@@ -4,3 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+bevy_ecs = "0.16.0"
+embedded-graphics = { version = "0.8.0" }
+embedded-graphics-simulator = "0.5.0"
+lvgl = { path = "../lv_binding_rust/lvgl" }
+lvgl-sys = { path = "../lv_binding_rust/lvgl-sys" }
