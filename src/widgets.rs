@@ -4,6 +4,7 @@ use bevy_ecs::{
     component::Component,
     hierarchy::{ChildOf, Children},
     observer::Trigger,
+    prelude::Bundle,
     system::Query,
     world::OnInsert,
 };
@@ -28,9 +29,9 @@ impl Drop for Widget {
 }
 
 macro_rules! impl_widget {
-    ($t:ident, $func:path) => {
+    ($t:ident,$bundle:ident, $func:path) => {
         impl $t {
-            pub fn create() -> Result<Widget, LvError> {
+            pub fn create_widget() -> Result<Widget, LvError> {
                 unsafe {
                     let default_screen =
                         lvgl_sys::lv_disp_get_scr_act(lvgl_sys::lv_disp_get_default());
@@ -42,19 +43,26 @@ macro_rules! impl_widget {
                     }
                 }
             }
+
+            pub fn create_bundle() -> $bundle {
+                $bundle(Self::create_widget().unwrap(), $t)
+            }
         }
+
+        #[derive(Bundle)]
+        pub struct $bundle(Widget, $t);
     };
 }
 
 #[derive(Component)]
 pub struct Button;
 
-impl_widget!(Button, lvgl_sys::lv_btn_create);
+impl_widget!(Button, ButtonBundle, lvgl_sys::lv_btn_create);
 
 #[derive(Component)]
 pub struct Label;
 
-impl_widget!(Label, lvgl_sys::lv_label_create);
+impl_widget!(Label, LabelBundle, lvgl_sys::lv_label_create);
 
 pub fn on_insert_children(
     trigger: Trigger<OnInsert, Children>,

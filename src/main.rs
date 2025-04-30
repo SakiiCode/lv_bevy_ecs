@@ -16,12 +16,14 @@ use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
 use lvgl::{
+    Display, DrawBuffer, LvError, NativeObject,
     input_device::{
-        pointer::{Pointer, PointerInputData}, BufferStatus, InputDriver
-    }, Display, DrawBuffer, LvError, NativeObject
+        BufferStatus, InputDriver,
+        pointer::{Pointer, PointerInputData},
+    },
 };
 use lvgl_sys::{LV_ALIGN_LEFT_MID, lv_label_set_text, lv_obj_align, lv_obj_set_size};
-use widgets::{on_insert_children, Button, Label};
+use widgets::{Button, Label, on_insert_children};
 
 mod widgets;
 
@@ -66,7 +68,6 @@ fn init(world: &mut World) -> LvResult<()> {
 fn main() -> Result<(), LvError> {
     let mut world = World::new();
     world.add_observer(on_insert_children);
-
 
     const HOR_RES: u32 = 240;
     const VER_RES: u32 = 240;
@@ -118,16 +119,16 @@ fn main() -> Result<(), LvError> {
             //world.spawn((button, ButtonComponent)).with_child((btn_lbl, LabelComponent));
         }*/
 
-        
-        let button = Button::create()?;
-        let label = Label::create()?;
+        //let button = Button::create_widget()?;
+        //let label = Label::create_widget()?;
 
-        let label_entity = world.spawn((label, Label)).id();
-        let mut button_entity = world.spawn((button, Button));
-        
+        let button = Button::create_bundle();
+        let label = Label::create_bundle();
+
+        let label_entity = world.spawn(label).id();
+        let mut button_entity = world.spawn(button);
+
         button_entity.add_child(label_entity);
-
-
     }
 
     println!("Create OK");
@@ -141,7 +142,6 @@ fn main() -> Result<(), LvError> {
     loop {
         let start = Instant::now();
 
-        
         window.update(&sim_display);
         let events = window.events().peekable();
 
