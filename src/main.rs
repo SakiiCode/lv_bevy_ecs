@@ -23,12 +23,14 @@ use lvgl::{
         pointer::{Pointer, PointerInputData},
     },
 };
-use lvgl_sys::LV_ALIGN_CENTER;
+use lvgl_sys::{LV_ALIGN_CENTER, LV_OPA_50};
+use styles::Style;
 use widgets::{Button, Label, on_insert_children};
 
 #[allow(dead_code)]
 mod generated;
 mod widgets;
+mod styles;
 
 /*#[derive(Resource)]
 struct DisplayResource(SimulatorDisplay<Rgb565>);
@@ -128,11 +130,20 @@ fn main() -> Result<(), LvError> {
         let mut button = Button::create_widget()?;
         let mut label = Label::create_widget()?;
         lv_label_set_text(&mut label, cstr!("OKE'SOS"));
-        lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
+        //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
         let label_entity = world.spawn(label).id();
         let mut button_entity = world.spawn(button);
 
         button_entity.add_child(label_entity);
+
+        let mut style = Style::default();
+        unsafe {
+            lvgl_sys::lv_style_set_opa(style.raw.as_mut(), LV_OPA_50 as u8);
+            lvgl_sys::lv_style_set_align(style.raw.as_mut(), LV_ALIGN_CENTER as u8);
+        }
+
+        button_entity.insert(style);
+
     }
 
     println!("Create OK");
