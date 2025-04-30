@@ -7,7 +7,11 @@ use std::{
 
 use bevy_ecs::{entity::Entity, query::With, resource::Resource, schedule::Schedule, world::World};
 
-use embedded_graphics::{pixelcolor::Rgb565, prelude::{Point, Size}, draw_target::DrawTarget};
+use embedded_graphics::{
+    draw_target::DrawTarget,
+    pixelcolor::Rgb565,
+    prelude::{Point, Size},
+};
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
@@ -18,8 +22,8 @@ use lvgl::{
         pointer::{Pointer, PointerInputData},
     },
 };
-use lvgl_sys::{lv_label_set_text, lv_obj_align, lv_obj_set_size, LV_ALIGN_LEFT_MID};
-use widgets::{Button, Label, Widget};
+use lvgl_sys::{LV_ALIGN_LEFT_MID, lv_label_set_text, lv_obj_align, lv_obj_set_size};
+use widgets::{ButtonComponent, LabelComponent, Widget};
 
 mod widgets;
 
@@ -90,23 +94,32 @@ fn main() -> Result<(), LvError> {
     let _touch_screen = Pointer::register(|| latest_touch_status, &display);
 
     // Create screen and widgets
-    let screen = display.get_scr_act()?;
+    //let screen = display.get_scr_act()?;
     {
         unsafe {
-            let button = Button::new(screen.raw().as_mut())?;
-            let btn_raw = button.obj.raw;
+            //let button_entity = ButtonComponent::spawn_entity(None, &mut world)?;
+            let button_widget = ButtonComponent::new_widget(None, &mut world)?;
+            //let btn_raw = Widget::get(button_entity, &world).obj.raw;
+            let btn_raw = button_widget.obj.raw;
+            let button_entity = world.spawn((button_widget, ButtonComponent)).id();
             lv_obj_align(btn_raw, LV_ALIGN_LEFT_MID as u8, 30, 0);
             lv_obj_set_size(btn_raw, 180, 80);
-            let btn_lbl = Label::new(btn_raw.as_mut().unwrap())?;
-            let lbl_raw = btn_lbl.obj.raw;
+            //let _btn_lbl = LabelComponent::spawn_entity(Some(button_entity), &mut world)?;
+            let label_widget = LabelComponent::new_widget(Some(button_entity), &mut world)?;
+            let lbl_raw = label_widget.obj.raw;
             lv_label_set_text(
                 lbl_raw,
-                CString::new("Click me!").unwrap().as_c_str().as_ptr(),
+                CString::new("Click me!").unwrap().as_ptr(),
             );
-            world.spawn((button, Button)).with_child((btn_lbl, Label));
+            world
+                .entity_mut(button_entity)
+                .with_child((label_widget, LabelComponent));
+            //button_entity.with_child((btn_lbl, LabelComponent));
+            //world.spawn((button, ButtonComponent)).with_child((btn_lbl, LabelComponent));
         }
     }
 
+    println!("Create OK");
     // Create a new Schedule, which defines an execution strategy for Systems
     let mut schedule = Schedule::default();
 
@@ -117,6 +130,7 @@ fn main() -> Result<(), LvError> {
     loop {
         let start = Instant::now();
 
+        
         window.update(&sim_display);
         let events = window.events().peekable();
 
@@ -150,10 +164,8 @@ fn main() -> Result<(), LvError> {
                 _ => {}
             }
         }
-
         // Run the schedule once. If your app has a "loop", you would run this once per loop
         schedule.run(&mut world);
-
         lvgl::task_handler();
 
         sleep(Duration::from_millis(5));
