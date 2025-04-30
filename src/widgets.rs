@@ -1,112 +1,76 @@
-use bevy_ecs::{component::Component, entity::Entity, world::World};
-use lvgl::{LvError, LvResult};
-use lvgl_sys::{lv_disp_get_scr_act, lv_obj_del, lv_obj_t};
+use std::ptr::NonNull;
 
-pub struct Obj {
-    pub raw: *mut lvgl_sys::lv_obj_t,
-}
-
-unsafe impl Send for Obj {}
-unsafe impl Sync for Obj {}
+use bevy_ecs::{
+    component::Component,
+    hierarchy::{ChildOf, Children},
+    observer::Trigger,
+    system::Query,
+    world::OnInsert,
+};
+use lvgl::LvError;
+use lvgl_sys::lv_obj_del;
 
 #[derive(Component)]
 pub struct Widget {
-    pub obj: Obj,
+    pub raw: NonNull<lvgl_sys::lv_obj_t>,
 }
 
-impl Widget {
-    pub fn new<F>(parent: Option<&Widget>, creator: F) -> LvResult<Widget>
-    where
-        F: Fn(*mut lv_obj_t) -> *mut lv_obj_t,
-    {
-        unsafe {
-            let parent_ptr = match parent {
-                Some(parent_widget) => parent_widget.obj.raw,
-                None => lv_disp_get_scr_act(std::ptr::null_mut()),
-            };
-            let ptr = creator(parent_ptr);
-            if let Some(raw) = core::ptr::NonNull::new(ptr) {
-                Ok(Widget {
-                    obj: (Obj { raw: raw.as_ptr() }),
-                })
-            } else {
-                Err(LvError::InvalidReference)
-            }
-        }
-    }
-
-    pub fn get(entity: Entity, world: &World) -> &Self {
-        world.entity(entity).get::<Widget>().unwrap()
-    }
-}
+unsafe impl Send for Widget {}
+unsafe impl Sync for Widget {}
 
 impl Drop for Widget {
     fn drop(&mut self) {
         unsafe {
-            println!("Dropping Widget");
-            lv_obj_del(self.obj.raw);
+            println!("Dropping Obj");
+            lv_obj_del(self.raw.as_ptr());
         }
     }
 }
 
-macro_rules! add_create {
+macro_rules! impl_widget {
     ($t:ident, $func:path) => {
         impl $t {
-            pub fn new_widget(parent: Option<Entity>, world: &mut World) -> LvResult<Widget> {
-                let parent_widget = parent.map(|e| world.entity(e).get::<Widget>().unwrap());
-                let new_widget = Widget::new(parent_widget, Self::create)?;
-                Ok(new_widget)
-            }
-
-            pub fn spawn_entity(parent: Option<Entity>, world: &mut World) -> LvResult<Entity> {
-                let new_widget = Self::new_widget(parent, world)?;
-                let new_entity = match parent {
-                    Some(parent_entity) => world
-                        .entity_mut(parent_entity)
-                        .with_child((new_widget, $t))
-                        .id(),
-                    None => world.spawn((new_widget, $t)).id(),
-                };
-                return Ok(new_entity);
-            }
-
-            fn create(parent: *mut lv_obj_t) -> *mut lv_obj_t {
-                unsafe { $func(parent) }
+            pub fn create() -> Result<Widget, LvError> {
+                unsafe {
+                    let default_screen =
+                        lvgl_sys::lv_disp_get_scr_act(lvgl_sys::lv_disp_get_default());
+                    let ptr = $func(default_screen);
+                    if let Some(raw) = core::ptr::NonNull::new(ptr) {
+                        Ok(Widget { raw })
+                    } else {
+                        Err(LvError::InvalidReference)
+                    }
+                }
             }
         }
     };
 }
 
 #[derive(Component)]
-pub struct ButtonComponent;
+pub struct Button;
 
-add_create!(ButtonComponent, lvgl_sys::lv_btn_create);
+impl_widget!(Button, lvgl_sys::lv_btn_create);
 
 #[derive(Component)]
-pub struct LabelComponent;
+pub struct Label;
 
-add_create!(LabelComponent, lvgl_sys::lv_label_create);
+impl_widget!(Label, lvgl_sys::lv_label_create);
 
-/*
-impl LabelComponent {
-    pub fn new(parent: Option<Entity>, world: &mut World) -> LvResult<impl Bundle> {
-        let parent_widget = parent.map(|e| world.entity(e).get::<Widget>().unwrap());
-        return Ok((Widget::new(parent_widget, Self::create)?, LabelComponent));
+pub fn on_insert_children(
+    trigger: Trigger<OnInsert, Children>,
+    widgets: Query<&Widget>,
+    children: Query<(&Widget, &ChildOf)>,
+) {
+    let mut parent_widget = None;
+    for (widget, parent) in children.iter() {
+        if parent.parent() == trigger.target() {
+            parent_widget = Some(widget);
+        }
     }
-
-    fn create(parent: *mut lv_obj_t) -> *mut lv_obj_t {
-        unsafe { lvgl_sys::lv_label_create(parent) }
+    let child_ptr = parent_widget.expect("Parent not found").raw.as_ptr();
+    let parent_ptr = widgets.get(trigger.target()).unwrap().raw.as_ptr();
+    unsafe {
+        lvgl_sys::lv_obj_set_parent(child_ptr, parent_ptr);
     }
+    dbg!("On Insert Children");
 }
-
-impl ButtonComponent {
-    pub fn new(parent: Option<Entity>, world: &mut World) -> LvResult<impl Bundle> {
-        let parent_widget = parent.map(|e| world.entity(e).get::<Widget>().unwrap());
-        return Ok((Widget::new(parent_widget, Self::create)?, ButtonComponent));
-    }
-
-    fn create(parent: *mut lv_obj_t) -> *mut lv_obj_t {
-        unsafe { lvgl_sys::lv_btn_create(parent) }
-    }
-}
-*/

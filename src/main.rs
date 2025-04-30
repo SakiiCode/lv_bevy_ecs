@@ -5,7 +5,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use bevy_ecs::{entity::Entity, query::With, resource::Resource, schedule::Schedule, world::World};
+use bevy_ecs::{entity::Entity, query::With, schedule::Schedule, world::World};
 
 use embedded_graphics::{
     draw_target::DrawTarget,
@@ -16,14 +16,12 @@ use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
 use lvgl::{
-    Display, DrawBuffer, LvError, NativeObject,
     input_device::{
-        BufferStatus, InputDriver,
-        pointer::{Pointer, PointerInputData},
-    },
+        pointer::{Pointer, PointerInputData}, BufferStatus, InputDriver
+    }, Display, DrawBuffer, LvError, NativeObject
 };
 use lvgl_sys::{LV_ALIGN_LEFT_MID, lv_label_set_text, lv_obj_align, lv_obj_set_size};
-use widgets::{ButtonComponent, LabelComponent, Widget};
+use widgets::{on_insert_children, Button, Label};
 
 mod widgets;
 
@@ -67,6 +65,8 @@ fn init(world: &mut World) -> LvResult<()> {
 
 fn main() -> Result<(), LvError> {
     let mut world = World::new();
+    world.add_observer(on_insert_children);
+
 
     const HOR_RES: u32 = 240;
     const VER_RES: u32 = 240;
@@ -96,7 +96,7 @@ fn main() -> Result<(), LvError> {
     // Create screen and widgets
     //let screen = display.get_scr_act()?;
     {
-        unsafe {
+        /*unsafe {
             //let button_entity = ButtonComponent::spawn_entity(None, &mut world)?;
             let button_widget = ButtonComponent::new_widget(None, &mut world)?;
             //let btn_raw = Widget::get(button_entity, &world).obj.raw;
@@ -116,7 +116,18 @@ fn main() -> Result<(), LvError> {
                 .with_child((label_widget, LabelComponent));
             //button_entity.with_child((btn_lbl, LabelComponent));
             //world.spawn((button, ButtonComponent)).with_child((btn_lbl, LabelComponent));
-        }
+        }*/
+
+        
+        let button = Button::create()?;
+        let label = Label::create()?;
+
+        let label_entity = world.spawn((label, Label)).id();
+        let mut button_entity = world.spawn((button, Button));
+        
+        button_entity.add_child(label_entity);
+
+
     }
 
     println!("Create OK");
@@ -143,7 +154,7 @@ fn main() -> Result<(), LvError> {
                     println!("Clicked on: {:?}", point);
                     latest_touch_status = PointerInputData::Touch(point).pressed().once();
                     let mut eids = Vec::new();
-                    let mut widgets = world.query_filtered::<Entity, With<Widget>>();
+                    let mut widgets = world.query::<Entity>();
                     for entity_id in widgets.iter(&world) {
                         eids.push(entity_id);
                     }
