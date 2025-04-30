@@ -771,6 +771,7 @@ name = "lv_bevy_ecs"
 version = "0.1.0"
 dependencies = [
  "bevy_ecs",
+ "cstr_core",
  "embedded-graphics",
  "embedded-graphics-simulator",
  "lvgl",
@@ -781,6 +782,7 @@ dependencies = [
 name = "lvgl"
 version = "0.6.2"
 dependencies = [
+ "bevy_ecs",
  "bitflags 2.9.0",
  "cstr_core",
  "ctor",

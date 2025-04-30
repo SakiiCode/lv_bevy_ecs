@@ -1,12 +1,12 @@
 use std::{
-    ffi::CString,
     process::exit,
     thread::sleep,
     time::{Duration, Instant},
 };
 
-use bevy_ecs::{entity::Entity, query::With, schedule::Schedule, world::World};
+use bevy_ecs::{entity::Entity, schedule::Schedule, world::World};
 
+use cstr_core::cstr;
 use embedded_graphics::{
     draw_target::DrawTarget,
     pixelcolor::Rgb565,
@@ -15,16 +15,19 @@ use embedded_graphics::{
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
+use generated::{lv_label_set_text, lv_obj_align};
 use lvgl::{
-    Display, DrawBuffer, LvError, NativeObject,
+    Display, DrawBuffer, LvError,
     input_device::{
-        BufferStatus, InputDriver,
+        InputDriver,
         pointer::{Pointer, PointerInputData},
     },
 };
-use lvgl_sys::{LV_ALIGN_LEFT_MID, lv_label_set_text, lv_obj_align, lv_obj_set_size};
+use lvgl_sys::LV_ALIGN_CENTER;
 use widgets::{Button, Label, on_insert_children};
 
+#[allow(dead_code)]
+mod generated;
 mod widgets;
 
 /*#[derive(Resource)]
@@ -122,9 +125,10 @@ fn main() -> Result<(), LvError> {
         //let button = Button::create_widget()?;
         //let label = Label::create_widget()?;
 
-        let button = Button::create_bundle();
-        let label = Label::create_bundle();
-
+        let mut button = Button::create_widget()?;
+        let mut label = Label::create_widget()?;
+        lv_label_set_text(&mut label, cstr!("OKE'SOS"));
+        lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
         let label_entity = world.spawn(label).id();
         let mut button_entity = world.spawn(button);
 

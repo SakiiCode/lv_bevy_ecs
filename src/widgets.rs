@@ -4,7 +4,6 @@ use bevy_ecs::{
     component::Component,
     hierarchy::{ChildOf, Children},
     observer::Trigger,
-    prelude::Bundle,
     system::Query,
     world::OnInsert,
 };
@@ -14,6 +13,12 @@ use lvgl_sys::lv_obj_del;
 #[derive(Component)]
 pub struct Widget {
     pub raw: NonNull<lvgl_sys::lv_obj_t>,
+}
+
+impl Widget {
+    pub fn raw(&self) -> NonNull<lvgl_sys::lv_obj_t> {
+        self.raw
+    }
 }
 
 unsafe impl Send for Widget {}
@@ -30,7 +35,11 @@ impl Drop for Widget {
 
 macro_rules! impl_widget {
     ($t:ident,$bundle:ident, $func:path) => {
+        #[derive(Component)]
+        pub struct $t;
+
         impl $t {
+            #[allow(dead_code)]
             pub fn create_widget() -> Result<Widget, LvError> {
                 unsafe {
                     let default_screen =
@@ -43,26 +52,19 @@ macro_rules! impl_widget {
                     }
                 }
             }
-
-            pub fn create_bundle() -> $bundle {
-                $bundle(Self::create_widget().unwrap(), $t)
-            }
         }
-
-        #[derive(Bundle)]
-        pub struct $bundle(Widget, $t);
     };
 }
 
-#[derive(Component)]
-pub struct Button;
-
 impl_widget!(Button, ButtonBundle, lvgl_sys::lv_btn_create);
 
-#[derive(Component)]
-pub struct Label;
-
 impl_widget!(Label, LabelBundle, lvgl_sys::lv_label_create);
+
+impl_widget!(Keyboard, KeyboardBundle, lvgl_sys::lv_keyboard_create);
+
+impl_widget!(Menu, MenuBundle, lvgl_sys::lv_menu_create);
+
+impl_widget!(Dropdown, DropdownBundle, lvgl_sys::lv_dropdown_create);
 
 pub fn on_insert_children(
     trigger: Trigger<OnInsert, Children>,
