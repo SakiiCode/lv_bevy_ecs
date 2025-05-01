@@ -10,12 +10,15 @@ use crate::widgets::Widget;
 #[derive(Component)]
 #[component(on_insert=add_animation)]
 pub struct Animation {
-    pub raw: Box<lvgl_sys::lv_anim_t>,
+    pub raw: Option<Box<lvgl_sys::lv_anim_t>>,
 }
 
 impl Drop for Animation {
     fn drop(&mut self) {
         println!("Dropping Animation");
+        // at this point internal lv_anim_t is already freed for some unknown reason
+        let raw = self.raw.take();
+        std::mem::forget(raw);
     }
 }
 
@@ -36,13 +39,14 @@ impl Animation {
         raw.user_data = Box::<F>::into_raw(Box::new(animator)) as *mut _;
         raw.exec_cb = Some(animator_trampoline::<F>);
 
-        Self { raw }
+        Self { raw: Some(raw) }
     }
 
-    /// Starts the animation.
     pub fn start(&mut self) {
         unsafe {
-            self.raw = Box::from_raw(lvgl_sys::lv_anim_start(self.raw.as_mut()));
+            self.raw = Some(Box::from_raw(lvgl_sys::lv_anim_start(Box::into_raw(
+                self.raw.take().unwrap(),
+            ))));
         }
     }
 }
@@ -51,13 +55,16 @@ unsafe impl Send for Animation {}
 unsafe impl Sync for Animation {}
 
 pub fn add_animation(mut world: DeferredWorld, ctx: HookContext) {
-    let widget = world
+    let obj = world
         .get_mut::<Widget>(ctx.entity)
-        .expect("Animation components must be added to Widget entities").as_mut() as *mut Widget;
+        .expect("Animation components must be added to Widget entities")
+        .as_mut()
+        .raw
+        .as_ptr();
     let mut anim = world.get_mut::<Animation>(ctx.entity).unwrap();
-    anim.raw.var = widget as *mut _;
+    anim.raw.as_mut().unwrap().var = obj as *mut _;
     anim.start();
-    dbg!("Added style");
+    dbg!("Added animation");
 }
 
 unsafe extern "C" fn animator_trampoline<F>(obj: *mut c_void, val: i32)
@@ -68,10 +75,10 @@ where
         let anim =
             NonNull::new(lvgl_sys::lv_anim_get(obj, None) as *mut lvgl_sys::lv_anim_t).unwrap();
         // yes, we have to do it this way. Casting `obj` directly to `&mut Obj` segfaults
-        let obj = (*(obj as *mut Widget)).raw();
+        let obj = obj as *mut lvgl_sys::lv_obj_t;
         if !anim.as_ref().user_data.is_null() {
             let callback = &mut *(anim.as_ref().user_data as *mut F);
-            let mut obj_nondrop = Widget::from_raw(obj);
+            let mut obj_nondrop = Widget::from_raw(obj).unwrap();
             callback(&mut obj_nondrop, val);
             std::mem::forget(obj_nondrop)
         }

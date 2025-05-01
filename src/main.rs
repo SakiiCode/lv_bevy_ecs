@@ -16,7 +16,7 @@ use embedded_graphics::{
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
-use generated::{lv_label_set_text, lv_obj_align};
+use generated::lv_label_set_text;
 use lvgl::{
     Display, DrawBuffer, LvError,
     input_device::{
@@ -24,9 +24,7 @@ use lvgl::{
         pointer::{Pointer, PointerInputData},
     },
 };
-use lvgl_sys::{
-    LV_ALIGN_CENTER, LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, lv_obj_set_style_opa,
-};
+use lvgl_sys::{LV_ALIGN_CENTER, LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN};
 use styles::Style;
 use widgets::{Button, Label, on_insert_children};
 
@@ -131,18 +129,18 @@ fn main() -> Result<(), LvError> {
         //let button = Button::create_widget()?;
         //let label = Label::create_widget()?;
 
-        let mut button = Button::create_widget()?;
+        let button = Button::create_widget()?;
         let mut label = Label::create_widget()?;
         lv_label_set_text(&mut label, cstr!("OKE'SOS"));
         //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
         let label_entity = world.spawn((Label, label)).id();
 
-        let mut anim = Animation::new(
+        let anim = Animation::new(
             Duration::from_secs(5),
             LV_OPA_0 as i32,
             LV_OPA_100 as i32,
             |obj, val| unsafe {
-                lv_obj_set_style_opa(obj.raw.as_ptr(), val as u8, LV_PART_MAIN);
+                lvgl_sys::lv_obj_set_style_opa(obj.raw.as_ptr(), val as u8, LV_PART_MAIN);
             },
         );
 
@@ -157,10 +155,8 @@ fn main() -> Result<(), LvError> {
         }
 
         button_entity.insert(style);
-        button_entity.remove::<Style>();
+        //button_entity.remove::<Style>();
         // button_entity.insert(style);
-
-        
     }
 
     println!("Create OK");
@@ -185,7 +181,7 @@ fn main() -> Result<(), LvError> {
                 } => {
                     println!("Clicked on: {:?}", point);
                     latest_touch_status = PointerInputData::Touch(point).pressed().once();
-                    let mut eids = Vec::new();
+                    /*let mut eids = Vec::new();
                     let mut widgets = world.query::<Entity>();
                     for entity_id in widgets.iter(&world) {
                         eids.push(entity_id);
@@ -195,7 +191,7 @@ fn main() -> Result<(), LvError> {
                         //let _ = widgets.get(eid).and_then(|w|Ok(w.delete()));
                         //widgets.delete(eid);
                         world.despawn(eid);
-                    }
+                    }*/
                 }
                 SimulatorEvent::MouseButtonUp {
                     mouse_btn: _,

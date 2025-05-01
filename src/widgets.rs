@@ -20,8 +20,8 @@ impl Widget {
         self.raw
     }
 
-    pub fn from_raw(ptr: NonNull<lvgl_sys::lv_obj_t>) -> Self {
-        Self { raw: ptr }
+    pub fn from_raw(ptr: *mut lvgl_sys::lv_obj_t) -> Option<Self> {
+        NonNull::new(ptr).map(|raw| Self { raw })
     }
 }
 

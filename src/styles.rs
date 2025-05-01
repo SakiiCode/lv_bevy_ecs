@@ -1,5 +1,3 @@
-use std::ops::{Deref, DerefMut};
-
 use bevy_ecs::{
     component::{Component, HookContext},
     world::DeferredWorld,
