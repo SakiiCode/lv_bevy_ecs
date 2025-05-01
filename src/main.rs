@@ -135,10 +135,9 @@ fn main() -> Result<(), LvError> {
         let mut label = Label::create_widget()?;
         lv_label_set_text(&mut label, cstr!("OKE'SOS"));
         //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
-        let label_entity = world.spawn(label).id();
+        let label_entity = world.spawn((Label, label)).id();
 
         let mut anim = Animation::new(
-            &mut button,
             Duration::from_secs(5),
             LV_OPA_0 as i32,
             LV_OPA_100 as i32,
@@ -146,9 +145,8 @@ fn main() -> Result<(), LvError> {
                 lv_obj_set_style_opa(obj.raw.as_ptr(), val as u8, LV_PART_MAIN);
             },
         );
-        //anim.start();
 
-        let mut button_entity = world.spawn(button);
+        let mut button_entity = world.spawn((Button, button, anim));
 
         button_entity.add_child(label_entity);
 
