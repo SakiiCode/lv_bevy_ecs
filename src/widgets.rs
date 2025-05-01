@@ -38,7 +38,7 @@ impl Drop for Widget {
 }
 
 macro_rules! impl_widget {
-    ($t:ident,$bundle:ident, $func:path) => {
+    ($t:ident, $func:path) => {
         #[derive(Component)]
         pub struct $t;
 
@@ -60,16 +60,6 @@ macro_rules! impl_widget {
     };
 }
 
-impl_widget!(Button, ButtonBundle, lvgl_sys::lv_btn_create);
-
-impl_widget!(Label, LabelBundle, lvgl_sys::lv_label_create);
-
-impl_widget!(Keyboard, KeyboardBundle, lvgl_sys::lv_keyboard_create);
-
-impl_widget!(Menu, MenuBundle, lvgl_sys::lv_menu_create);
-
-impl_widget!(Dropdown, DropdownBundle, lvgl_sys::lv_dropdown_create);
-
 pub fn on_insert_children(
     trigger: Trigger<OnInsert, Children>,
     widgets: Query<&Widget>,
@@ -88,3 +78,57 @@ pub fn on_insert_children(
     }
     dbg!("On Insert Children");
 }
+
+impl_widget!(Button, lvgl_sys::lv_btn_create);
+
+impl_widget!(Label, lvgl_sys::lv_label_create);
+
+impl_widget!(Keyboard, lvgl_sys::lv_keyboard_create);
+
+impl_widget!(Menu, lvgl_sys::lv_menu_create);
+
+impl_widget!(Dropdown, lvgl_sys::lv_dropdown_create);
+
+impl_widget!(Led, lvgl_sys::lv_dropdown_create);
+
+impl_widget!(Arc, lvgl_sys::lv_arc_create);
+
+impl_widget!(Table, lvgl_sys::lv_table_create);
+
+impl_widget!(Checkbox, lvgl_sys::lv_checkbox_create);
+
+impl_widget!(Bar, lvgl_sys::lv_bar_create);
+
+impl_widget!(Roller, lvgl_sys::lv_roller_create);
+
+impl_widget!(Canvas, lvgl_sys::lv_canvas_create);
+
+impl_widget!(Meter, lvgl_sys::lv_meter_create);
+
+impl_widget!(Calendar, lvgl_sys::lv_calendar_create);
+
+impl_widget!(Line, lvgl_sys::lv_line_create);
+
+impl_widget!(Spinbox, lvgl_sys::lv_spinbox_create);
+
+impl_widget!(TileView, lvgl_sys::lv_tileview_create);
+
+impl_widget!(Img, lvgl_sys::lv_img_create);
+
+impl_widget!(Imgbtn, lvgl_sys::lv_imgbtn_create);
+
+impl_widget!(Switch, lvgl_sys::lv_switch_create);
+
+impl_widget!(Chart, lvgl_sys::lv_chart_create);
+
+impl_widget!(Animimg, lvgl_sys::lv_animimg_create);
+
+impl_widget!(Spangroup, lvgl_sys::lv_spangroup_create);
+
+impl_widget!(Btnmatrix, lvgl_sys::lv_btnmatrix_create);
+
+impl_widget!(Textarea, lvgl_sys::lv_textarea_create);
+
+impl_widget!(Slider, lvgl_sys::lv_slider_create);
+
+impl_widget!(List, lvgl_sys::lv_list_create);

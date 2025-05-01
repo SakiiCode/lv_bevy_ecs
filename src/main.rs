@@ -5,7 +5,7 @@ use std::{
 };
 
 use animation::Animation;
-use bevy_ecs::{entity::Entity, schedule::Schedule, world::World};
+use bevy_ecs::{schedule::Schedule, world::World};
 
 use cstr_core::cstr;
 use embedded_graphics::{
@@ -72,6 +72,7 @@ fn init(world: &mut World) -> LvResult<()> {
     Ok(())
 }*/
 
+
 fn main() -> Result<(), LvError> {
     let mut world = World::new();
     world.add_observer(on_insert_children);
@@ -99,7 +100,7 @@ fn main() -> Result<(), LvError> {
     //world.insert_resource(TouchStatus(latest_touch_status));
 
     // Register a new input device that's capable of reading the current state of the input
-    let _touch_screen = Pointer::register(|| latest_touch_status, &display);
+    let _touch_screen = Pointer::register(|| latest_touch_status, &display)?;
 
     // Create screen and widgets
     //let screen = display.get_scr_act()?;
@@ -174,6 +175,7 @@ fn main() -> Result<(), LvError> {
         let events = window.events().peekable();
 
         for event in events {
+            #[allow(unused_assignments)]
             match event {
                 SimulatorEvent::MouseButtonDown {
                     mouse_btn: _,
@@ -181,17 +183,6 @@ fn main() -> Result<(), LvError> {
                 } => {
                     println!("Clicked on: {:?}", point);
                     latest_touch_status = PointerInputData::Touch(point).pressed().once();
-                    /*let mut eids = Vec::new();
-                    let mut widgets = world.query::<Entity>();
-                    for entity_id in widgets.iter(&world) {
-                        eids.push(entity_id);
-                    }
-                    for eid in eids {
-                        dbg!(&eid);
-                        //let _ = widgets.get(eid).and_then(|w|Ok(w.delete()));
-                        //widgets.delete(eid);
-                        world.despawn(eid);
-                    }*/
                 }
                 SimulatorEvent::MouseButtonUp {
                     mouse_btn: _,
@@ -210,6 +201,4 @@ fn main() -> Result<(), LvError> {
         sleep(Duration::from_millis(5));
         lvgl::tick_inc(Instant::now().duration_since(start));
     }
-
-    Ok(())
 }
