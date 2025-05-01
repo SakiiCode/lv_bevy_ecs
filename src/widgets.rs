@@ -19,6 +19,10 @@ impl Widget {
     pub fn raw(&self) -> NonNull<lvgl_sys::lv_obj_t> {
         self.raw
     }
+
+    pub fn from_raw(ptr: NonNull<lvgl_sys::lv_obj_t>) -> Self {
+        Self { raw: ptr }
+    }
 }
 
 unsafe impl Send for Widget {}

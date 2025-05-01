@@ -15,19 +15,6 @@ pub struct Style {
     pub raw: Box<lvgl_sys::lv_style_t>,
 }
 
-impl Deref for Style {
-    type Target = lvgl_sys::lv_style_t;
-    fn deref(&self) -> &Self::Target {
-        self.raw.as_ref()
-    }
-}
-
-impl DerefMut for Style {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.raw.as_mut()
-    }
-}
-
 impl Default for Style {
     fn default() -> Self {
         let raw = unsafe {
@@ -36,6 +23,12 @@ impl Default for Style {
             Box::new(style.assume_init())
         };
         Self { raw }
+    }
+}
+
+impl Drop for Style {
+    fn drop(&mut self) {
+        dbg!("Dropping style");
     }
 }
 

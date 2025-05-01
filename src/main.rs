@@ -4,6 +4,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use animation::Animation;
 use bevy_ecs::{entity::Entity, schedule::Schedule, world::World};
 
 use cstr_core::cstr;
@@ -23,14 +24,17 @@ use lvgl::{
         pointer::{Pointer, PointerInputData},
     },
 };
-use lvgl_sys::{LV_ALIGN_CENTER, LV_OPA_50};
+use lvgl_sys::{
+    LV_ALIGN_CENTER, LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, lv_obj_set_style_opa,
+};
 use styles::Style;
 use widgets::{Button, Label, on_insert_children};
 
+mod animation;
 #[allow(dead_code)]
 mod generated;
-mod widgets;
 mod styles;
+mod widgets;
 
 /*#[derive(Resource)]
 struct DisplayResource(SimulatorDisplay<Rgb565>);
@@ -132,6 +136,18 @@ fn main() -> Result<(), LvError> {
         lv_label_set_text(&mut label, cstr!("OKE'SOS"));
         //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
         let label_entity = world.spawn(label).id();
+
+        let mut anim = Animation::new(
+            &mut button,
+            Duration::from_secs(5),
+            LV_OPA_0 as i32,
+            LV_OPA_100 as i32,
+            |obj, val| unsafe {
+                lv_obj_set_style_opa(obj.raw.as_ptr(), val as u8, LV_PART_MAIN);
+            },
+        );
+        //anim.start();
+
         let mut button_entity = world.spawn(button);
 
         button_entity.add_child(label_entity);
@@ -143,7 +159,10 @@ fn main() -> Result<(), LvError> {
         }
 
         button_entity.insert(style);
+        button_entity.remove::<Style>();
+        // button_entity.insert(style);
 
+        
     }
 
     println!("Create OK");
