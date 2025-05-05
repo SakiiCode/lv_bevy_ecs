@@ -32,7 +32,7 @@ impl Animation {
             lvgl_sys::lv_anim_init(anim.as_mut_ptr());
             Box::new(anim.assume_init())
         };
-        raw.time = duration.as_millis().try_into().unwrap_or(0);
+        raw.duration = duration.as_millis().try_into().unwrap_or(0);
         raw.start_value = start;
         raw.current_value = start;
         raw.end_value = end;

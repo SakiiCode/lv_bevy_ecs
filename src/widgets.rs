@@ -7,8 +7,8 @@ use bevy_ecs::{
     system::Query,
     world::OnInsert,
 };
-use lvgl::LvError;
-use lvgl_sys::lv_obj_del;
+use lvgl_sys::lv_obj_delete;
+use crate::LvError;
 
 #[derive(Component)]
 pub struct Widget {
@@ -32,7 +32,7 @@ impl Drop for Widget {
     fn drop(&mut self) {
         unsafe {
             println!("Dropping Obj");
-            lv_obj_del(self.raw.as_ptr());
+            lv_obj_delete(self.raw.as_ptr());
         }
     }
 }
@@ -47,7 +47,7 @@ macro_rules! impl_widget {
             pub fn create_widget() -> Result<Widget, LvError> {
                 unsafe {
                     let default_screen =
-                        lvgl_sys::lv_disp_get_scr_act(lvgl_sys::lv_disp_get_default());
+                        lvgl_sys::lv_display_get_screen_active(lvgl_sys::lv_display_get_default());
                     let ptr = $func(default_screen);
                     if let Some(raw) = core::ptr::NonNull::new(ptr) {
                         Ok(Widget { raw })
@@ -79,7 +79,7 @@ pub fn on_insert_children(
     dbg!("On Insert Children");
 }
 
-impl_widget!(Button, lvgl_sys::lv_btn_create);
+impl_widget!(Button, lvgl_sys::lv_button_create);
 
 impl_widget!(Label, lvgl_sys::lv_label_create);
 
@@ -103,8 +103,6 @@ impl_widget!(Roller, lvgl_sys::lv_roller_create);
 
 impl_widget!(Canvas, lvgl_sys::lv_canvas_create);
 
-impl_widget!(Meter, lvgl_sys::lv_meter_create);
-
 impl_widget!(Calendar, lvgl_sys::lv_calendar_create);
 
 impl_widget!(Line, lvgl_sys::lv_line_create);
@@ -113,9 +111,9 @@ impl_widget!(Spinbox, lvgl_sys::lv_spinbox_create);
 
 impl_widget!(TileView, lvgl_sys::lv_tileview_create);
 
-impl_widget!(Img, lvgl_sys::lv_img_create);
+impl_widget!(Img, lvgl_sys::lv_image_create);
 
-impl_widget!(Imgbtn, lvgl_sys::lv_imgbtn_create);
+impl_widget!(Imgbtn, lvgl_sys::lv_imagebutton_create);
 
 impl_widget!(Switch, lvgl_sys::lv_switch_create);
 
@@ -125,7 +123,7 @@ impl_widget!(Animimg, lvgl_sys::lv_animimg_create);
 
 impl_widget!(Spangroup, lvgl_sys::lv_spangroup_create);
 
-impl_widget!(Btnmatrix, lvgl_sys::lv_btnmatrix_create);
+impl_widget!(Btnmatrix, lvgl_sys::lv_buttonmatrix_create);
 
 impl_widget!(Textarea, lvgl_sys::lv_textarea_create);
 

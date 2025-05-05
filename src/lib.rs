@@ -1,5 +1,12 @@
 pub mod animation;
-#[allow(dead_code)]
-pub mod generated;
 pub mod styles;
 pub mod widgets;
+
+/// Generic LVGL error. All other errors can be coerced into it.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum LvError {
+    InvalidReference,
+    Uninitialized,
+    LvOOMemory,
+    AlreadyInUse,
+}

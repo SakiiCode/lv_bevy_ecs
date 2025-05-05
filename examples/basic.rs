@@ -5,7 +5,7 @@ use std::{
 };
 
 use bevy_ecs::{schedule::Schedule, world::World};
-use lv_bevy_ecs::animation::Animation;
+use lv_bevy_ecs::{animation::Animation, LvError};
 
 use cstr_core::cstr;
 use embedded_graphics::{
@@ -16,17 +16,10 @@ use embedded_graphics::{
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
-use lv_bevy_ecs::generated::lv_label_set_text;
 use lv_bevy_ecs::styles::Style;
 use lv_bevy_ecs::widgets::{Button, Label, on_insert_children};
-use lvgl::{
-    Display, DrawBuffer, LvError,
-    input_device::{
-        InputDriver,
-        pointer::{Pointer, PointerInputData},
-    },
-};
-use lvgl_sys::{LV_ALIGN_CENTER, LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN};
+
+use lvgl_sys::{__uint8_t, lv_align_t_LV_ALIGN_CENTER, lv_area_t, lv_display_create, lv_display_set_flush_cb, lv_display_t, LV_OPA_0, LV_OPA_100, LV_OPA_50, LV_PART_MAIN};
 
 fn main() -> Result<(), LvError> {
     let mut world = World::new();
@@ -56,34 +49,11 @@ fn main() -> Result<(), LvError> {
     // Create screen and widgets
     //let screen = display.get_scr_act()?;
     {
-        /*unsafe {
-            //let button_entity = ButtonComponent::spawn_entity(None, &mut world)?;
-            let button_widget = ButtonComponent::new_widget(None, &mut world)?;
-            //let btn_raw = Widget::get(button_entity, &world).obj.raw;
-            let btn_raw = button_widget.obj.raw;
-            let button_entity = world.spawn((button_widget, ButtonComponent)).id();
-            lv_obj_align(btn_raw, LV_ALIGN_LEFT_MID as u8, 30, 0);
-            lv_obj_set_size(btn_raw, 180, 80);
-            //let _btn_lbl = LabelComponent::spawn_entity(Some(button_entity), &mut world)?;
-            let label_widget = LabelComponent::new_widget(Some(button_entity), &mut world)?;
-            let lbl_raw = label_widget.obj.raw;
-            lv_label_set_text(
-                lbl_raw,
-                CString::new("Click me!").unwrap().as_ptr(),
-            );
-            world
-                .entity_mut(button_entity)
-                .with_child((label_widget, LabelComponent));
-            //button_entity.with_child((btn_lbl, LabelComponent));
-            //world.spawn((button, ButtonComponent)).with_child((btn_lbl, LabelComponent));
-        }*/
-
-        //let button = Button::create_widget()?;
-        //let label = Label::create_widget()?;
-
         let button = Button::create_widget()?;
         let mut label = Label::create_widget()?;
-        lv_label_set_text(&mut label, cstr!("OKE'SOS"));
+        unsafe {
+            lvgl_sys::lv_label_set_text(label.raw().as_ptr(), cstr!("OKE'SOS").as_ptr());
+        }
         //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
         let label_entity = world.spawn((Label, label)).id();
 
@@ -103,7 +73,7 @@ fn main() -> Result<(), LvError> {
         let mut style = Style::default();
         unsafe {
             lvgl_sys::lv_style_set_opa(style.raw.as_mut(), LV_OPA_50 as u8);
-            lvgl_sys::lv_style_set_align(style.raw.as_mut(), LV_ALIGN_CENTER as u8);
+            lvgl_sys::lv_style_set_align(style.raw.as_mut(), lv_align_t_LV_ALIGN_CENTER as u32);
         }
 
         button_entity.insert(style);
@@ -122,7 +92,7 @@ fn main() -> Result<(), LvError> {
     loop {
         let start = Instant::now();
 
-        window.update(&sim_display);
+        /*window.update(&sim_display);
         let events = window.events().peekable();
 
         for event in events {
@@ -144,12 +114,19 @@ fn main() -> Result<(), LvError> {
                 SimulatorEvent::Quit => exit(0),
                 _ => {}
             }
-        }
+        }*/
         // Run the schedule once. If your app has a "loop", you would run this once per loop
         schedule.run(&mut world);
-        lvgl::task_handler();
+        unsafe {
+            lvgl_sys::lv_timer_handler();
+            sleep(Duration::from_millis(5));
 
-        sleep(Duration::from_millis(5));
-        lvgl::tick_inc(Instant::now().duration_since(start));
+            lvgl_sys::lv_tick_inc(Instant::now().duration_since(start).as_millis() as u32);
+        }
     }
+}
+
+extern "C" fn flush_cb(display: *mut lv_display_t, area: *const lv_area_t, px_map: *mut u8){
+            
+
 }
