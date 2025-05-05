@@ -3,6 +3,10 @@ name = "lv_bevy_ecs"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+name = "lv_bevy_ecs"
+path = "src/lib.rs"
+
 [dependencies]
 bevy_ecs = "0.16.0"
 cstr_core = "0.2.6"

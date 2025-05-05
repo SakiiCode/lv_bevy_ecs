@@ -4,8 +4,8 @@ use std::{
     time::{Duration, Instant},
 };
 
-use animation::Animation;
 use bevy_ecs::{schedule::Schedule, world::World};
+use lv_bevy_ecs::animation::Animation;
 
 use cstr_core::cstr;
 use embedded_graphics::{
@@ -16,7 +16,9 @@ use embedded_graphics::{
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
-use generated::lv_label_set_text;
+use lv_bevy_ecs::generated::lv_label_set_text;
+use lv_bevy_ecs::styles::Style;
+use lv_bevy_ecs::widgets::{Button, Label, on_insert_children};
 use lvgl::{
     Display, DrawBuffer, LvError,
     input_device::{
@@ -25,53 +27,6 @@ use lvgl::{
     },
 };
 use lvgl_sys::{LV_ALIGN_CENTER, LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN};
-use styles::Style;
-use widgets::{Button, Label, on_insert_children};
-
-mod animation;
-#[allow(dead_code)]
-mod generated;
-mod styles;
-mod widgets;
-
-/*#[derive(Resource)]
-struct DisplayResource(SimulatorDisplay<Rgb565>);
-
-#[derive(Resource)]
-struct TouchStatus(BufferStatus);*/
-
-/*#[inline(always)]
-fn init(world: &mut World) -> LvResult<()> {
-    const HOR_RES: u32 = 240;
-    const VER_RES: u32 = 240;
-
-    let mut sim_display: SimulatorDisplay<Rgb565> =
-        SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
-
-    let output_settings = OutputSettingsBuilder::new().scale(1).build();
-    let window = Window::new("Button Example", &output_settings);
-
-    world.add_unique_non_send_sync(WindowResource(window));
-
-    let buffer = DrawBuffer::<{ (HOR_RES * VER_RES) as usize }>::default();
-
-    let display = Display::register(buffer, HOR_RES, VER_RES, |refresh| {
-        sim_display.draw_iter(refresh.as_pixels()).unwrap();
-    })?;
-
-    world.add_unique(DisplayResource(sim_display));
-
-    // Define the initial state of your input
-    let latest_touch_status = PointerInputData::Touch(Point::new(0, 0)).released().once();
-
-    world.add_unique(TouchStatus(latest_touch_status));
-
-    // Register a new input device that's capable of reading the current state of the input
-    let _touch_screen = Pointer::register(|| latest_touch_status, &display);
-
-    Ok(())
-}*/
-
 
 fn main() -> Result<(), LvError> {
     let mut world = World::new();
@@ -92,12 +47,8 @@ fn main() -> Result<(), LvError> {
         sim_display.draw_iter(refresh.as_pixels()).unwrap();
     })?;
 
-    //world.insert_resource(DisplayResource(sim_display));
-
     // Define the initial state of your input
     let mut latest_touch_status = PointerInputData::Touch(Point::new(0, 0)).released().once();
-
-    //world.insert_resource(TouchStatus(latest_touch_status));
 
     // Register a new input device that's capable of reading the current state of the input
     let _touch_screen = Pointer::register(|| latest_touch_status, &display)?;

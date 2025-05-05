@@ -782,7 +782,6 @@ dependencies = [
 name = "lvgl"
 version = "0.6.2"
 dependencies = [
- "bevy_ecs",
  "bitflags 2.9.0",
  "cstr_core",
  "ctor",
