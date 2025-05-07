@@ -53,7 +53,7 @@
 
 #if LV_USE_STDLIB_MALLOC == LV_STDLIB_BUILTIN
     /*Size of the memory available for `lv_malloc()` in bytes (>= 2kB)*/
-    #define LV_MEM_SIZE (64 * 1024U)          /*[bytes]*/
+    #define LV_MEM_SIZE (8* 1024 * 1024U)          /*[bytes]*/
 
     /*Size of the memory expand for `lv_malloc()` in bytes*/
     #define LV_MEM_POOL_EXPAND_SIZE 0
@@ -473,7 +473,7 @@
 #define LV_USE_MATRIX           0
 
 /*Include `lvgl_private.h` in `lvgl.h` to access internal data and functions by default*/
-#define LV_USE_PRIVATE_API		0
+#define LV_USE_PRIVATE_API		1
 
 /*==================
  *   FONT USAGE
@@ -961,7 +961,7 @@
  *==================*/
 
 /*Use SDL to open window on PC and handle mouse and keyboard*/
-#define LV_USE_SDL              0
+#define LV_USE_SDL              1
 #if LV_USE_SDL
     #define LV_SDL_INCLUDE_PATH     <SDL2/SDL.h>
     #define LV_SDL_RENDER_MODE      LV_DISPLAY_RENDER_MODE_DIRECT   /*LV_DISPLAY_RENDER_MODE_DIRECT is recommended for best performance*/
@@ -1024,7 +1024,7 @@
 #define LV_USE_LINUX_DRM        0
 
 /*Interface for TFT_eSPI*/
-#define LV_USE_TFT_ESPI         0
+#define LV_USE_TFT_ESPI         1
 
 /*Driver for evdev input devices*/
 #define LV_USE_EVDEV    0
