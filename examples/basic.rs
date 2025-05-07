@@ -1,8 +1,5 @@
 use std::{
-    os::raw::c_void,
-    process::exit,
-    thread::sleep,
-    time::{Duration, Instant},
+    os::raw::c_void, process::exit, thread::sleep, time::{Duration, Instant}
 };
 
 use bevy_ecs::{schedule::Schedule, world::World};
@@ -10,10 +7,7 @@ use lv_bevy_ecs::{LvError, animation::Animation, support::Color};
 
 use cstr_core::cstr;
 use embedded_graphics::{
-    Pixel,
-    draw_target::DrawTarget,
-    pixelcolor::Rgb565,
-    prelude::{PixelColor, Point, Size},
+    draw_target::DrawTarget, pixelcolor::Rgb888, prelude::{PixelColor, Point, Size}, Pixel
 };
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
@@ -22,20 +16,15 @@ use lv_bevy_ecs::styles::Style;
 use lv_bevy_ecs::widgets::{Button, Label, on_insert_children};
 
 use lvgl_sys::{
-    LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, lv_align_t_LV_ALIGN_CENTER,
-    lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_color16_t,
-    lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_DIRECT,
-    lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_FULL,
-    lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL, lv_display_set_default, lv_display_t,
-    lv_draw_buf_create,
+    lv_align_t_LV_ALIGN_CENTER, lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL, lv_display_t, lv_draw_buf_create, LV_OPA_0, LV_OPA_100, LV_OPA_50, LV_PART_MAIN
 };
 
 fn main() -> Result<(), LvError> {
-    const HOR_RES: u32 = 160;
-    const VER_RES: u32 = 120;
+    const HOR_RES: u32 = 320;
+    const VER_RES: u32 = 240;
     const RES: usize = (HOR_RES * VER_RES) as usize;
 
-    let mut sim_display: SimulatorDisplay<Rgb565> =
+    let mut sim_display: SimulatorDisplay<Rgb888> =
         SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
@@ -50,7 +39,6 @@ fn main() -> Result<(), LvError> {
 
         println!("Display OK");
         let update_function = |refresh: &DisplayRefresh<RES>| {
-            println!("Callback");
             sim_display.draw_iter(refresh.as_pixels()).unwrap();
         };
 
@@ -59,7 +47,7 @@ fn main() -> Result<(), LvError> {
 
         let buffer = lv_draw_buf_create(
             HOR_RES,
-            VER_RES / 10,
+            VER_RES / 30,
             lv_color_format_t_LV_COLOR_FORMAT_RGB565,
             0,
         );
@@ -68,7 +56,7 @@ fn main() -> Result<(), LvError> {
             display,
             buffer as *mut c_void,
             std::ptr::null_mut(),
-            HOR_RES * VER_RES / 10,
+            HOR_RES * VER_RES / 30,
             lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL,
         );
 
@@ -122,6 +110,7 @@ fn main() -> Result<(), LvError> {
         unsafe {
             lvgl_sys::lv_style_set_opa(style.raw.as_mut(), LV_OPA_50 as u8);
             lvgl_sys::lv_style_set_align(style.raw.as_mut(), lv_align_t_LV_ALIGN_CENTER as u32);
+            lvgl_sys::lv_style_set_bg_color(style.raw.as_mut(), lvgl_sys::lv_color_make(0, 0, 255));
         }
 
         button_entity.insert(style);
@@ -230,26 +219,23 @@ unsafe extern "C" fn disp_flush_trampoline<'a, F, const N: usize>(
 ) where
     F: FnMut(&DisplayRefresh<N>) + 'a,
 {
-    println!("Flushing");
     let display_driver = *disp_drv;
     if !display_driver.user_data.is_null() {
         let callback = &mut *(display_driver.user_data as *mut F);
 
         let mut colors = [Color::default(); N];
-        let buf16 = color_p as *mut u16;
-
+        //let buf16 = color_p as *mut u16;
+        //lvgl_sys::lv_draw_sw_rgb565_swap(buf16 as *mut c_void, (N/2) as u32);
         for (color_len, color) in colors.iter_mut().enumerate() {
-            let lv_color: u16 = (*buf16.add(color_len)).into();
+            let lv_color = (color_p.add(color_len*3));
 
             //*color = lvgl_sys::lv_color_make//Color::from_rgb((77, 77, 77));
             //let red = /
-            /*let r = ((((lv_color >> 11) & 0x1F) * 527) + 23) >> 6;
-            let g = ((((lv_color >> 5) & 0x3F) * 259) + 33) >> 6;
-            let b = (((lv_color & 0x1F) * 527) + 23) >> 6;*/
-            let r = ((lv_color >> 11) & 0x1F)+23;
-            let g = ((lv_color >> 5) & 0x3F)+33;
-            let b = (lv_color & 0x1F)+23;
-            *color = Color::from_rgb((g as u8,r as u8,b as u8));
+            let r = *lv_color.add(0);
+            let g = *lv_color.add(1);
+            let b = *lv_color.add(2);
+            
+            *color = Color::from_rgb((b as u8,g as u8,r as u8));
             
         }
 
