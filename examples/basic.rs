@@ -8,11 +8,16 @@ use bevy_ecs::{schedule::Schedule, world::World};
 use lv_bevy_ecs::{
     animation::Animation,
     display::{Display, DisplayRefresh, DrawBuffer},
+    input::{InputDevice, PointerInputData},
     support::LvError,
 };
 
 use cstr_core::cstr;
-use embedded_graphics::{draw_target::DrawTarget, pixelcolor::Rgb888, prelude::Size};
+use embedded_graphics::{
+    draw_target::DrawTarget,
+    pixelcolor::Rgb888,
+    prelude::{Point, Size},
+};
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
@@ -20,7 +25,8 @@ use lv_bevy_ecs::styles::Style;
 use lv_bevy_ecs::widgets::{Button, Label, on_insert_children};
 
 use lvgl_sys::{
-    lv_align_t_LV_ALIGN_CENTER, lv_color_format_t_LV_COLOR_FORMAT_RGB888, LV_OPA_0, LV_OPA_100, LV_OPA_50, LV_PART_MAIN
+    LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, lv_align_t_LV_ALIGN_CENTER,
+    lv_color_format_t_LV_COLOR_FORMAT_RGB888, lv_indev_type_t_LV_INDEV_TYPE_POINTER,
 };
 
 fn main() -> Result<(), LvError> {
@@ -55,30 +61,23 @@ fn main() -> Result<(), LvError> {
 
     display.set_buffers(buffer);
 
-    println!("User Data OK");
-    
-    println!("INIT OK");
+    println!("Display Driver OK");
+
+    // Define the initial state of your input
+    let mut latest_touch_status = PointerInputData::Touch(Point::new(0, 0)).released().once();
+
+    // Register a new input device that's capable of reading the current state of the input
+    let _touch_screen = InputDevice::create(lv_indev_type_t_LV_INDEV_TYPE_POINTER, || {
+        latest_touch_status
+    });
+
+    println!("Input OK");
 
     let mut world = World::new();
     world.add_observer(on_insert_children);
 
     println!("ECS OK");
 
-    /*
-    let buffer = DrawBuffer::<{ (HOR_RES * VER_RES) as usize }>::default();
-
-    let display = Display::register(buffer, HOR_RES, VER_RES, |refresh| {
-        sim_display.draw_iter(refresh.as_pixels()).unwrap();
-    })?;
-
-    // Define the initial state of your input
-    let mut latest_touch_status = PointerInputData::Touch(Point::new(0, 0)).released().once();
-
-    // Register a new input device that's capable of reading the current state of the input
-    let _touch_screen = Pointer::register(|| latest_touch_status, &display)?;*/
-
-    // Create screen and widgets
-    //let screen = display.get_scr_act()?;
     {
         let button = Button::create_widget()?;
         let label = Label::create_widget()?;
@@ -117,13 +116,12 @@ fn main() -> Result<(), LvError> {
     // Create a new Schedule, which defines an execution strategy for Systems
     let mut schedule = Schedule::default();
 
-    // Add our system to the schedule
-    //schedule.add_systems(movement);
-    //world.add_observer(drop_widget);
-
-    //let mut last_tick = SDL_GetTicks();
+    let mut prev_time = Instant::now();
+    sleep(Duration::from_millis(5));
     loop {
-        let start = Instant::now();
+        let current_time = Instant::now();
+        let diff = current_time.duration_since(prev_time).as_millis() as u32;
+        prev_time = current_time;
 
         window.update(&sim_display);
         let events = window.events().peekable();
@@ -136,26 +134,28 @@ fn main() -> Result<(), LvError> {
                     point,
                 } => {
                     println!("Clicked on: {:?}", point);
-                    //latest_touch_status = PointerInputData::Touch(point).pressed().once();
+                    latest_touch_status = PointerInputData::Touch(point).pressed().once();
                 }
                 SimulatorEvent::MouseButtonUp {
                     mouse_btn: _,
-                    point: _point,
+                    point,
                 } => {
-                    //latest_touch_status = PointerInputData::Touch(point).released().once();
+                    latest_touch_status = PointerInputData::Touch(point).released().once();
                 }
                 SimulatorEvent::Quit => exit(0),
                 _ => {}
             }
         }
 
-        sleep(Duration::from_millis(5));
         // Run the schedule once. If your app has a "loop", you would run this once per loop
         schedule.run(&mut world);
+
         unsafe {
-            lvgl_sys::lv_tick_inc(Instant::now().duration_since(start).as_millis() as u32);
+            lvgl_sys::lv_tick_inc(diff);
 
             lvgl_sys::lv_timer_handler();
         }
+
+        sleep(Duration::from_millis(5));
     }
 }
