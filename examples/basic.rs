@@ -1,14 +1,19 @@
 use std::{
-    os::raw::c_void, process::exit, thread::sleep, time::{Duration, Instant}
+    os::raw::c_void,
+    process::exit,
+    thread::sleep,
+    time::{Duration, Instant},
 };
 
 use bevy_ecs::{schedule::Schedule, world::World};
-use lv_bevy_ecs::{LvError, animation::Animation, support::Color};
+use lv_bevy_ecs::{
+    animation::Animation,
+    display::{Display, DisplayRefresh},
+    support::LvError,
+};
 
 use cstr_core::cstr;
-use embedded_graphics::{
-    draw_target::DrawTarget, pixelcolor::Rgb888, prelude::{PixelColor, Point, Size}, Pixel
-};
+use embedded_graphics::{draw_target::DrawTarget, pixelcolor::Rgb888, prelude::Size};
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
@@ -16,7 +21,9 @@ use lv_bevy_ecs::styles::Style;
 use lv_bevy_ecs::widgets::{Button, Label, on_insert_children};
 
 use lvgl_sys::{
-    lv_align_t_LV_ALIGN_CENTER, lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL, lv_display_t, lv_draw_buf_create, LV_OPA_0, LV_OPA_100, LV_OPA_50, LV_PART_MAIN
+    LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, lv_align_t_LV_ALIGN_CENTER,
+    lv_color_format_t_LV_COLOR_FORMAT_RGB565,
+    lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL, lv_draw_buf_create,
 };
 
 fn main() -> Result<(), LvError> {
@@ -34,29 +41,30 @@ fn main() -> Result<(), LvError> {
 
     unsafe {
         lvgl_sys::lv_init();
+    }
 
-        let display = lvgl_sys::lv_display_create(HOR_RES as i32, VER_RES as i32);
+    let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 
+    unsafe {
         println!("Display OK");
         let update_function = |refresh: &DisplayRefresh<RES>| {
             sim_display.draw_iter(refresh.as_pixels()).unwrap();
         };
 
-        register_display(display, update_function);
-        //lvgl_sys::lv_display_set_default(display);
+        display.register(update_function);
 
         let buffer = lv_draw_buf_create(
             HOR_RES,
-            VER_RES / 30,
+            VER_RES / 40,
             lv_color_format_t_LV_COLOR_FORMAT_RGB565,
             0,
         );
 
         lvgl_sys::lv_display_set_buffers(
-            display,
+            display.raw(),
             buffer as *mut c_void,
             std::ptr::null_mut(),
-            HOR_RES * VER_RES / 30,
+            HOR_RES * VER_RES / 40,
             lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL,
         );
 
@@ -86,7 +94,7 @@ fn main() -> Result<(), LvError> {
     //let screen = display.get_scr_act()?;
     {
         let button = Button::create_widget()?;
-        let mut label = Label::create_widget()?;
+        let label = Label::create_widget()?;
         unsafe {
             lvgl_sys::lv_label_set_text(label.raw().as_ptr(), cstr!("OKE'SOS").as_ptr());
         }
@@ -145,7 +153,7 @@ fn main() -> Result<(), LvError> {
                 }
                 SimulatorEvent::MouseButtonUp {
                     mouse_btn: _,
-                    point,
+                    point: _point,
                 } => {
                     //latest_touch_status = PointerInputData::Touch(point).released().once();
                 }
@@ -162,125 +170,5 @@ fn main() -> Result<(), LvError> {
 
             lvgl_sys::lv_timer_handler();
         }
-    }
-}
-
-/*
-/// An LVGL color. Equivalent to `lv_color_t`.
-#[derive(Copy, Clone)]
-pub struct Color {
-    pub(crate) raw: lvgl_sys::lv_color_t,
-}*/
-
-/*impl Into<Rgb565> for Color {
-    fn into(self) -> Rgb565 {
-        Rgb565::new(self.r(), self.g(), self.b())
-    }
-}*/
-
-/*impl From<Color> for Rgb565 {
-    fn from(value: Color) -> Self {
-        Rgb565::new(value.r(), value.g(), value.b())
-    }
-}*/
-
-/// Represents a sub-area of the display that is being updated.
-pub struct Area {
-    pub x1: i16,
-    pub x2: i16,
-    pub y1: i16,
-    pub y2: i16,
-}
-
-/// An update to the display information, contains the area that is being
-/// updated and the color of the pixels that need to be updated. The colors
-/// are represented in a contiguous array.
-pub struct DisplayRefresh<const N: usize> {
-    pub area: Area,
-    pub colors: [Color; N],
-}
-
-unsafe fn register_display<F, const N: usize>(display: *mut lv_display_t, callback: F)
-where
-    F: FnMut(&DisplayRefresh<N>),
-{
-    lvgl_sys::lv_display_set_flush_cb(display, Some(disp_flush_trampoline::<F, N>));
-    println!("Callback OK");
-    lvgl_sys::lv_display_set_user_data(
-        display,
-        Box::into_raw(Box::new(callback)) as *mut _ as *mut c_void,
-    );
-}
-
-unsafe extern "C" fn disp_flush_trampoline<'a, F, const N: usize>(
-    disp_drv: *mut lvgl_sys::lv_display_t,
-    area: *const lvgl_sys::lv_area_t,
-    color_p: *mut u8,
-) where
-    F: FnMut(&DisplayRefresh<N>) + 'a,
-{
-    let display_driver = *disp_drv;
-    if !display_driver.user_data.is_null() {
-        let callback = &mut *(display_driver.user_data as *mut F);
-
-        let mut colors = [Color::default(); N];
-        //let buf16 = color_p as *mut u16;
-        //lvgl_sys::lv_draw_sw_rgb565_swap(buf16 as *mut c_void, (N/2) as u32);
-        for (color_len, color) in colors.iter_mut().enumerate() {
-            let lv_color = (color_p.add(color_len*3));
-
-            //*color = lvgl_sys::lv_color_make//Color::from_rgb((77, 77, 77));
-            //let red = /
-            let r = *lv_color.add(0);
-            let g = *lv_color.add(1);
-            let b = *lv_color.add(2);
-            
-            *color = Color::from_rgb((b as u8,g as u8,r as u8));
-            
-        }
-
-        let update = DisplayRefresh {
-            area: Area {
-                x1: (*area).x1 as i16,
-                x2: (*area).x2 as i16,
-                y1: (*area).y1 as i16,
-                y2: (*area).y2 as i16,
-            },
-            colors,
-        };
-        callback(&update);
-    } else {
-        println!("User data is null");
-    }
-    // Not doing this causes a segfault in rust >= 1.69.0
-    *disp_drv = display_driver;
-    // Indicate to LVGL that we are ready with the flushing
-    lvgl_sys::lv_display_flush_ready(disp_drv);
-}
-
-impl<const N: usize> DisplayRefresh<N> {
-    pub fn as_pixels<C>(&self) -> impl IntoIterator<Item = Pixel<C>> + '_
-    where
-        C: PixelColor + From<Color>,
-    {
-        let area = &self.area;
-        let x1 = area.x1;
-        let x2 = area.x2;
-        let y1 = area.y1;
-        let y2 = area.y2;
-
-        let ys = y1..=y2;
-        let xs = (x1..=x2).enumerate();
-        let x_len = (x2 - x1 + 1) as usize;
-
-        // We use iterators here to ensure that the Rust compiler can apply all possible
-        // optimizations at compile time.
-        ys.enumerate().flat_map(move |(iy, y)| {
-            xs.clone().map(move |(ix, x)| {
-                let color_len = x_len * iy + ix;
-                let raw_color = self.colors[color_len];
-                Pixel(Point::new(x as i32, y as i32), raw_color.into())
-            })
-        })
     }
 }

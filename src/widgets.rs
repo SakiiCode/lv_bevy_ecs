@@ -8,7 +8,7 @@ use bevy_ecs::{
     world::OnInsert,
 };
 use lvgl_sys::lv_obj_delete;
-use crate::LvError;
+use crate::support::LvError;
 
 #[derive(Component)]
 pub struct Widget {
