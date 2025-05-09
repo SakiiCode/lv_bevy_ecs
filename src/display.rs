@@ -5,7 +5,7 @@ use embedded_graphics::{
     Pixel,
     prelude::{PixelColor, Point},
 };
-use lvgl_sys::lv_display_t;
+use lvgl_sys::{lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL, lv_display_t, lv_draw_buf_t};
 
 use crate::support::Color;
 
@@ -32,6 +32,18 @@ impl Display {
 
     pub fn raw(&self) -> *mut lv_display_t {
         self.raw.as_ptr()
+    }
+
+    pub fn set_buffers(&self, buffer: DrawBuffer) {
+        unsafe {
+            lvgl_sys::lv_display_set_buffers(
+                self.raw(),
+                buffer.raw.as_ptr() as *mut c_void,
+                std::ptr::null_mut(),
+                buffer.size(),
+                lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL,
+            );
+        }
     }
 }
 
@@ -136,5 +148,26 @@ impl<const N: usize> DisplayRefresh<N> {
                 Pixel(Point::new(x as i32, y as i32), raw_color.into())
             })
         })
+    }
+}
+
+pub struct DrawBuffer {
+    w: u32,
+    h: u32,
+    raw: NonNull<lv_draw_buf_t>,
+}
+
+impl DrawBuffer {
+    pub fn create(w: u32, h: u32, cf: lvgl_sys::lv_color_format_t) -> Self {
+        unsafe {
+            let raw = NonNull::new(lvgl_sys::lv_draw_buf_create(w, h, cf, 0)).unwrap();
+            Self { w, h, raw }
+        }
+    }
+    pub fn raw(&self) -> *mut lv_draw_buf_t {
+        self.raw.as_ptr()
+    }
+    pub fn size(&self) -> u32 {
+        self.w * self.h
     }
 }

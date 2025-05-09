@@ -1,5 +1,4 @@
 use std::{
-    os::raw::c_void,
     process::exit,
     thread::sleep,
     time::{Duration, Instant},
@@ -8,7 +7,7 @@ use std::{
 use bevy_ecs::{schedule::Schedule, world::World};
 use lv_bevy_ecs::{
     animation::Animation,
-    display::{Display, DisplayRefresh},
+    display::{Display, DisplayRefresh, DrawBuffer},
     support::LvError,
 };
 
@@ -21,9 +20,7 @@ use lv_bevy_ecs::styles::Style;
 use lv_bevy_ecs::widgets::{Button, Label, on_insert_children};
 
 use lvgl_sys::{
-    LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, lv_align_t_LV_ALIGN_CENTER,
-    lv_color_format_t_LV_COLOR_FORMAT_RGB565,
-    lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL, lv_draw_buf_create,
+    lv_align_t_LV_ALIGN_CENTER, lv_color_format_t_LV_COLOR_FORMAT_RGB888, LV_OPA_0, LV_OPA_100, LV_OPA_50, LV_PART_MAIN
 };
 
 fn main() -> Result<(), LvError> {
@@ -39,37 +36,27 @@ fn main() -> Result<(), LvError> {
 
     println!("SIMULATOR OK");
 
-    unsafe {
-        lvgl_sys::lv_init();
-    }
+    lv_bevy_ecs::init();
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 
-    unsafe {
-        println!("Display OK");
-        let update_function = |refresh: &DisplayRefresh<RES>| {
-            sim_display.draw_iter(refresh.as_pixels()).unwrap();
-        };
+    let buffer = DrawBuffer::create(
+        HOR_RES,
+        VER_RES / 30,
+        lv_color_format_t_LV_COLOR_FORMAT_RGB888,
+    );
 
-        display.register(update_function);
+    println!("Display OK");
+    let update_function = |refresh: &DisplayRefresh<RES>| {
+        sim_display.draw_iter(refresh.as_pixels()).unwrap();
+    };
 
-        let buffer = lv_draw_buf_create(
-            HOR_RES,
-            VER_RES / 40,
-            lv_color_format_t_LV_COLOR_FORMAT_RGB565,
-            0,
-        );
+    display.register(update_function);
 
-        lvgl_sys::lv_display_set_buffers(
-            display.raw(),
-            buffer as *mut c_void,
-            std::ptr::null_mut(),
-            HOR_RES * VER_RES / 40,
-            lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL,
-        );
+    display.set_buffers(buffer);
 
-        println!("User Data OK");
-    }
+    println!("User Data OK");
+    
     println!("INIT OK");
 
     let mut world = World::new();

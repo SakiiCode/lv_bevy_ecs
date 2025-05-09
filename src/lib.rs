@@ -1,5 +1,11 @@
 pub mod animation;
-pub mod styles;
-pub mod widgets;
-pub mod support;
 pub mod display;
+pub mod styles;
+pub mod support;
+pub mod widgets;
+
+pub fn init() {
+    unsafe {
+        lvgl_sys::lv_init();
+    }
+}
