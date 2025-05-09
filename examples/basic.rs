@@ -10,6 +10,7 @@ use lv_bevy_ecs::{
     display::{Display, DisplayRefresh, DrawBuffer},
     input::{InputDevice, PointerInputData},
     support::LvError,
+    widgets::Arc,
 };
 
 use cstr_core::cstr;
@@ -25,7 +26,7 @@ use lv_bevy_ecs::styles::Style;
 use lv_bevy_ecs::widgets::{Button, Label, on_insert_children};
 
 use lvgl_sys::{
-    LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, lv_align_t_LV_ALIGN_CENTER,
+    LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, lv_align_t_LV_ALIGN_BOTTOM_MID, lv_align_t_LV_ALIGN_TOP_MID,
     lv_color_format_t_LV_COLOR_FORMAT_RGB888, lv_indev_type_t_LV_INDEV_TYPE_POINTER,
 };
 
@@ -103,18 +104,27 @@ fn main() -> Result<(), LvError> {
         let mut style = Style::default();
         unsafe {
             lvgl_sys::lv_style_set_opa(style.raw.as_mut(), LV_OPA_50 as u8);
-            lvgl_sys::lv_style_set_align(style.raw.as_mut(), lv_align_t_LV_ALIGN_CENTER as u32);
+            lvgl_sys::lv_style_set_align(style.raw.as_mut(), lv_align_t_LV_ALIGN_TOP_MID as u32);
             lvgl_sys::lv_style_set_bg_color(style.raw.as_mut(), lvgl_sys::lv_color_make(0, 0, 255));
         }
 
         button_entity.insert(style);
         //button_entity.remove::<Style>();
         // button_entity.insert(style);
+
+        let arc = Arc::create_widget()?;
+        unsafe {
+            lvgl_sys::lv_obj_set_align(arc.raw().as_ptr(), lv_align_t_LV_ALIGN_BOTTOM_MID);
+        }
+
+        world.spawn((Arc, arc));
     }
 
     println!("Create OK");
     // Create a new Schedule, which defines an execution strategy for Systems
     let mut schedule = Schedule::default();
+
+    let mut is_pointer_down = false;
 
     let mut prev_time = Instant::now();
     sleep(Duration::from_millis(5));
@@ -135,12 +145,19 @@ fn main() -> Result<(), LvError> {
                 } => {
                     println!("Clicked on: {:?}", point);
                     latest_touch_status = PointerInputData::Touch(point).pressed().once();
+                    is_pointer_down = true;
                 }
                 SimulatorEvent::MouseButtonUp {
                     mouse_btn: _,
                     point,
                 } => {
                     latest_touch_status = PointerInputData::Touch(point).released().once();
+                    is_pointer_down = false;
+                }
+                SimulatorEvent::MouseMove { point } => {
+                    if is_pointer_down {
+                        latest_touch_status = PointerInputData::Touch(point).pressed().once();
+                    }
                 }
                 SimulatorEvent::Quit => exit(0),
                 _ => {}
