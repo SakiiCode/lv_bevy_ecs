@@ -10,7 +10,7 @@ use crate::widgets::Widget;
 #[component(on_insert=add_style)]
 #[component(on_replace=remove_style)]
 pub struct Style {
-    pub raw: Box<lvgl_sys::lv_style_t>,
+    raw: Box<lvgl_sys::lv_style_t>,
 }
 
 impl Default for Style {
@@ -21,6 +21,12 @@ impl Default for Style {
             Box::new(style.assume_init())
         };
         Self { raw }
+    }
+}
+
+impl Style {
+    pub fn raw(&mut self)-> *mut lvgl_sys::lv_style_t {
+        self.raw.as_mut()
     }
 }
 
@@ -38,8 +44,7 @@ pub fn add_style(mut world: DeferredWorld, ctx: HookContext) {
     let widget = world
         .get_mut::<Widget>(ctx.entity)
         .expect("Style components must be added to Widget entities")
-        .raw
-        .as_ptr();
+        .raw();
     let mut style = world.get_mut::<Style>(ctx.entity).unwrap();
     unsafe {
         lvgl_sys::lv_obj_add_style(widget, style.raw.as_mut(), LV_PART_MAIN);
@@ -52,8 +57,7 @@ pub fn remove_style(mut world: DeferredWorld, ctx: HookContext) {
     let widget = world
         .get_mut::<Widget>(ctx.entity)
         .expect("Style components must be added to Widget entities")
-        .raw
-        .as_ptr();
+        .raw();
     let mut style = world.get_mut::<Style>(ctx.entity).unwrap();
     unsafe {
         lvgl_sys::lv_obj_remove_style(widget, style.raw.as_mut(), LV_PART_MAIN);

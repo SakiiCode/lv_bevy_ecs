@@ -1,5 +1,6 @@
 use std::ptr::NonNull;
 
+use crate::support::LvError;
 use bevy_ecs::{
     component::Component,
     hierarchy::{ChildOf, Children},
@@ -8,16 +9,15 @@ use bevy_ecs::{
     world::OnInsert,
 };
 use lvgl_sys::lv_obj_delete;
-use crate::support::LvError;
 
 #[derive(Component)]
 pub struct Widget {
-    pub raw: NonNull<lvgl_sys::lv_obj_t>,
+    raw: NonNull<lvgl_sys::lv_obj_t>,
 }
 
 impl Widget {
-    pub fn raw(&self) -> NonNull<lvgl_sys::lv_obj_t> {
-        self.raw
+    pub fn raw(&self) -> *mut lvgl_sys::lv_obj_t {
+        self.raw.as_ptr()
     }
 
     pub fn from_raw(ptr: *mut lvgl_sys::lv_obj_t) -> Option<Self> {

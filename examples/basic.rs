@@ -81,7 +81,7 @@ fn main() -> Result<(), LvError> {
         let button = Button::create_widget()?;
         let label = Label::create_widget()?;
         unsafe {
-            lvgl_sys::lv_label_set_text(label.raw().as_ptr(), cstr!("OKE'SOS").as_ptr());
+            lvgl_sys::lv_label_set_text(label.raw(), cstr!("OKE'SOS").as_ptr());
         }
         //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
         let label_entity = world.spawn((Label, label)).id();
@@ -91,7 +91,7 @@ fn main() -> Result<(), LvError> {
             LV_OPA_0 as i32,
             LV_OPA_100 as i32,
             |obj, val| unsafe {
-                lvgl_sys::lv_obj_set_style_opa(obj.raw.as_ptr(), val as u8, LV_PART_MAIN);
+                lvgl_sys::lv_obj_set_style_opa(obj.raw(), val as u8, LV_PART_MAIN);
             },
         );
 
@@ -101,9 +101,9 @@ fn main() -> Result<(), LvError> {
 
         let mut style = Style::default();
         unsafe {
-            lvgl_sys::lv_style_set_opa(style.raw.as_mut(), LV_OPA_50 as u8);
-            lvgl_sys::lv_style_set_align(style.raw.as_mut(), lv_align_t_LV_ALIGN_TOP_MID as u32);
-            lvgl_sys::lv_style_set_bg_color(style.raw.as_mut(), lvgl_sys::lv_color_make(255, 0, 0));
+            lvgl_sys::lv_style_set_opa(style.raw(), LV_OPA_50 as u8);
+            lvgl_sys::lv_style_set_align(style.raw(), lv_align_t_LV_ALIGN_TOP_MID as u32);
+            lvgl_sys::lv_style_set_bg_color(style.raw(), lvgl_sys::lv_color_make(255, 0, 0));
         }
 
         button_entity.insert(style);
@@ -112,7 +112,7 @@ fn main() -> Result<(), LvError> {
 
         let arc = Arc::create_widget()?;
         unsafe {
-            lvgl_sys::lv_obj_set_align(arc.raw().as_ptr(), lv_align_t_LV_ALIGN_BOTTOM_MID);
+            lvgl_sys::lv_obj_set_align(arc.raw(), lv_align_t_LV_ALIGN_BOTTOM_MID);
         }
 
         world.spawn((Arc, arc));

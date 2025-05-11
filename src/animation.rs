@@ -10,7 +10,7 @@ use crate::widgets::Widget;
 #[derive(Component)]
 #[component(on_insert=add_animation)]
 pub struct Animation {
-    pub raw: Option<Box<lvgl_sys::lv_anim_t>>,
+    raw: Option<Box<lvgl_sys::lv_anim_t>>,
 }
 
 impl Drop for Animation {
@@ -49,6 +49,10 @@ impl Animation {
             ))));
         }
     }
+
+    pub fn raw(mut self) -> *mut lvgl_sys::lv_anim_t {
+        self.raw.as_mut().unwrap().as_mut()
+    }
 }
 
 unsafe impl Send for Animation {}
@@ -59,8 +63,7 @@ pub fn add_animation(mut world: DeferredWorld, ctx: HookContext) {
         .get_mut::<Widget>(ctx.entity)
         .expect("Animation components must be added to Widget entities")
         .as_mut()
-        .raw
-        .as_ptr();
+        .raw();
     let mut anim = world.get_mut::<Animation>(ctx.entity).unwrap();
     anim.raw.as_mut().unwrap().var = obj as *mut _;
     anim.start();
