@@ -4,6 +4,7 @@ pub mod styles;
 pub mod support;
 pub mod widgets;
 pub mod input;
+pub mod events;
 
 pub mod prelude {
     pub use lvgl_sys::*;

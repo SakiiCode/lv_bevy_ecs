@@ -8,6 +8,7 @@ use bevy_ecs::{schedule::Schedule, world::World};
 use lv_bevy_ecs::{
     animation::Animation,
     display::{Display, DrawBuffer},
+    events::{Event, lv_obj_add_event_cb},
     input::{InputDevice, PointerInputData},
     support::LvError,
     widgets::Arc,
@@ -94,6 +95,10 @@ fn main() -> Result<(), LvError> {
                 lvgl_sys::lv_obj_set_style_opa(obj.raw(), val as u8, LV_PART_MAIN);
             },
         );
+
+        lv_obj_add_event_cb(&button, Event::Clicked, |_| unsafe {
+            lvgl_sys::lv_obj_set_style_opa(button.raw(), 30, LV_PART_MAIN);
+        });
 
         let mut button_entity = world.spawn((Button, button, anim));
 
