@@ -1,3 +1,2 @@
 [env]
 DEP_LV_CONFIG_PATH = { relative = true, value = "." }
-LVGL_LINK="X11"

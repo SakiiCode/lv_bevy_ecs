@@ -5,8 +5,14 @@ pub mod support;
 pub mod widgets;
 pub mod input;
 
+pub mod prelude {
+    pub use lvgl_sys::*;
+    pub use bevy_ecs::*;
+}
+
 pub fn init() {
     unsafe {
         lvgl_sys::lv_init();
     }
 }
+

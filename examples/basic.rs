@@ -7,7 +7,7 @@ use std::{
 use bevy_ecs::{schedule::Schedule, world::World};
 use lv_bevy_ecs::{
     animation::Animation,
-    display::{Display, DisplayRefresh, DrawBuffer},
+    display::{Display, DrawBuffer},
     input::{InputDevice, PointerInputData},
     support::LvError,
     widgets::Arc,
@@ -16,7 +16,7 @@ use lv_bevy_ecs::{
 use cstr_core::cstr;
 use embedded_graphics::{
     draw_target::DrawTarget,
-    pixelcolor::Rgb888,
+    pixelcolor::Rgb565,
     prelude::{Point, Size},
 };
 use embedded_graphics_simulator::{
@@ -25,17 +25,18 @@ use embedded_graphics_simulator::{
 use lv_bevy_ecs::styles::Style;
 use lv_bevy_ecs::widgets::{Button, Label, on_insert_children};
 
-use lvgl_sys::{
-    LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, lv_align_t_LV_ALIGN_BOTTOM_MID, lv_align_t_LV_ALIGN_TOP_MID,
-    lv_color_format_t_LV_COLOR_FORMAT_RGB888, lv_indev_type_t_LV_INDEV_TYPE_POINTER,
+use lv_bevy_ecs::prelude::{
+    LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, lv_align_t_LV_ALIGN_BOTTOM_MID,
+    lv_align_t_LV_ALIGN_TOP_MID, lv_color_format_t_LV_COLOR_FORMAT_RGB565,
+    lv_indev_type_t_LV_INDEV_TYPE_POINTER,
 };
 
 fn main() -> Result<(), LvError> {
     const HOR_RES: u32 = 320;
     const VER_RES: u32 = 240;
-    const RES: usize = (HOR_RES * VER_RES) as usize;
+    const LINE_HEIGHT: u32 = 10;
 
-    let mut sim_display: SimulatorDisplay<Rgb888> =
+    let mut sim_display: SimulatorDisplay<Rgb565> =
         SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
@@ -47,20 +48,17 @@ fn main() -> Result<(), LvError> {
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 
-    let buffer = DrawBuffer::create(
+    let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }>::create(
         HOR_RES,
-        VER_RES / 30,
-        lv_color_format_t_LV_COLOR_FORMAT_RGB888,
+        LINE_HEIGHT,
+        lv_color_format_t_LV_COLOR_FORMAT_RGB565,
     );
 
     println!("Display OK");
-    let update_function = |refresh: &DisplayRefresh<RES>| {
+
+    display.register(buffer, |refresh| {
         sim_display.draw_iter(refresh.as_pixels()).unwrap();
-    };
-
-    display.register(update_function);
-
-    display.set_buffers(buffer);
+    });
 
     println!("Display Driver OK");
 
@@ -105,7 +103,7 @@ fn main() -> Result<(), LvError> {
         unsafe {
             lvgl_sys::lv_style_set_opa(style.raw.as_mut(), LV_OPA_50 as u8);
             lvgl_sys::lv_style_set_align(style.raw.as_mut(), lv_align_t_LV_ALIGN_TOP_MID as u32);
-            lvgl_sys::lv_style_set_bg_color(style.raw.as_mut(), lvgl_sys::lv_color_make(0, 0, 255));
+            lvgl_sys::lv_style_set_bg_color(style.raw.as_mut(), lvgl_sys::lv_color_make(255, 0, 0));
         }
 
         button_entity.insert(style);

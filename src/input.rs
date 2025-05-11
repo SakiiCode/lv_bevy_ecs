@@ -58,6 +58,7 @@ pub enum BufferStatus {
     Buffered(InputState),
 }
 
+#[allow(dead_code)]
 pub struct InputDevice {
     raw: NonNull<lvgl_sys::lv_indev_t>,
 }

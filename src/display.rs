@@ -5,7 +5,9 @@ use embedded_graphics::{
     Pixel,
     prelude::{PixelColor, Point},
 };
-use lvgl_sys::{lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL, lv_display_t, lv_draw_buf_t};
+use lvgl_sys::{
+    lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL, lv_display_t, lv_draw_buf_t,
+};
 
 use crate::support::Color;
 
@@ -21,29 +23,24 @@ impl Display {
         }
     }
 
-    pub fn register<F, const N: usize>(&mut self, callback: F)
+    pub fn register<F, const N: usize>(&mut self, buffer: DrawBuffer<N>, callback: F)
     where
         F: FnMut(&DisplayRefresh<N>),
     {
         unsafe {
+            lvgl_sys::lv_display_set_buffers(
+                self.raw(),
+                buffer.raw.as_ptr() as *mut c_void,
+                std::ptr::null_mut(),
+                N as u32,
+                lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL,
+            );
             register_display(self.raw.as_ptr(), callback);
         }
     }
 
     pub fn raw(&self) -> *mut lv_display_t {
         self.raw.as_ptr()
-    }
-
-    pub fn set_buffers(&self, buffer: DrawBuffer) {
-        unsafe {
-            lvgl_sys::lv_display_set_buffers(
-                self.raw(),
-                buffer.raw.as_ptr() as *mut c_void,
-                std::ptr::null_mut(),
-                buffer.size(),
-                lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL,
-            );
-        }
     }
 }
 
@@ -90,18 +87,16 @@ unsafe extern "C" fn disp_flush_trampoline<'a, F, const N: usize>(
             let callback = &mut *(display_driver.user_data as *mut F);
 
             let mut colors = [Color::default(); N];
-            //let buf16 = color_p as *mut u16;
+            let buf16 = color_p as *mut u16;
             //lvgl_sys::lv_draw_sw_rgb565_swap(buf16 as *mut c_void, (N/2) as u32);
             for (color_len, color) in colors.iter_mut().enumerate() {
-                let lv_color = color_p.add(color_len * 3);
+                let lv_color = buf16.add(color_len);
 
-                //*color = lvgl_sys::lv_color_make//Color::from_rgb((77, 77, 77));
-                //let red = /
-                let r = *lv_color.add(0);
-                let g = *lv_color.add(1);
-                let b = *lv_color.add(2);
+                let r = (*lv_color >> 11) & 0x1F;
+                let g = (*lv_color >> 5) & 0x3F;
+                let b = *lv_color & 0x1F;
 
-                *color = Color::from_rgb((b as u8, g as u8, r as u8));
+                *color = Color::from_rgb((r as u8, g as u8, b as u8));
             }
 
             let update = DisplayRefresh {
@@ -151,23 +146,19 @@ impl<const N: usize> DisplayRefresh<N> {
     }
 }
 
-pub struct DrawBuffer {
-    w: u32,
-    h: u32,
+pub struct DrawBuffer<const N: usize> {
     raw: NonNull<lv_draw_buf_t>,
 }
 
-impl DrawBuffer {
+impl<const N: usize> DrawBuffer<N> {
     pub fn create(w: u32, h: u32, cf: lvgl_sys::lv_color_format_t) -> Self {
+        assert_eq!(w * h, N as u32);
         unsafe {
             let raw = NonNull::new(lvgl_sys::lv_draw_buf_create(w, h, cf, 0)).unwrap();
-            Self { w, h, raw }
+            Self { raw }
         }
     }
     pub fn raw(&self) -> *mut lv_draw_buf_t {
         self.raw.as_ptr()
-    }
-    pub fn size(&self) -> u32 {
-        self.w * self.h
     }
 }
