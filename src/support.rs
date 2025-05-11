@@ -142,8 +142,8 @@ pub enum Align {
     OutRightBottom,
 }
 
-impl From<Align> for u8 {
-    fn from(value: Align) -> u8 {
+impl From<Align> for lvgl_sys::lv_align_t {
+    fn from(value: Align) -> lvgl_sys::lv_align_t {
         let native = match value {
             Align::Center => lvgl_sys::lv_align_t_LV_ALIGN_CENTER,
             Align::TopLeft => lvgl_sys::lv_align_t_LV_ALIGN_TOP_LEFT,
@@ -167,7 +167,7 @@ impl From<Align> for u8 {
             Align::OutRightMid => lvgl_sys::lv_align_t_LV_ALIGN_OUT_RIGHT_MID,
             Align::OutRightBottom => lvgl_sys::lv_align_t_LV_ALIGN_OUT_RIGHT_BOTTOM,
         };
-        native as u8
+        native as lvgl_sys::lv_align_t
     }
 }
 
@@ -178,7 +178,7 @@ pub enum TextAlign {
     Right,
 }
 
-impl From<TextAlign> for u8 {
+impl From<TextAlign> for lvgl_sys::lv_align_t {
     fn from(value: TextAlign) -> Self {
         let native = match value {
             TextAlign::Auto => lvgl_sys::lv_text_align_t_LV_TEXT_ALIGN_AUTO,
@@ -186,7 +186,7 @@ impl From<TextAlign> for u8 {
             TextAlign::Left => lvgl_sys::lv_text_align_t_LV_TEXT_ALIGN_LEFT,
             TextAlign::Right => lvgl_sys::lv_text_align_t_LV_TEXT_ALIGN_RIGHT,
         };
-        native as u8
+        native as lvgl_sys::lv_align_t
     }
 }
 

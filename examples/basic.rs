@@ -4,13 +4,12 @@ use std::{
     time::{Duration, Instant},
 };
 
-use bevy_ecs::{schedule::Schedule, world::World};
 use lv_bevy_ecs::{
     animation::Animation,
     display::{Display, DrawBuffer},
     events::{Event, lv_obj_add_event_cb},
     input::{InputDevice, PointerInputData},
-    support::LvError,
+    support::{Align, LvError},
     widgets::Arc,
 };
 
@@ -27,10 +26,13 @@ use lv_bevy_ecs::styles::Style;
 use lv_bevy_ecs::widgets::{Button, Label, on_insert_children};
 
 use lv_bevy_ecs::prelude::{
-    LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, lv_align_t_LV_ALIGN_BOTTOM_MID,
-    lv_align_t_LV_ALIGN_TOP_MID, lv_color_format_t_LV_COLOR_FORMAT_RGB565,
-    lv_indev_type_t_LV_INDEV_TYPE_POINTER,
+    LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, component::Component, entity::Entity,
+    lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_indev_type_t_LV_INDEV_TYPE_POINTER, query::With,
+    schedule::Schedule, world::World,
 };
+
+#[derive(Component)]
+struct DynamicButton;
 
 fn main() -> Result<(), LvError> {
     const HOR_RES: u32 = 320;
@@ -82,7 +84,7 @@ fn main() -> Result<(), LvError> {
         let button = Button::create_widget()?;
         let label = Label::create_widget()?;
         unsafe {
-            lvgl_sys::lv_label_set_text(label.raw(), cstr!("OKE'SOS").as_ptr());
+            lvgl_sys::lv_label_set_text(label.raw(), cstr!("SPAWN").as_ptr());
         }
         //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
         let label_entity = world.spawn((Label, label)).id();
@@ -96,8 +98,34 @@ fn main() -> Result<(), LvError> {
             },
         );
 
-        lv_obj_add_event_cb(&button, Event::Clicked, |_| unsafe {
-            lvgl_sys::lv_obj_set_style_opa(button.raw(), 30, LV_PART_MAIN);
+        lv_obj_add_event_cb(&button, Event::Clicked, |_| {
+            match world
+                .query_filtered::<Entity, With<DynamicButton>>()
+                .single(&world)
+                .ok()
+            {
+                Some(entity) => {
+                    world.despawn(entity);
+                    /*let mut entities = Vec::new();
+                    for entity in world.query_filtered::<Entity, With<Button>>().iter(&world) {
+                        entities.push(entity);
+                    }
+                    for entity in entities{
+                        world.despawn(entity);
+                    }*/
+                }
+                None => {
+                    let dynamic_button = Button::create_widget().unwrap();
+                    let label = Label::create_widget().unwrap();
+                    unsafe {
+                        lvgl_sys::lv_obj_align(dynamic_button.raw(), Align::TopRight.into(), 0, 0);
+                        lvgl_sys::lv_label_set_text(label.raw(), cstr!("This is dynamic").as_ptr());
+                    }
+                    world
+                        .spawn((DynamicButton, Button, dynamic_button))
+                        .with_child((Label, label));
+                }
+            }
         });
 
         let mut button_entity = world.spawn((Button, button, anim));
@@ -107,7 +135,7 @@ fn main() -> Result<(), LvError> {
         let mut style = Style::default();
         unsafe {
             lvgl_sys::lv_style_set_opa(style.raw(), LV_OPA_50 as u8);
-            lvgl_sys::lv_style_set_align(style.raw(), lv_align_t_LV_ALIGN_TOP_MID as u32);
+            lvgl_sys::lv_style_set_align(style.raw(), Align::TopLeft.into());
             lvgl_sys::lv_style_set_bg_color(style.raw(), lvgl_sys::lv_color_make(255, 0, 0));
         }
 
@@ -117,7 +145,7 @@ fn main() -> Result<(), LvError> {
 
         let arc = Arc::create_widget()?;
         unsafe {
-            lvgl_sys::lv_obj_set_align(arc.raw(), lv_align_t_LV_ALIGN_BOTTOM_MID);
+            lvgl_sys::lv_obj_set_align(arc.raw(), Align::BottomMid.into());
         }
 
         world.spawn((Arc, arc));
