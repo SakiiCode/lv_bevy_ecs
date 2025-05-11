@@ -1,11 +1,5 @@
-use crate::widgets::Widget;
 use core::convert::{TryFrom, TryInto};
-#[cfg(feature = "nightly")]
-use core::error::Error;
 use core::fmt;
-use core::ptr::NonNull;
-use embedded_graphics::pixelcolor::{Rgb565, Rgb888};
-#[cfg(feature = "embedded_graphics")]
 use embedded_graphics::pixelcolor::{Rgb565, Rgb888};
 
 pub type LvResult<T> = Result<T, LvError>;
@@ -34,8 +28,6 @@ impl fmt::Display for LvError {
     }
 }
 
-#[cfg(feature = "nightly")]
-impl Error for LvError {}
 /*
 impl From<DisplayError> for LvError {
     fn from(err: DisplayError) -> Self {
@@ -69,10 +61,9 @@ pub struct Color {
 
 impl Default for Color {
     fn default() -> Self {
-        let raw = unsafe{lvgl_sys::lv_color_black()};
-        Self {raw}    
+        let raw = unsafe { lvgl_sys::lv_color_black() };
+        Self { raw }
     }
-    
 }
 
 impl Color {
@@ -87,39 +78,35 @@ impl Color {
     }
     /// Returns the value of the red channel.
     pub fn r(&self) -> u8 {
-        unsafe { (self.raw.red) as u8 }
+        (self.raw.red) as u8
     }
     /// Returns the value of the green channel.
     pub fn g(&self) -> u8 {
-        unsafe { self.raw.green as u8 }
+        self.raw.green as u8
     }
     /// Returns the value of the blue channel.
     pub fn b(&self) -> u8 {
-        unsafe { self.raw.blue as u8 }
+        self.raw.blue as u8
     }
 }
 
 impl From<Color> for Rgb888 {
     fn from(color: Color) -> Self {
-        unsafe {
-            Rgb888::new(
-                color.raw.red as u8,
-                color.raw.green as u8,
-                color.raw.blue as u8,
-            )
-        }
+        Rgb888::new(
+            color.raw.red as u8,
+            color.raw.green as u8,
+            color.raw.blue as u8,
+        )
     }
 }
 
 impl From<Color> for Rgb565 {
     fn from(color: Color) -> Self {
-        unsafe {
-            Rgb565::new(
-                color.raw.red as u8,
-                color.raw.green as u8,
-                color.raw.blue as u8,
-            )
-        }
+        Rgb565::new(
+            color.raw.red as u8,
+            color.raw.green as u8,
+            color.raw.blue as u8,
+        )
     }
 }
 
