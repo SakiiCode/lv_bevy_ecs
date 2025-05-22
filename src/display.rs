@@ -1,4 +1,4 @@
-use std::ptr::NonNull;
+use std::{ptr::NonNull, u16};
 
 use cty::c_void;
 use embedded_graphics::{
@@ -25,7 +25,7 @@ impl Display {
 
     pub fn register<F, const N: usize>(&mut self, buffer: DrawBuffer<N>, callback: F)
     where
-        F: FnMut(&DisplayRefresh<N>),
+        F: FnMut(&mut DisplayRefresh<N>),
     {
         unsafe {
             lvgl_sys::lv_display_set_buffers(
@@ -55,14 +55,14 @@ pub struct Area {
 /// An update to the display information, contains the area that is being
 /// updated and the color of the pixels that need to be updated. The colors
 /// are represented in a contiguous array.
-pub struct DisplayRefresh<const N: usize> {
+pub struct DisplayRefresh<'a, const N: usize> {
     pub area: Area,
-    pub colors: *mut u16,
+    pub colors: Option<Box<dyn Iterator<Item = &'a u16>>>,
 }
 
 unsafe fn register_display<F, const N: usize>(display: *mut lv_display_t, callback: F)
 where
-    F: FnMut(&DisplayRefresh<N>),
+    F: FnMut(&mut DisplayRefresh<N>),
 {
     unsafe {
         lvgl_sys::lv_display_set_flush_cb(display, Some(disp_flush_trampoline::<F, N>));
@@ -79,7 +79,7 @@ unsafe extern "C" fn disp_flush_trampoline<'a, F, const N: usize>(
     area: *const lvgl_sys::lv_area_t,
     color_p: *mut u8,
 ) where
-    F: FnMut(&DisplayRefresh<N>) + 'a,
+    F: FnMut(&mut DisplayRefresh<N>) + 'a,
 {
     unsafe {
         let display_driver = *display;
@@ -99,16 +99,18 @@ unsafe extern "C" fn disp_flush_trampoline<'a, F, const N: usize>(
                 *color = Color::from_rgb((r as u8, g as u8, b as u8));
             }*/
 
-            let update = DisplayRefresh {
+            let iterator= (0..N).map(move|offset| {buf16.add(offset).as_ref().unwrap()});
+
+            let mut update = DisplayRefresh {
                 area: Area {
                     x1: (*area).x1 as i16,
                     x2: (*area).x2 as i16,
                     y1: (*area).y1 as i16,
                     y2: (*area).y2 as i16,
                 },
-                colors: buf16,
+                colors: Some(Box::new(iterator)),
             };
-            callback(&update);
+            callback(&mut update);
         } else {
             println!("User data is null");
         }
