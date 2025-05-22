@@ -57,7 +57,7 @@ pub struct Area {
 /// are represented in a contiguous array.
 pub struct DisplayRefresh<const N: usize> {
     pub area: Area,
-    pub colors: [Color; N],
+    pub colors: *mut u16,
 }
 
 unsafe fn register_display<F, const N: usize>(display: *mut lv_display_t, callback: F)
@@ -86,10 +86,10 @@ unsafe extern "C" fn disp_flush_trampoline<'a, F, const N: usize>(
         if !display_driver.user_data.is_null() {
             let callback = &mut *(display_driver.user_data as *mut F);
 
-            let mut colors = [Color::default(); N];
+            //let mut colors = Box::new([Color::default(); N]);
             let buf16 = color_p as *mut u16;
             //lvgl_sys::lv_draw_sw_rgb565_swap(buf16 as *mut c_void, (N/2) as u32);
-            for (color_len, color) in colors.iter_mut().enumerate() {
+            /*for (color_len, color) in colors.iter_mut().enumerate() {
                 let lv_color = buf16.add(color_len);
 
                 let r = (*lv_color >> 11) & 0x1F;
@@ -97,7 +97,7 @@ unsafe extern "C" fn disp_flush_trampoline<'a, F, const N: usize>(
                 let b = *lv_color & 0x1F;
 
                 *color = Color::from_rgb((r as u8, g as u8, b as u8));
-            }
+            }*/
 
             let update = DisplayRefresh {
                 area: Area {
@@ -106,7 +106,7 @@ unsafe extern "C" fn disp_flush_trampoline<'a, F, const N: usize>(
                     y1: (*area).y1 as i16,
                     y2: (*area).y2 as i16,
                 },
-                colors,
+                colors: buf16,
             };
             callback(&update);
         } else {
@@ -119,7 +119,7 @@ unsafe extern "C" fn disp_flush_trampoline<'a, F, const N: usize>(
     }
 }
 
-impl<const N: usize> DisplayRefresh<N> {
+/*impl<const N: usize> DisplayRefresh<N> {
     pub fn as_pixels<C>(&self) -> impl IntoIterator<Item = Pixel<C>> + '_
     where
         C: PixelColor + From<Color>,
@@ -144,7 +144,7 @@ impl<const N: usize> DisplayRefresh<N> {
             })
         })
     }
-}
+}*/
 
 pub struct DrawBuffer<const N: usize> {
     raw: NonNull<lv_draw_buf_t>,
