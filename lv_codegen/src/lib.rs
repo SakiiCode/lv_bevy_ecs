@@ -1,31 +1,23 @@
-use inflector::cases::pascalcase::to_pascal_case;
-use lazy_static::lazy_static;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
-use quote::{format_ident, ToTokens};
+use quote::{ToTokens, format_ident};
 use regex::Regex;
 use std::collections::HashMap;
 use std::error::Error;
-use syn::{parse_str, FnArg, ForeignItem, ForeignItemFn, Item, ReturnType, TypePath};
+use syn::{FnArg, ForeignItem, ForeignItemFn, Item, ReturnType, TypePath, parse_str};
 
 type CGResult<T> = Result<T, Box<dyn Error>>;
 
 const LIB_PREFIX: &str = "lv_";
 
-lazy_static! {
-    static ref TYPE_MAPPINGS: HashMap<&'static str, &'static str> = [
-        ("u16", "u16"),
-        ("u32", "u32"),
-        ("i32", "i32"),
-        ("i16", "i16"),
-        ("u8", "u8"),
-        ("i8", "i8"),
-        ("bool", "bool"),
-    ]
-    .iter()
-    .cloned()
-    .collect();
-}
+const FUNCTION_BLACKLIST: [&'static str; 6] = [
+    "lv_obj_null_on_delete",
+    "lv_obj_add_style",
+    "lv_obj_replace_style",
+    "lv_obj_remove_style",
+    "lv_obj_remove_style_all",
+    "lv_obj_refresh_style",
+];
 
 #[derive(Debug, Copy, Clone)]
 pub enum WrapperError {
@@ -46,38 +38,14 @@ pub struct LvWidget {
     methods: Vec<LvFunc>,
 }
 
-impl LvWidget {
-    fn pascal_name(&self) -> String {
-        to_pascal_case(&self.name)
-    }
-}
-
 impl Rusty for LvWidget {
     type Parent = ();
 
     fn code(&self, _parent: &Self::Parent) -> WrapperResult<TokenStream> {
-        let widget_name = format_ident!("{}", self.pascal_name());
         let methods: Vec<TokenStream> = self.methods.iter().flat_map(|m| m.code(self)).collect();
-        if self.name.as_str().eq("obj") {
-            Ok(quote! {
-                pub trait Widget<'a>: NativeObject + Sized + 'a {
-                    type SpecialEvent;
-                    type Part: Into<lvgl_sys::lv_part_t>;
-
-                    unsafe fn from_raw(raw_pointer: core::ptr::NonNull<lvgl_sys::lv_obj_t>) -> Option<Self>;
-
-                    #(#methods)*
-                }
-            })
-        } else {
-            Ok(quote! {
-                define_object!(#widget_name);
-
-                impl<'a> #widget_name<'a> {
-                    #(#methods)*
-                }
-            })
-        }
+        Ok(quote! {
+            #(#methods)*
+        })
     }
 }
 
@@ -108,33 +76,13 @@ impl Rusty for LvFunc {
     fn code(&self, parent: &Self::Parent) -> WrapperResult<TokenStream> {
         let templ = format!("{}{}_", LIB_PREFIX, parent.name.as_str());
         let new_name = self.name.replace(templ.as_str(), "");
-        let func_name = format_ident!("{}", new_name);
-        let original_func_name = format_ident!("{}", self.name.as_str());
+        let func_name = format_ident!("{}", self.name);
 
-        // generate constructor
-        if new_name.as_str().eq("create") && parent.name != "obj" {
-            return Ok(quote! {
-
-                pub fn create(parent: &mut impl crate::NativeObject) -> crate::LvResult<Self> {
-                    unsafe {
-                        let ptr = lvgl_sys::#original_func_name(
-                            parent.raw().as_mut(),
-                        );
-                        if let Some(raw) = core::ptr::NonNull::new(ptr) {
-                            let core = <crate::Obj as Widget>::from_raw(raw).unwrap();
-                            Ok(Self { core })
-                        } else {
-                            Err(crate::LvError::InvalidReference)
-                        }
-                    }
-                }
-
-                pub fn new() -> crate::LvResult<Self> {
-                    let mut parent = crate::display::get_scr_act()?;
-                    Self::create(&mut parent)
-                }
-
-            });
+        // skip constructors and blacklisted functions
+        if new_name.as_str().eq("create") && parent.name != "obj"
+            || FUNCTION_BLACKLIST.contains(&self.name.as_str())
+        {
+            return Err(WrapperError::Skip);
         }
 
         // Handle return values
@@ -171,10 +119,11 @@ impl Rusty for LvFunc {
                 .enumerate()
                 .fold(quote!(), |args_accumulator, (arg_idx, arg)| {
                     let next_arg = if arg_idx == 0 {
+                        let name = format_ident!("{}", arg.name.clone());
                         if arg.get_type().is_const() {
-                            quote!(&self)
+                            quote!(#name: &crate::widgets::Widget)
                         } else {
-                            quote!(&mut self)
+                            quote!(#name: &mut crate::widgets::Widget)
                         }
                     } else {
                         arg.code(self).unwrap()
@@ -243,37 +192,27 @@ impl Rusty for LvFunc {
         // - The first argument will be always self.core.raw().as_mut() (see quote! when arg_idx == 0), it's most likely a pointer to lv_obj_t
         //   TODO: When handling getters this should be self.raw().as_ptr() instead, this also requires updating args_decl
         // - The arguments will be appended to the accumulator (args_accumulator) as they are generated in the closure
-        let ffi_args =
-            self.args
-                .iter()
-                .enumerate()
-                .fold(quote!(), |args_accumulator, (arg_idx, arg)| {
-                    let next_arg = if arg_idx == 0 {
-                        if parent.name == "obj" {
-                            quote!(self.raw().as_mut())
-                        } else {
-                            quote!(self.core.raw().as_mut())
-                        }
-                    } else if arg.typ.is_mut_native_object() {
-                        let var = arg.get_value_usage();
-                        quote! {#var.raw().as_mut()}
-                    }else if arg.typ.is_const_native_object() {
-                        let var = arg.get_value_usage();
-                        quote! {#var.raw().as_ref()}
-                    } else {
-                        let var = arg.get_value_usage();
-                        quote!(#var)
-                    };
+        let ffi_args = self.args.iter().fold(quote!(), |args_accumulator, arg| {
+            let next_arg = if arg.typ.is_mut_native_object() {
+                let var = arg.get_value_usage();
+                quote! {#var.raw()}
+            } else if arg.typ.is_const_native_object() {
+                let var = arg.get_value_usage();
+                quote! {#var.raw()}
+            } else {
+                let var = arg.get_value_usage();
+                quote!(#var)
+            };
 
-                    // If the accummulator is empty then we call quote! only with the next_arg content
-                    if args_accumulator.is_empty() {
-                        quote! {#next_arg}
-                    }
-                    // Otherwise we append next_arg at the end of the accumulator
-                    else {
-                        quote! {#args_accumulator, #next_arg}
-                    }
-                });
+            // If the accummulator is empty then we call quote! only with the next_arg content
+            if args_accumulator.is_empty() {
+                quote! {#next_arg}
+            }
+            // Otherwise we append next_arg at the end of the accumulator
+            else {
+                quote! {#args_accumulator, #next_arg}
+            }
+        });
 
         // NOTE: When the function returns something we can 'avoid' placing an Ok() at the end.
         let explicit_ok = if return_type.is_empty() {
@@ -294,7 +233,7 @@ impl Rusty for LvFunc {
                 fn #func_name(#args_decl) -> #return_type {
                     unsafe {
                         #args_preprocessing
-                        lvgl_sys::#original_func_name(#ffi_args)#optional_semicolon
+                        lvgl_sys::#func_name(#ffi_args)#optional_semicolon
                         #args_postprocessing
                         #explicit_ok
                     }
@@ -305,7 +244,7 @@ impl Rusty for LvFunc {
                 pub fn #func_name(#args_decl) -> #return_type {
                     unsafe {
                         #args_preprocessing
-                        lvgl_sys::#original_func_name(#ffi_args)#optional_semicolon
+                        lvgl_sys::#func_name(#ffi_args)#optional_semicolon
                         #args_postprocessing
                         #explicit_ok
                     }
@@ -462,13 +401,11 @@ impl LvType {
     }
 
     pub fn is_const_native_object(&self) -> bool {
-        self.literal_name == "* const lv_obj_t" || 
-        self.literal_name == "* const _lv_obj_t"
+        self.literal_name == "* const lv_obj_t" || self.literal_name == "* const _lv_obj_t"
     }
 
     pub fn is_mut_native_object(&self) -> bool {
-        self.literal_name == "* mut lv_obj_t" || 
-        self.literal_name == "* mut _lv_obj_t"
+        self.literal_name == "* mut lv_obj_t" || self.literal_name == "* mut _lv_obj_t"
     }
 
     pub fn is_pointer(&self) -> bool {
@@ -476,7 +413,7 @@ impl LvType {
     }
 
     pub fn is_array(&self) -> bool {
-        self.literal_name.starts_with("* mut *")
+        self.literal_name.starts_with("* mut *") || self.literal_name.starts_with("* const *")
     }
 }
 
@@ -484,17 +421,17 @@ impl Rusty for LvType {
     type Parent = LvArg;
 
     fn code(&self, _parent: &Self::Parent) -> WrapperResult<TokenStream> {
-        let val = if self.is_const_str() {
+        let val = if self.is_array() {
+            println!("Array as argument ({})", self.literal_name);
+            return Err(WrapperError::Skip);
+        } else if self.is_const_str() {
             quote!(&cstr_core::CStr)
         } else if self.is_mut_str() {
             quote!(&mut cstr_core::CString)
-        }else if self.is_const_native_object() {
-            quote!(&impl NativeObject)
+        } else if self.is_const_native_object() {
+            quote!(&crate::widgets::Widget)
         } else if self.is_mut_native_object() {
-            quote!(&mut impl NativeObject)
-        } else if self.is_array() {
-            println!("Array as argument ({})", self.literal_name);
-            return Err(WrapperError::Skip);
+            quote!(&mut crate::widgets::Widget)
         } else {
             let literal_name = self.literal_name.as_str();
             let raw_name = literal_name.replace("* const ", "").replace("* mut ", "");
