@@ -5,12 +5,7 @@ use std::{
 };
 
 use lv_bevy_ecs::{
-    animation::Animation,
-    display::{Display, DrawBuffer},
-    events::{Event, lv_obj_add_event_cb},
-    input::{InputDevice, PointerInputData},
-    support::{Align, LvError},
-    widgets::Arc,
+    animation::Animation, display::{Display, DrawBuffer}, events::{lv_obj_add_event_cb, Event}, functions::{lv_label_set_text, lv_obj_set_align}, input::{InputDevice, PointerInputData}, support::{Align, LvError}, widgets::Arc
 };
 
 use cstr_core::cstr;
@@ -83,10 +78,8 @@ fn main() -> Result<(), LvError> {
 
     {
         let button = Button::create_widget()?;
-        let label = Label::create_widget()?;
-        unsafe {
-            lvgl_sys::lv_label_set_text(label.raw(), cstr!("SPAWN").as_ptr());
-        }
+        let mut label = Label::create_widget()?;
+        lv_label_set_text(&mut label, cstr!("SPAWN"));
         //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
         let label_entity = world.spawn((Label, label)).id();
 
@@ -116,12 +109,10 @@ fn main() -> Result<(), LvError> {
                     }*/
                 }
                 None => {
-                    let dynamic_button = Button::create_widget().unwrap();
-                    let label = Label::create_widget().unwrap();
-                    unsafe {
-                        lvgl_sys::lv_obj_align(dynamic_button.raw(), Align::TopRight.into(), 0, 0);
-                        lvgl_sys::lv_label_set_text(label.raw(), cstr!("This is dynamic").as_ptr());
-                    }
+                    let mut dynamic_button = Button::create_widget().unwrap();
+                    let mut label = Label::create_widget().unwrap();
+                    lv_obj_set_align(&mut dynamic_button, Align::TopRight.into());
+                    lv_label_set_text(&mut label, cstr!("This is dynamic"));
                     world
                         .spawn((DynamicButton, Button, dynamic_button))
                         .with_child((Label, label));
@@ -144,10 +135,9 @@ fn main() -> Result<(), LvError> {
         //button_entity.remove::<Style>();
         // button_entity.insert(style);
 
-        let arc = Arc::create_widget()?;
-        unsafe {
-            lvgl_sys::lv_obj_set_align(arc.raw(), Align::BottomMid.into());
-        }
+        let mut arc = Arc::create_widget()?;
+        lv_obj_set_align(&mut arc, Align::BottomMid.into());
+        
 
         world.spawn((Arc, arc));
     }
