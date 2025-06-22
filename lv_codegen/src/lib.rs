@@ -227,30 +227,16 @@ impl Rusty for LvFunc {
             None => quote!(;),
             _ => quote!(),
         };
-        if parent.name == "obj" {
-            // pub keyword cannot be used in traits
-            Ok(quote! {
-                fn #func_name(#args_decl) -> #return_type {
-                    unsafe {
-                        #args_preprocessing
-                        lvgl_sys::#func_name(#ffi_args)#optional_semicolon
-                        #args_postprocessing
-                        #explicit_ok
-                    }
+        Ok(quote! {
+            pub fn #func_name(#args_decl) -> #return_type {
+                unsafe {
+                    #args_preprocessing
+                    lvgl_sys::#func_name(#ffi_args)#optional_semicolon
+                    #args_postprocessing
+                    #explicit_ok
                 }
-            })
-        } else {
-            Ok(quote! {
-                pub fn #func_name(#args_decl) -> #return_type {
-                    unsafe {
-                        #args_preprocessing
-                        lvgl_sys::#func_name(#ffi_args)#optional_semicolon
-                        #args_postprocessing
-                        #explicit_ok
-                    }
-                }
-            })
-        }
+            }
+        })
     }
 }
 
