@@ -68,7 +68,7 @@ impl Default for Color {
 
 impl Color {
     /// Creates a `Color` from red, green, and blue values.
-    pub fn from_rgb((r, g, b): (u8, u8, u8)) -> Self {
+    pub fn from_rgb(r: u8, g: u8, b: u8) -> Self {
         let raw = unsafe { lvgl_sys::lv_color_make(r, g, b) };
         Self { raw }
     }
@@ -115,7 +115,6 @@ impl From<Color> for lvgl_sys::lv_color_t {
         val.raw
     }
 }
-
 
 /// Possible LVGL alignments for widgets.
 pub enum Align {
@@ -226,7 +225,7 @@ mod test {
 
     #[test]
     fn color_properties_accessible() {
-        let color = Color::from_rgb((206, 51, 255));
+        let color = Color::from_rgb(206, 51, 255);
 
         if lvgl_sys::LV_COLOR_DEPTH == 32 {
             assert_eq!(color.r(), 206);

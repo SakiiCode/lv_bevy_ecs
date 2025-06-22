@@ -10,13 +10,14 @@ type CGResult<T> = Result<T, Box<dyn Error>>;
 
 const LIB_PREFIX: &str = "lv_";
 
-const FUNCTION_BLACKLIST: [&'static str; 6] = [
+const FUNCTION_BLACKLIST: [&'static str; 7] = [
     "lv_obj_null_on_delete",
     "lv_obj_add_style",
     "lv_obj_replace_style",
     "lv_obj_remove_style",
     "lv_obj_remove_style_all",
     "lv_obj_refresh_style",
+    "lv_style_init"
 ];
 
 #[derive(Debug, Copy, Clone)]
@@ -64,7 +65,8 @@ impl LvFunc {
     pub fn is_method(&self) -> bool {
         if !self.args.is_empty() {
             let first_arg = &self.args[0];
-            return first_arg.typ.literal_name.contains("lv_obj_t");
+            return first_arg.typ.literal_name.contains("lv_obj_t")
+                || first_arg.typ.literal_name.contains("lv_style_t");
         }
         false
     }
@@ -116,18 +118,8 @@ impl Rusty for LvFunc {
         let args_decl =
             self.args
                 .iter()
-                .enumerate()
-                .fold(quote!(), |args_accumulator, (arg_idx, arg)| {
-                    let next_arg = if arg_idx == 0 {
-                        let name = format_ident!("{}", arg.name.clone());
-                        if arg.get_type().is_const() {
-                            quote!(#name: &crate::widgets::Widget)
-                        } else {
-                            quote!(#name: &mut crate::widgets::Widget)
-                        }
-                    } else {
-                        arg.code(self).unwrap()
-                    };
+                .fold(quote!(), |args_accumulator, arg| {
+                    let next_arg = arg.code(self).unwrap();
 
                     // If the accummulator is empty then we call quote! only with the next_arg content
                     if args_accumulator.is_empty() {
@@ -329,6 +321,10 @@ impl LvArg {
             quote! {
                 #ident_raw
             }
+        }else if self.typ.is_const_style() || self.typ.is_mut_style() {
+            quote! {
+                #ident.raw()
+            }
         } else {
             quote! {
                 #ident
@@ -394,6 +390,14 @@ impl LvType {
         self.literal_name == "* mut lv_obj_t" || self.literal_name == "* mut _lv_obj_t"
     }
 
+    pub fn is_mut_style(&self) -> bool {
+        self.literal_name == "* mut lv_style_t"
+    }
+
+    pub fn is_const_style(&self) -> bool {
+        self.literal_name == "* const lv_style_t"
+    }
+
     pub fn is_pointer(&self) -> bool {
         self.literal_name.starts_with('*')
     }
@@ -418,6 +422,10 @@ impl Rusty for LvType {
             quote!(&crate::widgets::Widget)
         } else if self.is_mut_native_object() {
             quote!(&mut crate::widgets::Widget)
+        } else if self.is_const_style() {
+            quote!(&mut crate::styles::Style) // TODO make this const
+        } else if self.is_mut_style() {
+            quote!(&mut crate::styles::Style)
         } else {
             let literal_name = self.literal_name.as_str();
             let raw_name = literal_name.replace("* const ", "").replace("* mut ", "");
@@ -487,12 +495,12 @@ impl CodeGen {
     }
 
     fn get_widget_names(functions: &[LvFunc]) -> Vec<String> {
-        let reg = format!("^{}([^_]+)_create$", LIB_PREFIX);
+        let reg = format!("^{}([^_]+)_(create|init)$", LIB_PREFIX);
         let create_func = Regex::new(reg.as_str()).unwrap();
 
         functions
             .iter()
-            .filter(|e| create_func.is_match(e.name.as_str()) && e.args.len() == 1)
+            .filter(|e| (create_func.is_match(e.name.as_str())) && e.args.len() == 1)
             .map(|f| {
                 String::from(
                     create_func
@@ -541,6 +549,7 @@ impl CodeGen {
 #[cfg(test)]
 mod test {
     use crate::{CodeGen, LvArg, LvFunc, LvType, LvWidget, Rusty};
+    use itertools::Itertools;
     use quote::quote;
 
     #[test]
@@ -604,11 +613,20 @@ mod test {
                 )],
                 None,
             ),
+            LvFunc::new(
+                "lv_style_init".to_string(),
+                vec![LvArg::new(
+                    "style".to_string(),
+                    LvType::new("abc".to_string()),
+                )],
+                None,
+            ),
         ];
 
         let widget_names = CodeGen::get_widget_names(&funcs);
-
-        assert_eq!(widget_names.len(), 3);
+        let widgets = CodeGen::extract_widgets(&funcs).unwrap();
+        println!("{:?}", widgets.iter().map(|w| w.name.clone()).collect_vec());
+        assert_eq!(widget_names.len(), 4);
     }
 
     #[test]

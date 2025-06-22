@@ -10,9 +10,9 @@ fn main() {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     let rs = out_path.join("generated.rs");
 
-    let widgets_impl = lvgl_sys::_bindgen_raw_src();
+    let source = lvgl_sys::_bindgen_raw_src();
 
-    let codegen = CodeGen::from(widgets_impl).unwrap();
+    let codegen = CodeGen::from(source).unwrap();
     let widgets_impl: Vec<TokenStream> = codegen
         .get_widgets()
         .iter()

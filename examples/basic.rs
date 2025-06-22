@@ -5,7 +5,16 @@ use std::{
 };
 
 use lv_bevy_ecs::{
-    animation::Animation, display::{Display, DrawBuffer}, events::{lv_obj_add_event_cb, Event}, functions::{lv_label_set_text, lv_obj_set_align}, input::{InputDevice, PointerInputData}, support::{Align, LvError}, widgets::Arc
+    animation::Animation,
+    display::{Display, DrawBuffer},
+    events::{Event, lv_obj_add_event_cb},
+    functions::{
+        lv_label_set_text, lv_obj_set_align, lv_obj_set_style_opa, lv_style_set_align,
+        lv_style_set_bg_color, lv_style_set_opa,
+    },
+    input::{InputDevice, PointerInputData},
+    support::{Align, Color, LvError},
+    widgets::Arc,
 };
 
 use cstr_core::cstr;
@@ -56,7 +65,12 @@ fn main() -> Result<(), LvError> {
 
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
-        sim_display.fill_contiguous(&refresh.rectangle, refresh.colors.take().unwrap().map(|c|c.into())).unwrap();
+        sim_display
+            .fill_contiguous(
+                &refresh.rectangle,
+                refresh.colors.take().unwrap().map(|c| c.into()),
+            )
+            .unwrap();
     });
 
     println!("Display Driver OK");
@@ -87,8 +101,8 @@ fn main() -> Result<(), LvError> {
             Duration::from_secs(5),
             LV_OPA_0 as i32,
             LV_OPA_100 as i32,
-            |obj, val| unsafe {
-                lvgl_sys::lv_obj_set_style_opa(obj.raw(), val as u8, LV_PART_MAIN);
+            |obj, val| {
+                lv_obj_set_style_opa(obj, val as u8, LV_PART_MAIN);
             },
         );
 
@@ -125,11 +139,9 @@ fn main() -> Result<(), LvError> {
         button_entity.add_child(label_entity);
 
         let mut style = Style::default();
-        unsafe {
-            lvgl_sys::lv_style_set_opa(style.raw(), LV_OPA_50 as u8);
-            lvgl_sys::lv_style_set_align(style.raw(), Align::TopLeft.into());
-            lvgl_sys::lv_style_set_bg_color(style.raw(), lvgl_sys::lv_color_make(255, 0, 0));
-        }
+        lv_style_set_opa(&mut style, LV_OPA_50 as u8);
+        lv_style_set_align(&mut style, Align::TopLeft.into());
+        lv_style_set_bg_color(&mut style, Color::from_rgb(255, 0, 0).into());
 
         button_entity.insert(style);
         //button_entity.remove::<Style>();
@@ -137,7 +149,6 @@ fn main() -> Result<(), LvError> {
 
         let mut arc = Arc::create_widget()?;
         lv_obj_set_align(&mut arc, Align::BottomMid.into());
-        
 
         world.spawn((Arc, arc));
     }
