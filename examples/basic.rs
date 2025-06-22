@@ -2,6 +2,7 @@ use std::{
     process::exit,
     thread::sleep,
     time::{Duration, Instant},
+    ffi::CString
 };
 
 use lv_bevy_ecs::{
@@ -17,7 +18,6 @@ use lv_bevy_ecs::{
     widgets::Arc,
 };
 
-use cstr_core::cstr;
 use embedded_graphics::{
     draw_target::DrawTarget,
     pixelcolor::Rgb565,
@@ -34,6 +34,12 @@ use lv_bevy_ecs::prelude::{
     lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_indev_type_t_LV_INDEV_TYPE_POINTER, query::With,
     schedule::Schedule, world::World,
 };
+
+macro_rules! cstr {
+    ($txt:literal) => {
+        CString::new($txt).unwrap().as_c_str()
+    };
+}
 
 #[derive(Component)]
 struct DynamicButton;

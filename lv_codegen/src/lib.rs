@@ -303,7 +303,7 @@ impl LvArg {
             let name = format_ident!("{}", &self.name);
             let name_raw = format_ident!("{}_raw", &self.name);
             quote! {
-                *#name = cstr_core::CString::from_raw(#name_raw);
+                *#name = std::ffi::CString::from_raw(#name_raw);
             }
         } else {
             quote! {}
@@ -415,9 +415,9 @@ impl Rusty for LvType {
             println!("Array as argument ({})", self.literal_name);
             return Err(WrapperError::Skip);
         } else if self.is_const_str() {
-            quote!(&cstr_core::CStr)
+            quote!(&std::ffi::CStr)
         } else if self.is_mut_str() {
-            quote!(&mut cstr_core::CString)
+            quote!(&mut std::ffi::CString)
         } else if self.is_const_native_object() {
             quote!(&crate::widgets::Widget)
         } else if self.is_mut_native_object() {
@@ -678,7 +678,7 @@ mod test {
         let code = label_set_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
 
-            pub fn lv_label_set_text(label: &mut crate::widgets::Widget, text: &cstr_core::CStr) -> () {
+            pub fn lv_label_set_text(label: &mut crate::widgets::Widget, text: &std::ffi::CStr) -> () {
                 unsafe {
                     lvgl_sys::lv_label_set_text(
                         label.raw(),
@@ -710,7 +710,7 @@ mod test {
         let code = dropdown_get_selected_str.code(&parent_widget).unwrap();
         let expected_code = quote! {
 
-            pub fn lv_dropdown_get_selected_str(obj: &mut crate::widgets::Widget, buf: &mut cstr_core::CString, buf_size:u32) -> () {
+            pub fn lv_dropdown_get_selected_str(obj: &mut crate::widgets::Widget, buf: &mut std::ffi::CString, buf_size:u32) -> () {
                 unsafe {
                     let buf_raw = buf.clone().into_raw();
                     lvgl_sys::lv_dropdown_get_selected_str(
@@ -718,7 +718,7 @@ mod test {
                         buf_raw,
                         buf_size
                     );
-                    *buf = cstr_core::CString::from_raw(buf_raw);
+                    *buf = std::ffi::CString::from_raw(buf_raw);
                 }
             }
 
@@ -747,7 +747,7 @@ mod test {
 
         let code = label_set_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_label_set_text(label: &mut crate::widgets::Widget, text: &cstr_core::CStr) -> () {
+            pub fn lv_label_set_text(label: &mut crate::widgets::Widget, text: &std::ffi::CStr) -> () {
                 unsafe {
                     lvgl_sys::lv_label_set_text(
                         label.raw(),
