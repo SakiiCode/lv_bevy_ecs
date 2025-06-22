@@ -482,7 +482,7 @@ impl CodeGen {
         let widgets = functions.iter().fold(HashMap::new(), |mut ws, f| {
             for widget_name in &widget_names {
                 if f.name
-                    .starts_with(format!("{}{}", LIB_PREFIX, widget_name).as_str())
+                    .starts_with(format!("{}{}_", LIB_PREFIX, widget_name).as_str())
                     && f.is_method()
                 {
                     ws.entry(widget_name.clone())
