@@ -617,7 +617,7 @@ mod test {
         let arc_set_bg_end_angle = LvFunc::new(
             "lv_arc_set_bg_end_angle".to_string(),
             vec![
-                LvArg::new("arc".to_string(), LvType::new("*mut lv_obj_t".to_string())),
+                LvArg::new("obj".to_string(), LvType::new("* mut lv_obj_t".to_string())),
                 LvArg::new("end".to_string(), LvType::new("u16".to_string())),
             ],
             None,
@@ -629,9 +629,9 @@ mod test {
 
         let code = arc_set_bg_end_angle.code(&arc_widget).unwrap();
         let expected_code = quote! {
-            pub fn set_bg_end_angle(&mut self, end: u16) -> () {
+            pub fn lv_arc_set_bg_end_angle(obj: &mut crate::widgets::Widget, end: u16) -> () {
                 unsafe {
-                    lvgl_sys::lv_arc_set_bg_end_angle(self.core.raw().as_mut(), end);
+                    lvgl_sys::lv_arc_set_bg_end_angle(obj.raw(), end);
                 }
             }
         };
@@ -646,7 +646,7 @@ mod test {
                 #[doc = " Set a new text for a label. Memory will be allocated to store the text by the label."]
                 #[doc = " @param label pointer to a label object"]
                 #[doc = " @param text '\\0' terminated character string. NULL to refresh with the current text."]
-                pub fn lv_label_set_text(label: *mut lv_obj_t, text: *const cty::c_char);
+                pub fn lv_label_set_text(label: *mut lv_obj_t, text: *const ::core::ffi::c_char);
             }
         };
         let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
@@ -660,10 +660,10 @@ mod test {
         let code = label_set_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
 
-            pub fn set_text(&mut self, text: &cstr_core::CStr) -> () {
+            pub fn lv_label_set_text(label: &mut crate::widgets::Widget, text: &cstr_core::CStr) -> () {
                 unsafe {
                     lvgl_sys::lv_label_set_text(
-                        self.core.raw().as_mut(),
+                        label.raw(),
                         text.as_ptr()
                     );
                 }
@@ -678,7 +678,7 @@ mod test {
     fn generate_method_wrapper_for_mut_str_types_as_argument() {
         let bindgen_code = quote! {
             extern "C" {
-                pub fn lv_dropdown_get_selected_str(obj: *const lv_obj_t, buf: *mut cty::c_char, buf_size: u32);
+                pub fn lv_dropdown_get_selected_str(obj: *const lv_obj_t, buf: *mut ::core::ffi::c_char, buf_size: u32);
             }
         };
         let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
@@ -692,11 +692,11 @@ mod test {
         let code = dropdown_get_selected_str.code(&parent_widget).unwrap();
         let expected_code = quote! {
 
-            pub fn get_selected_str(&mut self, buf: &mut cstr_core::CString, buf_size:u32) -> () {
+            pub fn lv_dropdown_get_selected_str(obj: &mut crate::widgets::Widget, buf: &mut cstr_core::CString, buf_size:u32) -> () {
                 unsafe {
                     let buf_raw = buf.clone().into_raw();
                     lvgl_sys::lv_dropdown_get_selected_str(
-                        self.core.raw().as_mut(),
+                        obj.raw(),
                         buf_raw,
                         buf_size
                     );
@@ -716,7 +716,7 @@ mod test {
                 #[doc = " Set a new text for a label. Memory will be allocated to store the text by the label."]
                 #[doc = " @param label pointer to a label object"]
                 #[doc = " @param text '\\0' terminated character string. NULL to refresh with the current text."]
-                pub fn lv_label_set_text(label: *mut lv_obj_t, text: *const cty::c_char);
+                pub fn lv_label_set_text(label: *mut lv_obj_t, text: *const ::core::ffi::c_char);
             }
         };
         let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
@@ -729,10 +729,10 @@ mod test {
 
         let code = label_set_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn set_text(&mut self, text: &cstr_core::CStr) -> () {
+            pub fn lv_label_set_text(label: &mut crate::widgets::Widget, text: &cstr_core::CStr) -> () {
                 unsafe {
                     lvgl_sys::lv_label_set_text(
-                        self.core.raw().as_mut(),
+                        label.raw(),
                         text.as_ptr()
                     );
                 }
@@ -762,11 +762,11 @@ mod test {
 
         let code = arc_rotate_obj_to_angle.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn rotate_obj_to_angle(&mut self, obj_to_rotate: &mut impl NativeObject, r_offset: lv_coord_t) -> () {
+            pub fn lv_arc_rotate_obj_to_angle(obj: &mut crate::widgets::Widget, obj_to_rotate: &mut crate::widgets::Widget, r_offset: lv_coord_t) -> () {
                 unsafe {
                     lvgl_sys::lv_arc_rotate_obj_to_angle(
-                        self.core.raw().as_mut(),
-                        obj_to_rotate.raw().as_mut(),
+                        obj.raw(),
+                        obj_to_rotate.raw(),
                         r_offset
                     );
                 }
@@ -793,10 +793,10 @@ mod test {
 
         let code = label_get_recolor.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn get_recolor(&mut self) -> bool {
+            pub fn lv_label_get_recolor(label: &mut crate::widgets::Widget) -> bool {
                 unsafe {
                     lvgl_sys::lv_label_get_recolor(
-                        self.core.raw().as_mut()
+                        label.raw()
                     )
                 }
             }
@@ -822,10 +822,10 @@ mod test {
 
         let code = label_get_text_selection_start.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn get_text_selection_start(&mut self) -> u32 {
+            pub fn lv_label_get_text_selection_start(label: &mut crate::widgets::Widget) -> u32 {
                 unsafe {
                     lvgl_sys::lv_label_get_text_selection_start(
-                        self.core.raw().as_mut()
+                        label.raw()
                     )
                 }
             }
@@ -842,13 +842,7 @@ mod test {
         };
 
         let code = arc_widget.code(&()).unwrap();
-        let expected_code = quote! {
-            define_object!(Arc);
-
-            impl<'a> Arc<'a> {
-
-            }
-        };
+        let expected_code = quote! {};
 
         assert_eq!(code.to_string(), expected_code.to_string());
     }
@@ -874,30 +868,7 @@ mod test {
         };
 
         let code = arc_widget.code(&()).unwrap();
-        let expected_code = quote! {
-            define_object!(Arc);
-
-            impl<'a> Arc<'a> {
-                pub fn create(parent: &mut impl crate::NativeObject) -> crate::LvResult<Self> {
-                    unsafe {
-                        let ptr = lvgl_sys::lv_arc_create(
-                            parent.raw().as_mut(),
-                        );
-                        if let Some(raw) = core::ptr::NonNull::new(ptr) {
-                            let core = <crate::Obj as Widget>::from_raw(raw).unwrap();
-                            Ok(Self { core })
-                        } else {
-                            Err(crate::LvError::InvalidReference)
-                        }
-                    }
-                }
-
-                pub fn new() -> crate::LvResult<Self> {
-                    let mut parent = crate::display::get_scr_act()?;
-                    Self::create(&mut parent)
-                }
-            }
-        };
+        let expected_code = quote! {};
 
         assert_eq!(code.to_string(), expected_code.to_string());
     }
