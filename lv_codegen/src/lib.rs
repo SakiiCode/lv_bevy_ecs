@@ -379,11 +379,11 @@ impl LvType {
     }
 
     pub fn is_const_str(&self) -> bool {
-        self.literal_name == "* const cty :: c_char"
+        self.literal_name == "* const :: core :: ffi :: c_char"
     }
 
     pub fn is_mut_str(&self) -> bool {
-        self.literal_name == "* mut cty :: c_char"
+        self.literal_name == "* mut :: core :: ffi :: c_char"
     }
 
     pub fn is_const_native_object(&self) -> bool {
