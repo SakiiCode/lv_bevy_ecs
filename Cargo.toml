@@ -21,5 +21,4 @@ embedded-graphics-simulator = "0.5.0"
 lv_codegen = { path = "lv_codegen" }
 proc-macro2 = "1.0.95"
 quote = "1.0.40"
-syn = {version = "2.0.101", features = ["full"]}
 lvgl-sys = { path = "../lvgl-sys-scratch" }
