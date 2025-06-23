@@ -60,7 +60,8 @@ fn main() -> Result<(), LvError> {
     println!("Display OK");
 
     display.register(buffer, |refresh| {
-        sim_display.draw_iter(refresh.as_pixels()).unwrap();
+        //sim_display.draw_iter(refresh.as_pixels()).unwrap();
+        sim_display.fill_contiguous(&refresh.rectangle, refresh.colors.take().unwrap().map(|c|c.into())).unwrap();
     });
 
     println!("Display Driver OK");

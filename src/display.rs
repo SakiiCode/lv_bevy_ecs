@@ -1,9 +1,9 @@
-use std::ptr::NonNull;
+use std::{ptr::NonNull, u16};
 
 use cty::c_void;
 use embedded_graphics::{
-    Pixel,
-    prelude::{PixelColor, Point},
+    prelude::{PixelColor, Point, Size},
+    primitives::Rectangle, Pixel,
 };
 use lvgl_sys::{
     lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL, lv_display_t, lv_draw_buf_t,
@@ -25,7 +25,7 @@ impl Display {
 
     pub fn register<F, const N: usize>(&mut self, buffer: DrawBuffer<N>, callback: F)
     where
-        F: FnMut(&DisplayRefresh<N>),
+        F: FnMut(&mut DisplayRefresh<N>),
     {
         unsafe {
             lvgl_sys::lv_display_set_buffers(
@@ -56,13 +56,13 @@ pub struct Area {
 /// updated and the color of the pixels that need to be updated. The colors
 /// are represented in a contiguous array.
 pub struct DisplayRefresh<const N: usize> {
-    pub area: Area,
-    pub colors: *mut u16,
+    pub rectangle: Rectangle,
+    pub colors: Option<Box<dyn Iterator<Item = Color>>>,
 }
 
 unsafe fn register_display<F, const N: usize>(display: *mut lv_display_t, callback: F)
 where
-    F: FnMut(&DisplayRefresh<N>),
+    F: FnMut(&mut DisplayRefresh<N>),
 {
     unsafe {
         lvgl_sys::lv_display_set_flush_cb(display, Some(disp_flush_trampoline::<F, N>));
@@ -79,36 +79,43 @@ unsafe extern "C" fn disp_flush_trampoline<'a, F, const N: usize>(
     area: *const lvgl_sys::lv_area_t,
     color_p: *mut u8,
 ) where
-    F: FnMut(&DisplayRefresh<N>) + 'a,
+    F: FnMut(&mut DisplayRefresh<N>) + 'a,
 {
     unsafe {
         let display_driver = *display;
         if !display_driver.user_data.is_null() {
             let callback = &mut *(display_driver.user_data as *mut F);
 
-            //let mut colors = Box::new([Color::default(); N]);
             let buf16 = color_p as *mut u16;
-            //lvgl_sys::lv_draw_sw_rgb565_swap(buf16 as *mut c_void, (N/2) as u32);
-            /*for (color_len, color) in colors.iter_mut().enumerate() {
-                let lv_color = buf16.add(color_len);
 
-                let r = (*lv_color >> 11) & 0x1F;
-                let g = (*lv_color >> 5) & 0x3F;
-                let b = *lv_color & 0x1F;
+            let iterator = (0..N)
+                .map(move |offset| buf16.add(offset).as_ref().unwrap())
+                .map(|lv_color| {
+                    let r = (*lv_color >> 11) & 0x1F;
+                    let g = (*lv_color >> 5) & 0x3F;
+                    let b = *lv_color & 0x1F;
 
-                *color = Color::from_rgb((r as u8, g as u8, b as u8));
-            }*/
+                    Color::from_rgb((r as u8, g as u8, b as u8)).into()
+                });
 
-            let update = DisplayRefresh {
-                area: Area {
-                    x1: (*area).x1 as i16,
-                    x2: (*area).x2 as i16,
-                    y1: (*area).y1 as i16,
-                    y2: (*area).y2 as i16,
+            let w = (*area).x2 - (*area).x1 + 1;
+            let h = (*area).y2 - (*area).y1 + 1;
+            let rectangle = Rectangle {
+                size: Size {
+                    width: w as u32,
+                    height: h as u32,
                 },
-                colors: buf16,
+                top_left: Point {
+                    x: (*area).x1.into(),
+                    y: (*area).y1.into(),
+                },
             };
-            callback(&update);
+
+            let mut update = DisplayRefresh {
+                rectangle,
+                colors: Some(Box::new(iterator)),
+            };
+            callback(&mut update);
         } else {
             println!("User data is null");
         }
@@ -119,32 +126,29 @@ unsafe extern "C" fn disp_flush_trampoline<'a, F, const N: usize>(
     }
 }
 
-/*impl<const N: usize> DisplayRefresh<N> {
-    pub fn as_pixels<C>(&self) -> impl IntoIterator<Item = Pixel<C>> + '_
+impl<const N: usize> DisplayRefresh<N> {
+    pub fn as_pixels<C>(&mut self) -> impl IntoIterator<Item = Pixel<C>> + '_
     where
         C: PixelColor + From<Color>,
     {
-        let area = &self.area;
-        let x1 = area.x1;
-        let x2 = area.x2;
-        let y1 = area.y1;
-        let y2 = area.y2;
-
+        let area = &self.rectangle;
+        let Point { x:x1, y:y1 } = area.top_left;
+        let Point { x:x2, y:y2 } = area.bottom_right().unwrap();
+        
         let ys = y1..=y2;
-        let xs = (x1..=x2).enumerate();
-        let x_len = (x2 - x1 + 1) as usize;
+        let xs = x1..=x2;
 
         // We use iterators here to ensure that the Rust compiler can apply all possible
         // optimizations at compile time.
-        ys.enumerate().flat_map(move |(iy, y)| {
-            xs.clone().map(move |(ix, x)| {
-                let color_len = x_len * iy + ix;
-                let raw_color = self.colors[color_len];
-                Pixel(Point::new(x as i32, y as i32), raw_color.into())
+        ys.flat_map(move |y| {
+            xs.clone().map(move |x| {
+                Point::new(x as i32, y as i32)
             })
+        }).zip(self.colors.as_mut().unwrap()).map(|(point, color)|{
+            Pixel(point, color.into())
         })
     }
-}*/
+}
 
 pub struct DrawBuffer<const N: usize> {
     raw: NonNull<lv_draw_buf_t>,
