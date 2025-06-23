@@ -95,7 +95,7 @@ unsafe extern "C" fn disp_flush_trampoline<'a, F, const N: usize>(
                     let g = (*lv_color >> 5) & 0x3F;
                     let b = *lv_color & 0x1F;
 
-                    Color::from_rgb((r as u8, g as u8, b as u8)).into()
+                    Color::from_rgb(r as u8, g as u8, b as u8).into()
                 });
 
             let w = (*area).x2 - (*area).x1 + 1;
