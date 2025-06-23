@@ -27,7 +27,7 @@ use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
 use lv_bevy_ecs::styles::Style;
-use lv_bevy_ecs::widgets::{Button, Label, on_insert_children};
+use lv_bevy_ecs::widgets::{Button, Label, on_insert_parent};
 
 use lv_bevy_ecs::prelude::{
     LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, component::Component, entity::Entity,
@@ -92,7 +92,7 @@ fn main() -> Result<(), LvError> {
     println!("Input OK");
 
     let mut world = World::new();
-    world.add_observer(on_insert_children);
+    world.add_observer(on_insert_parent);
 
     println!("ECS OK");
 

@@ -3,7 +3,7 @@ use std::ptr::NonNull;
 use crate::support::LvError;
 use bevy_ecs::{
     component::Component,
-    hierarchy::{ChildOf, Children},
+    hierarchy::{ChildOf},
     observer::Trigger,
     system::Query,
     world::OnInsert,
@@ -60,23 +60,18 @@ macro_rules! impl_widget {
     };
 }
 
-pub fn on_insert_children(
-    trigger: Trigger<OnInsert, Children>,
+pub fn on_insert_parent(
+    trigger: Trigger<OnInsert, ChildOf>,
     widgets: Query<&Widget>,
     children: Query<(&Widget, &ChildOf)>,
 ) {
-    let mut parent_widget = None;
-    for (widget, parent) in children.iter() {
-        if parent.parent() == trigger.target() {
-            parent_widget = Some(widget);
-        }
-    }
-    let child_ptr = parent_widget.expect("Parent not found").raw.as_ptr();
-    let parent_ptr = widgets.get(trigger.target()).unwrap().raw.as_ptr();
+    let parent_widget = children.get(trigger.target()).unwrap();
+    let parent_ptr = widgets.get(parent_widget.1.0).unwrap().raw();
+    let child_ptr = children.get(trigger.target()).unwrap().0.raw();
     unsafe {
         lvgl_sys::lv_obj_set_parent(child_ptr, parent_ptr);
     }
-    dbg!("On Insert Children");
+    dbg!("On Insert Parent");
 }
 
 impl_widget!(Button, lvgl_sys::lv_button_create);
@@ -111,9 +106,9 @@ impl_widget!(Spinbox, lvgl_sys::lv_spinbox_create);
 
 impl_widget!(TileView, lvgl_sys::lv_tileview_create);
 
-impl_widget!(Img, lvgl_sys::lv_image_create);
+impl_widget!(Image, lvgl_sys::lv_image_create);
 
-impl_widget!(Imgbtn, lvgl_sys::lv_imagebutton_create);
+impl_widget!(Imagebutton, lvgl_sys::lv_imagebutton_create);
 
 impl_widget!(Switch, lvgl_sys::lv_switch_create);
 

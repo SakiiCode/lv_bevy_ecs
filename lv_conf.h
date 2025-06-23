@@ -275,7 +275,7 @@
  *-----------*/
 
 /*Enable the log module*/
-#define LV_USE_LOG 0
+#define LV_USE_LOG 1
 #if LV_USE_LOG
 
     /*How important log should be added:
@@ -285,11 +285,11 @@
     *LV_LOG_LEVEL_ERROR       Only critical issue, when the system may fail
     *LV_LOG_LEVEL_USER        Only logs added by the user
     *LV_LOG_LEVEL_NONE        Do not log anything*/
-    #define LV_LOG_LEVEL LV_LOG_LEVEL_WARN
+    #define LV_LOG_LEVEL LV_LOG_LEVEL_INFO
 
     /*1: Print the log with 'printf';
     *0: User need to register a callback with `lv_log_register_print_cb()`*/
-    #define LV_LOG_PRINTF 0
+    #define LV_LOG_PRINTF 1
 
     /*Set callback to print the logs.
      *E.g `my_print`. The prototype should be `void my_print(lv_log_level_t level, const char * buf)`
@@ -489,7 +489,7 @@
 #define LV_FONT_MONTSERRAT_18 0
 #define LV_FONT_MONTSERRAT_20 0
 #define LV_FONT_MONTSERRAT_22 0
-#define LV_FONT_MONTSERRAT_24 0
+#define LV_FONT_MONTSERRAT_24 1
 #define LV_FONT_MONTSERRAT_26 0
 #define LV_FONT_MONTSERRAT_28 0
 #define LV_FONT_MONTSERRAT_30 0
@@ -716,9 +716,9 @@
 #define LV_FS_DEFAULT_DRIVE_LETTER '\0'
 
 /*API for fopen, fread, etc*/
-#define LV_USE_FS_STDIO 0
+#define LV_USE_FS_STDIO 1
 #if LV_USE_FS_STDIO
-    #define LV_FS_STDIO_LETTER '\0'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
+    #define LV_FS_STDIO_LETTER 'A'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
     #define LV_FS_STDIO_PATH ""         /*Set the working directory. File/directory paths will be appended to it.*/
     #define LV_FS_STDIO_CACHE_SIZE 0    /*>0 to cache this number of bytes in lv_fs_read()*/
 #endif
@@ -771,7 +771,7 @@
 #endif
 
 /*LODEPNG decoder library*/
-#define LV_USE_LODEPNG 0
+#define LV_USE_LODEPNG 1
 
 /*PNG decoder(libpng) library*/
 #define LV_USE_LIBPNG 0
@@ -781,7 +781,7 @@
 
 /* JPG + split JPG decoder library.
  * Split JPG is a custom format optimized for embedded systems. */
-#define LV_USE_TJPGD 0
+#define LV_USE_TJPGD 1
 
 /* libjpeg-turbo decoder library.
  * Supports complete JPEG specifications and high-performance JPEG decoding. */

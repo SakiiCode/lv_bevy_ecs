@@ -1,8 +1,17 @@
 use core::convert::TryInto;
 use core::fmt;
 use embedded_graphics::pixelcolor::{Rgb565, Rgb888};
+use lvgl_sys::lv_coord_t;
 
 pub type LvResult<T> = Result<T, LvError>;
+
+pub const LV_SIZE_CONTENT: u32 = 2001 | lvgl_sys::LV_COORD_TYPE_SPEC;
+
+pub fn lv_pct(pct: lv_coord_t) -> lv_coord_t {
+    unsafe{
+        lvgl_sys::lv_pct(pct)
+    }
+}
 
 /// Generic LVGL error. All other errors can be coerced into it.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
