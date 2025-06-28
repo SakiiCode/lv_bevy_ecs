@@ -82,7 +82,7 @@ fn main() -> Result<(), LvError> {
         SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
-    let mut window = Window::new("Button Example", &output_settings);
+    let mut window = Window::new("Bindings test Example", &output_settings);
     println!("SIMULATOR OK");
 
     lv_bevy_ecs::init();
@@ -421,7 +421,7 @@ fn main() -> Result<(), LvError> {
     sleep(Duration::from_millis(5));
     loop {
         let current_time = Instant::now();
-        let diff = current_time.duration_since(prev_time).as_millis() as u32;
+        let diff = current_time.duration_since(prev_time);
         prev_time = current_time;
 
         window.update(&sim_display);
@@ -458,11 +458,9 @@ fn main() -> Result<(), LvError> {
         // Run the schedule once. If your app has a "loop", you would run this once per loop
         schedule.run(&mut world);
 
-        unsafe {
-            lvgl_sys::lv_tick_inc(diff);
+        lv_bevy_ecs::lv_tick_inc(diff);
 
-            lvgl_sys::lv_timer_handler();
-        }
+        lv_bevy_ecs::lv_timer_handler();
 
         sleep(Duration::from_millis(5));
     }

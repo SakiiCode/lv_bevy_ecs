@@ -1,8 +1,8 @@
 use std::{
+    ffi::CString,
     process::exit,
     thread::sleep,
     time::{Duration, Instant},
-    ffi::CString
 };
 
 use lv_bevy_ecs::{
@@ -14,6 +14,7 @@ use lv_bevy_ecs::{
         lv_style_set_bg_color, lv_style_set_opa,
     },
     input::{InputDevice, PointerInputData},
+    lv_tick_inc, lv_timer_handler,
     support::{Align, Color, LvError},
     widgets::Arc,
 };
@@ -169,7 +170,7 @@ fn main() -> Result<(), LvError> {
     sleep(Duration::from_millis(5));
     loop {
         let current_time = Instant::now();
-        let diff = current_time.duration_since(prev_time).as_millis() as u32;
+        let diff = current_time.duration_since(prev_time);
         prev_time = current_time;
 
         window.update(&sim_display);
@@ -206,11 +207,8 @@ fn main() -> Result<(), LvError> {
         // Run the schedule once. If your app has a "loop", you would run this once per loop
         schedule.run(&mut world);
 
-        unsafe {
-            lvgl_sys::lv_tick_inc(diff);
-
-            lvgl_sys::lv_timer_handler();
-        }
+        lv_tick_inc(diff);
+        lv_timer_handler();
 
         sleep(Duration::from_millis(5));
     }

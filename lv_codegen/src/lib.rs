@@ -115,21 +115,20 @@ impl Rusty for LvFunc {
         //
         // - Iif the first argument (of the C function) is const then we require a &self immutable reference, otherwise an &mut self reference
         // - The arguments will be appended to the accumulator (args_accumulator) as they are generated in the closure
-        let args_decl =
-            self.args
-                .iter()
-                .fold(quote!(), |args_accumulator, arg| {
-                    let next_arg = arg.code(self).unwrap();
-
-                    // If the accummulator is empty then we call quote! only with the next_arg content
-                    if args_accumulator.is_empty() {
-                        quote! {#next_arg}
-                    }
-                    // Otherwise we append next_arg at the end of the accumulator
-                    else {
-                        quote! {#args_accumulator, #next_arg}
-                    }
-                });
+        let args_decl = self.args.iter().fold(quote!(), |args_accumulator, arg| {
+            if let Ok(next_arg) = arg.code(self) {
+                // If the accummulator is empty then we call quote! only with the next_arg content
+                if args_accumulator.is_empty() {
+                    quote! {#next_arg}
+                }
+                // Otherwise we append next_arg at the end of the accumulator
+                else {
+                    quote! {#args_accumulator, #next_arg}
+                }
+            }else{
+                args_accumulator
+            }
+        });
 
         let args_preprocessing = self
             .args
