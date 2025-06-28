@@ -8,6 +8,7 @@ pub mod widgets;
 pub mod input;
 pub mod events;
 pub mod functions;
+pub mod subjects;
 
 pub mod prelude {
     pub use lvgl_sys::*;

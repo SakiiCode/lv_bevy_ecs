@@ -20,6 +20,7 @@ use lv_bevy_ecs::{
         lv_style_set_text_font,
     },
     input::{InputDevice, PointerInputData},
+    subjects::Subject,
     support::{Color, LvError, lv_pct},
     widgets::{Btnmatrix, Canvas, Chart, Dropdown, Image, Widget},
 };
@@ -53,8 +54,8 @@ use lvgl_sys::{
     lv_grid_align_t_LV_GRID_ALIGN_STRETCH, lv_layer_t, lv_obj_create,
     lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT,
     lv_observer_get_target, lv_observer_t, lv_palette_darken, lv_palette_t_LV_PALETTE_BLUE,
-    lv_screen_active, lv_subject_add_observer_obj, lv_subject_get_int, lv_subject_init_int,
-    lv_subject_set_int, lv_subject_t,
+    lv_screen_active, lv_subject_add_observer_obj, lv_subject_get_int, lv_subject_set_int,
+    lv_subject_t,
 };
 
 macro_rules! cstr {
@@ -169,10 +170,7 @@ fn main() -> Result<(), LvError> {
             );
         }
 
-        let mut chart_type_subject = std::mem::MaybeUninit::<lv_subject_t>::uninit();
-        unsafe {
-            lv_subject_init_int(chart_type_subject.as_mut_ptr(), 0);
-        }
+        let mut chart_type_subject = Subject::new_int(0);
 
         let mut dropdown = Dropdown::create_widget()?;
         lv_dropdown_set_options(&mut dropdown, &cstr!("Lines\nBars"));
@@ -188,7 +186,7 @@ fn main() -> Result<(), LvError> {
         );
 
         unsafe {
-            lv_dropdown_bind_value(dropdown.raw(), chart_type_subject.as_mut_ptr());
+            lv_dropdown_bind_value(dropdown.raw(), chart_type_subject.raw());
         }
 
         world.spawn((Dropdown, dropdown));
@@ -214,12 +212,12 @@ fn main() -> Result<(), LvError> {
 
         unsafe {
             lv_subject_add_observer_obj(
-                chart_type_subject.as_mut_ptr(),
+                chart_type_subject.raw(),
                 Some(chart_type_observer_cb),
                 chart.raw(),
                 std::ptr::null_mut(),
             );
-            lv_subject_set_int(chart_type_subject.as_mut_ptr(), 1);
+            lv_subject_set_int(chart_type_subject.raw(), 1);
         }
 
         world.spawn((Chart, chart));
