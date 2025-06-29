@@ -153,3 +153,17 @@ where
         callback(*event);
     }
 }
+
+pub fn lv_event_get_target_obj(event: &mut lvgl_sys::lv_event_t) -> Widget {
+    unsafe {
+        let target = lvgl_sys::lv_event_get_target_obj(event);
+        Widget::from_raw(target).unwrap()
+    }
+}
+
+pub fn lv_event_get_current_target_obj(event: &mut lvgl_sys::lv_event_t) -> Widget {
+    unsafe {
+        let target = lvgl_sys::lv_event_get_current_target_obj(event);
+        Widget::from_raw(target).unwrap()
+    }
+}
