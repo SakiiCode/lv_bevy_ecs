@@ -52,7 +52,7 @@ impl Drop for Style {
 unsafe impl Send for Style {}
 unsafe impl Sync for Style {}
 
-pub fn add_style(mut world: DeferredWorld, ctx: HookContext) {
+fn add_style(mut world: DeferredWorld, ctx: HookContext) {
     // TODO make this safer
     let widget = world
         .get_mut::<Widget>(ctx.entity)
@@ -65,7 +65,7 @@ pub fn add_style(mut world: DeferredWorld, ctx: HookContext) {
     dbg!("Added style");
 }
 
-pub fn remove_style(mut world: DeferredWorld, ctx: HookContext) {
+fn remove_style(mut world: DeferredWorld, ctx: HookContext) {
     // TODO make this safer
     let widget = world
         .get_mut::<Widget>(ctx.entity)

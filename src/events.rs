@@ -1,3 +1,5 @@
+use std::ffi::c_void;
+
 use crate::widgets::Widget;
 
 /// Events are triggered in LVGL when something happens which might be interesting to
@@ -152,6 +154,10 @@ where
         let callback = &mut *((*event).user_data as *mut F);
         callback(*event);
     }
+}
+
+pub fn lv_event_get_target(event: &mut lvgl_sys::lv_event_t) -> *const c_void {
+    unsafe { lvgl_sys::lv_event_get_target(event) }
 }
 
 pub fn lv_event_get_target_obj(event: &mut lvgl_sys::lv_event_t) -> Widget {

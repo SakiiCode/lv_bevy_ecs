@@ -1,13 +1,18 @@
 use std::{
-    ffi::{c_char, c_void, CStr},
+    ffi::{CStr, c_char, c_void},
     mem::MaybeUninit,
 };
 
-use lvgl_sys::lv_subject_t;
+use lvgl_sys::{lv_color_t, lv_subject_t};
+
+use crate::widgets::Widget;
 
 pub struct Subject {
     raw: lv_subject_t,
 }
+
+unsafe impl Send for Subject {}
+unsafe impl Sync for Subject {}
 
 impl Subject {
     pub fn new_int(value: i32) -> Self {
@@ -50,5 +55,80 @@ impl Subject {
 
     pub fn raw(&mut self) -> &mut lv_subject_t {
         &mut self.raw
+    }
+}
+
+pub fn lv_subject_set_int(subject: &mut Subject, value: i32) {
+    unsafe {
+        lvgl_sys::lv_subject_set_int(subject.raw(), value);
+    }
+}
+
+pub fn lv_subject_set_string(subject: &mut Subject, value: *mut c_void) {
+    unsafe {
+        lvgl_sys::lv_subject_set_pointer(subject.raw(), value);
+    }
+}
+
+pub fn lv_subject_set_color(subject: &mut Subject, value: lv_color_t) {
+    unsafe {
+        lvgl_sys::lv_subject_set_color(subject.raw(), value);
+    }
+}
+
+pub fn lv_subject_get_int(subject: &mut Subject) -> i32 {
+    unsafe { lvgl_sys::lv_subject_get_int(subject.raw()) }
+}
+
+pub fn lv_sujbect_get_ptr(subject: &mut Subject) -> *const c_void {
+    unsafe { lvgl_sys::lv_subject_get_pointer(subject.raw()) }
+}
+
+pub fn lv_subject_get_color(subject: &mut Subject) -> lv_color_t {
+    unsafe { lvgl_sys::lv_subject_get_color(subject.raw()) }
+}
+
+pub fn lv_subject_get_string(subject: &mut Subject) -> &CStr {
+    unsafe { CStr::from_ptr(lvgl_sys::lv_subject_get_string(subject.raw())) }
+}
+
+pub fn lv_subject_get_previous_color(subject: &mut Subject) -> lv_color_t {
+    unsafe { lvgl_sys::lv_subject_get_previous_color(subject.raw()) }
+}
+
+pub fn lv_subject_get_previous_int(subject: &mut Subject) -> i32 {
+    unsafe { lvgl_sys::lv_subject_get_previous_int(subject.raw()) }
+}
+
+pub fn lv_subject_get_previous_string(subject: &mut Subject) -> &CStr {
+    unsafe { CStr::from_ptr(lvgl_sys::lv_subject_get_previous_string(subject.raw())) }
+}
+pub fn lv_subject_get_previous_pointer(subject: &mut Subject) -> *const c_void {
+    unsafe { lvgl_sys::lv_subject_get_previous_pointer(subject.raw()) }
+}
+
+pub fn lv_subject_add_observer_obj<F>(subject: &mut Subject, object: &mut Widget, callback: F)
+where
+    F: FnMut(*mut lvgl_sys::lv_observer_t, *mut lvgl_sys::lv_subject_t),
+{
+    unsafe {
+        lvgl_sys::lv_subject_add_observer_obj(
+            &mut subject.raw,
+            Some(subject_callback::<F>),
+            object.raw(),
+            Box::into_raw(Box::new(callback)) as *mut c_void,
+        );
+    }
+}
+
+pub(crate) unsafe extern "C" fn subject_callback<F>(
+    observer: *mut lvgl_sys::lv_observer_t,
+    subject: *mut lvgl_sys::lv_subject_t,
+) where
+    F: FnMut(*mut lvgl_sys::lv_observer_t, *mut lvgl_sys::lv_subject_t),
+{
+    unsafe {
+        let callback = &mut *((*observer).user_data as *mut F);
+        callback(observer, subject);
     }
 }

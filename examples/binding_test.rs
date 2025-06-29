@@ -9,7 +9,7 @@ use bevy_ecs::{hierarchy::Children, query::With};
 use lv_bevy_ecs::{
     animation::Animation,
     display::{Display, DrawBuffer},
-    events::{Event, lv_obj_add_event_cb},
+    events::{Event, lv_event_get_target, lv_obj_add_event_cb},
     functions::{
         lv_buttonmatrix_set_ctrl_map, lv_buttonmatrix_set_selected_button, lv_canvas_fill_bg,
         lv_canvas_set_buffer, lv_chart_set_ext_y_array, lv_dropdown_set_options,
@@ -20,7 +20,7 @@ use lv_bevy_ecs::{
         lv_style_set_text_font,
     },
     input::{InputDevice, PointerInputData},
-    subjects::Subject,
+    subjects::{Subject, lv_subject_add_observer_obj, lv_subject_set_int},
     support::{Color, LvError, lv_pct},
     widgets::{Btnmatrix, Canvas, Chart, Dropdown, Image, Widget},
 };
@@ -48,14 +48,13 @@ use lvgl_sys::{
     lv_buttonmatrix_get_selected_button, lv_chart_add_series,
     lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X, lv_chart_set_type, lv_chart_type_t_LV_CHART_TYPE_BAR,
     lv_chart_type_t_LV_CHART_TYPE_LINE, lv_color_hex3, lv_color_mix, lv_color_t, lv_draw_buf_align,
-    lv_draw_image_dsc_t, lv_draw_line_dsc_t, lv_dropdown_bind_value, lv_event_get_target,
-    lv_event_t, lv_flex_flow_t_LV_FLEX_FLOW_COLUMN, lv_font_montserrat_24,
+    lv_draw_image_dsc_t, lv_draw_line_dsc_t, lv_dropdown_bind_value, lv_event_t,
+    lv_flex_flow_t_LV_FLEX_FLOW_COLUMN, lv_font_montserrat_24,
     lv_grid_align_t_LV_GRID_ALIGN_CENTER, lv_grid_align_t_LV_GRID_ALIGN_START,
     lv_grid_align_t_LV_GRID_ALIGN_STRETCH, lv_layer_t, lv_obj_create,
     lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT,
     lv_observer_get_target, lv_observer_t, lv_palette_darken, lv_palette_t_LV_PALETTE_BLUE,
-    lv_screen_active, lv_subject_add_observer_obj, lv_subject_get_int, lv_subject_set_int,
-    lv_subject_t,
+    lv_screen_active, lv_subject_get_int, lv_subject_t,
 };
 
 macro_rules! cstr {
@@ -83,7 +82,7 @@ fn main() -> Result<(), LvError> {
         SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
-    let mut window = Window::new("Bindings test Example", &output_settings);
+    let mut window = Window::new("Bindings Test Example", &output_settings);
     println!("SIMULATOR OK");
 
     lv_bevy_ecs::init();
@@ -210,15 +209,8 @@ fn main() -> Result<(), LvError> {
             lv_chart_set_ext_y_array(&mut chart, series.as_mut().unwrap(), &mut chart_y_array[0]);
         }
 
-        unsafe {
-            lv_subject_add_observer_obj(
-                chart_type_subject.raw(),
-                Some(chart_type_observer_cb),
-                chart.raw(),
-                std::ptr::null_mut(),
-            );
-            lv_subject_set_int(chart_type_subject.raw(), 1);
-        }
+        lv_subject_add_observer_obj(&mut chart_type_subject, &mut chart, chart_type_observer_cb);
+        lv_subject_set_int(&mut chart_type_subject, 1);
 
         world.spawn((Chart, chart));
 
@@ -464,10 +456,7 @@ fn main() -> Result<(), LvError> {
     }
 }
 
-unsafe extern "C" fn chart_type_observer_cb(
-    observer: *mut lv_observer_t,
-    subject: *mut lv_subject_t,
-) {
+fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject_t) {
     unsafe {
         let v = lv_subject_get_int(subject);
         let chart = lv_observer_get_target(observer);
@@ -484,7 +473,7 @@ unsafe extern "C" fn chart_type_observer_cb(
 
 fn buttonmatrix_event_cb(world: &mut World, e: &mut lv_event_t) {
     unsafe {
-        let buttonmatrix = lv_event_get_target(e) as *mut lvgl_sys::lv_obj_t;
+        let buttonmatrix = lv_event_get_target(e) as *const lvgl_sys::lv_obj_t;
 
         let idx = lv_buttonmatrix_get_selected_button(buttonmatrix);
         let text = lv_buttonmatrix_get_button_text(buttonmatrix, idx);
