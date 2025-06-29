@@ -10,7 +10,7 @@ use crate::widgets::Widget;
 #[component(on_insert=add_style)]
 #[component(on_replace=remove_style)]
 pub struct Style {
-    raw: Box<lvgl_sys::lv_style_t>,
+    raw: lvgl_sys::lv_style_t,
     selector: lv_style_selector_t,
 }
 
@@ -19,7 +19,7 @@ impl Default for Style {
         let raw = unsafe {
             let mut style = std::mem::MaybeUninit::<lvgl_sys::lv_style_t>::uninit();
             lvgl_sys::lv_style_init(style.as_mut_ptr());
-            Box::new(style.assume_init())
+            style.assume_init()
         };
         Self {
             raw,
@@ -29,15 +29,15 @@ impl Default for Style {
 }
 
 impl Style {
-    pub fn raw(&mut self) -> *mut lvgl_sys::lv_style_t {
-        self.raw.as_mut()
+    pub fn raw(&mut self) -> &mut lvgl_sys::lv_style_t {
+        &mut self.raw
     }
 
     pub fn new(selector: lv_style_selector_t) -> Self {
         let raw = unsafe {
             let mut style = std::mem::MaybeUninit::<lvgl_sys::lv_style_t>::uninit();
             lvgl_sys::lv_style_init(style.as_mut_ptr());
-            Box::new(style.assume_init())
+            style.assume_init()
         };
         Self { raw, selector }
     }
@@ -60,7 +60,7 @@ pub fn add_style(mut world: DeferredWorld, ctx: HookContext) {
         .raw();
     let mut style = world.get_mut::<Style>(ctx.entity).unwrap();
     unsafe {
-        lvgl_sys::lv_obj_add_style(widget, style.raw.as_mut(), style.selector);
+        lvgl_sys::lv_obj_add_style(widget, &mut style.raw, style.selector);
     }
     dbg!("Added style");
 }
@@ -73,7 +73,7 @@ pub fn remove_style(mut world: DeferredWorld, ctx: HookContext) {
         .raw();
     let mut style = world.get_mut::<Style>(ctx.entity).unwrap();
     unsafe {
-        lvgl_sys::lv_obj_remove_style(widget, style.raw.as_mut(), style.selector);
+        lvgl_sys::lv_obj_remove_style(widget, &mut style.raw, style.selector);
     }
     dbg!("Removed style");
 }

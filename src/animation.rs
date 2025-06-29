@@ -10,16 +10,7 @@ use crate::widgets::Widget;
 #[derive(Component)]
 #[component(on_insert=add_animation)]
 pub struct Animation {
-    raw: Option<Box<lvgl_sys::lv_anim_t>>,
-}
-
-impl Drop for Animation {
-    fn drop(&mut self) {
-        println!("Dropping Animation");
-        // at this point internal lv_anim_t is already freed for some unknown reason
-        let raw = self.raw.take();
-        std::mem::forget(raw);
-    }
+    raw: Option<lvgl_sys::lv_anim_t>,
 }
 
 impl Animation {
@@ -30,7 +21,7 @@ impl Animation {
         let mut raw = unsafe {
             let mut anim = std::mem::MaybeUninit::<lvgl_sys::lv_anim_t>::uninit();
             lvgl_sys::lv_anim_init(anim.as_mut_ptr());
-            Box::new(anim.assume_init())
+            anim.assume_init()
         };
         raw.duration = duration.as_millis().try_into().unwrap_or(0);
         raw.start_value = start;
@@ -44,14 +35,12 @@ impl Animation {
 
     pub fn start(&mut self) {
         unsafe {
-            self.raw = Some(Box::from_raw(lvgl_sys::lv_anim_start(Box::into_raw(
-                self.raw.take().unwrap(),
-            ))));
+            self.raw = Some(*lvgl_sys::lv_anim_start(&self.raw.take().unwrap()));
         }
     }
 
-    pub fn raw(mut self) -> *mut lvgl_sys::lv_anim_t {
-        self.raw.as_mut().unwrap().as_mut()
+    pub fn raw(&mut self) -> &mut lvgl_sys::lv_anim_t {
+        self.raw.as_mut().unwrap()
     }
 }
 

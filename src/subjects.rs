@@ -48,7 +48,7 @@ impl Subject {
         }
     }
 
-    pub fn raw(&mut self) -> *mut lv_subject_t {
+    pub fn raw(&mut self) -> &mut lv_subject_t {
         &mut self.raw
     }
 }
