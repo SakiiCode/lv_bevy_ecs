@@ -10,6 +10,8 @@ pub mod events;
 pub mod functions;
 pub mod subjects;
 pub mod timers;
+#[cfg(feature="lvgl-alloc")]
+mod alloc;
 
 pub mod prelude {
     pub use lvgl_sys::*;

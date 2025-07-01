@@ -30,3 +30,4 @@ lvgl-sys = { path = "../lvgl-sys-scratch", default-features = false, features = 
 [features]
 qrcode=[]
 barcode=[]
+lvgl-alloc=[]
