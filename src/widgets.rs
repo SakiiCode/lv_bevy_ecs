@@ -125,3 +125,9 @@ impl_widget!(Textarea, lvgl_sys::lv_textarea_create);
 impl_widget!(Slider, lvgl_sys::lv_slider_create);
 
 impl_widget!(List, lvgl_sys::lv_list_create);
+
+#[cfg(feature="qrcode")]
+impl_widget!(QrCode, lvgl_sys::lv_qrcode_create);
+
+#[cfg(feature="barcode")]
+impl_widget!(Barcode, lvgl_sys::lv_barcode_create);

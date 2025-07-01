@@ -26,3 +26,7 @@ quote = "1.0.40"
 lvgl-sys = { path = "../lvgl-sys-scratch", default-features = false, features = [
   "raw-bindings",
 ] }
+
+[features]
+qrcode=[]
+barcode=[]
