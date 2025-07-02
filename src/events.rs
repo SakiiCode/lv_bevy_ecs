@@ -131,9 +131,9 @@ impl From<Event> for lvgl_sys::lv_event_code_t {
     }
 }
 
-pub fn lv_obj_add_event_cb<F>(widget: &Widget, filter: Event, callback: F)
+pub fn lv_obj_add_event_cb<'a, F>(widget: &'a Widget, filter: Event, callback: F)
 where
-    F: FnMut(lvgl_sys::lv_event_t),
+    F: FnMut(lvgl_sys::lv_event_t) + 'a,
 {
     unsafe {
         let obj = widget.raw();

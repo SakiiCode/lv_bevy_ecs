@@ -12,7 +12,7 @@ pub struct Timer {
 impl Timer {
     pub fn new<F>(callback: F, period: u32) -> Result<Self, LvError>
     where
-        F: FnMut(*mut lv_timer_t),
+        F: FnMut(*mut lv_timer_t) + 'static,
     {
         unsafe {
             let timer = lvgl_sys::lv_timer_create(
@@ -31,7 +31,7 @@ impl Timer {
 
 unsafe extern "C" fn timer_trampoline<F>(timer: *mut lv_timer_t)
 where
-    F: FnMut(*mut lv_timer_t),
+    F: FnMut(*mut lv_timer_t) + 'static,
 {
     unsafe {
         let callback = &mut *((*timer).user_data as *mut F);
@@ -41,7 +41,7 @@ where
 
 pub fn lv_async_call<F>(callback: F)
 where
-    F: FnMut(),
+    F: FnMut() + 'static,
 {
     unsafe {
         lvgl_sys::lv_async_call(
@@ -53,7 +53,7 @@ where
 
 unsafe extern "C" fn async_call_trampoline<F>(obj: *mut c_void)
 where
-    F: FnMut(),
+    F: FnMut() + 'static,
 {
     unsafe {
         let callback = &mut *((obj) as *mut F);

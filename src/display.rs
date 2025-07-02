@@ -2,8 +2,9 @@ use std::{ptr::NonNull, u16};
 
 use cty::c_void;
 use embedded_graphics::{
+    Pixel,
     prelude::{PixelColor, Point, Size},
-    primitives::Rectangle, Pixel,
+    primitives::Rectangle,
 };
 use lvgl_sys::{
     lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL, lv_display_t, lv_draw_buf_t,
@@ -23,9 +24,9 @@ impl Display {
         }
     }
 
-    pub fn register<F, const N: usize>(&mut self, buffer: DrawBuffer<N>, callback: F)
+    pub fn register<'a, F, const N: usize>(&'a mut self, buffer: DrawBuffer<N>, callback: F)
     where
-        F: FnMut(&mut DisplayRefresh<N>),
+        F: FnMut(&mut DisplayRefresh<N>) + 'a,
     {
         unsafe {
             lvgl_sys::lv_display_set_buffers(
@@ -74,12 +75,12 @@ where
     }
 }
 
-unsafe extern "C" fn disp_flush_trampoline<'a, F, const N: usize>(
+unsafe extern "C" fn disp_flush_trampoline<F, const N: usize>(
     display: *mut lvgl_sys::lv_display_t,
     area: *const lvgl_sys::lv_area_t,
     color_p: *mut u8,
 ) where
-    F: FnMut(&mut DisplayRefresh<N>) + 'a,
+    F: FnMut(&mut DisplayRefresh<N>),
 {
     unsafe {
         let display_driver = *display;
@@ -132,21 +133,17 @@ impl<const N: usize> DisplayRefresh<N> {
         C: PixelColor + From<Color>,
     {
         let area = &self.rectangle;
-        let Point { x:x1, y:y1 } = area.top_left;
-        let Point { x:x2, y:y2 } = area.bottom_right().unwrap();
-        
+        let Point { x: x1, y: y1 } = area.top_left;
+        let Point { x: x2, y: y2 } = area.bottom_right().unwrap();
+
         let ys = y1..=y2;
         let xs = x1..=x2;
 
         // We use iterators here to ensure that the Rust compiler can apply all possible
         // optimizations at compile time.
-        ys.flat_map(move |y| {
-            xs.clone().map(move |x| {
-                Point::new(x as i32, y as i32)
-            })
-        }).zip(self.colors.as_mut().unwrap()).map(|(point, color)|{
-            Pixel(point, color.into())
-        })
+        ys.flat_map(move |y| xs.clone().map(move |x| Point::new(x as i32, y as i32)))
+            .zip(self.colors.as_mut().unwrap())
+            .map(|(point, color)| Pixel(point, color.into()))
     }
 }
 

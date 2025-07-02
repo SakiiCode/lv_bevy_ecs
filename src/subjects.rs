@@ -80,7 +80,7 @@ pub fn lv_subject_get_int(subject: &mut Subject) -> i32 {
     unsafe { lvgl_sys::lv_subject_get_int(subject.raw()) }
 }
 
-pub fn lv_sujbect_get_ptr(subject: &mut Subject) -> *const c_void {
+pub fn lv_subject_get_ptr(subject: &mut Subject) -> *const c_void {
     unsafe { lvgl_sys::lv_subject_get_pointer(subject.raw()) }
 }
 
@@ -107,9 +107,9 @@ pub fn lv_subject_get_previous_pointer(subject: &mut Subject) -> *const c_void {
     unsafe { lvgl_sys::lv_subject_get_previous_pointer(subject.raw()) }
 }
 
-pub fn lv_subject_add_observer_obj<F>(subject: &mut Subject, object: &mut Widget, callback: F)
+pub fn lv_subject_add_observer_obj<'a, F>(subject: &'a mut Subject, object: &mut Widget, callback: F)
 where
-    F: FnMut(*mut lvgl_sys::lv_observer_t, *mut lvgl_sys::lv_subject_t),
+    F: FnMut(*mut lvgl_sys::lv_observer_t, *mut lvgl_sys::lv_subject_t) + 'a,
 {
     unsafe {
         lvgl_sys::lv_subject_add_observer_obj(
