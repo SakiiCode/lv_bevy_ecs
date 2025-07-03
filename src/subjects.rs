@@ -11,6 +11,14 @@ pub struct Subject {
     raw: lv_subject_t,
 }
 
+impl Drop for Subject {
+    fn drop(&mut self) {
+        unsafe {
+            lvgl_sys::lv_subject_deinit(&mut self.raw);
+        }
+    }
+}
+
 unsafe impl Send for Subject {}
 unsafe impl Sync for Subject {}
 

@@ -9,6 +9,14 @@ pub struct Timer {
     raw: NonNull<lvgl_sys::lv_timer_t>,
 }
 
+impl Drop for Timer {
+    fn drop(&mut self) {
+        unsafe {
+            lvgl_sys::lv_timer_delete(self.raw.as_ptr());
+        }
+    }
+}
+
 impl Timer {
     pub fn new<F>(callback: F, period: u32) -> Result<Self, LvError>
     where
