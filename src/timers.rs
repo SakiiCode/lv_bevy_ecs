@@ -1,15 +1,18 @@
-use std::{ffi::c_void, ptr::NonNull};
+use std::{ffi::c_void, marker::PhantomData, ptr::NonNull, time::Duration};
 
+use bevy_ecs::component::Component;
 use lvgl_sys::lv_timer_t;
 
 use crate::support::LvError;
 
 #[allow(dead_code)]
-pub struct Timer {
-    raw: NonNull<lvgl_sys::lv_timer_t>,
+#[derive(Component)]
+pub struct Timer<'a> {
+    raw: NonNull<lv_timer_t>,
+    phantom: PhantomData<&'a lv_timer_t>,
 }
 
-impl Drop for Timer {
+impl Drop for Timer<'_> {
     fn drop(&mut self) {
         unsafe {
             lvgl_sys::lv_timer_delete(self.raw.as_ptr());
@@ -17,19 +20,25 @@ impl Drop for Timer {
     }
 }
 
-impl Timer {
-    pub fn new<F>(callback: F, period: u32) -> Result<Self, LvError>
+unsafe impl Send for Timer<'_> {}
+unsafe impl Sync for Timer<'_> {}
+
+impl<'a> Timer<'a> {
+    pub fn new<F>(callback: F, period: Duration) -> Result<Self, LvError>
     where
-        F: FnMut(*mut lv_timer_t) + 'static,
+        F: FnMut(*mut lv_timer_t) + 'a,
     {
         unsafe {
             let timer = lvgl_sys::lv_timer_create(
                 Some(timer_trampoline::<F>),
-                period,
+                period.as_millis() as u32,
                 Box::into_raw(Box::new(callback)) as *mut _,
             );
             if let Some(ptr) = NonNull::new(timer) {
-                Ok(Self { raw: ptr })
+                Ok(Self {
+                    raw: ptr,
+                    phantom: PhantomData,
+                })
             } else {
                 Err(LvError::InvalidReference)
             }
@@ -39,7 +48,7 @@ impl Timer {
 
 unsafe extern "C" fn timer_trampoline<F>(timer: *mut lv_timer_t)
 where
-    F: FnMut(*mut lv_timer_t) + 'static,
+    F: FnMut(*mut lv_timer_t),
 {
     unsafe {
         let callback = &mut *((*timer).user_data as *mut F);
