@@ -7,6 +7,7 @@ use std::{
 
 use bevy_ecs::{hierarchy::Children, query::With};
 use lv_bevy_ecs::{
+    LvglWorld,
     animation::Animation,
     display::{Display, DrawBuffer},
     events::{Event, lv_event_get_target, lv_obj_add_event_cb},
@@ -34,7 +35,7 @@ use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
 use lv_bevy_ecs::styles::Style;
-use lv_bevy_ecs::widgets::{Button, Label, on_insert_parent};
+use lv_bevy_ecs::widgets::{Button, Label};
 
 use lv_bevy_ecs::prelude::{
     component::Component, entity::Entity, lv_color_format_t_LV_COLOR_FORMAT_RGB565,
@@ -119,8 +120,7 @@ fn main() -> Result<(), LvError> {
 
     println!("Input OK");
 
-    let mut world = World::new();
-    world.add_observer(on_insert_parent);
+    let mut world = LvglWorld::new();
 
     println!("ECS OK");
 
