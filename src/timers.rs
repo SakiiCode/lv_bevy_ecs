@@ -1,3 +1,26 @@
+//! # Timers
+//! 
+//! Timers are components, can be used as a standalone entity or attached to another entity
+//! ```rust
+//! let timer = Timer::new(
+//!     move |_timer| {
+//!         // ...
+//!     },
+//!     Duration::from_millis(5000),
+//! )?;
+//! world.spawn(timer);
+//! ```
+//! To delete a timer, despawn the entity or remove the component and it will be automatically dropped.
+//! 
+//! ## Async calls
+//! 
+//! Closure will be executed on the next `lv_timer_handler()`. It needs `'static` lifetime.
+//! ```rust
+//! lv_async_call(||{
+//!     // ...
+//! })
+//! ```
+
 use std::{ffi::c_void, marker::PhantomData, ptr::NonNull, time::Duration};
 
 use bevy_ecs::component::Component;

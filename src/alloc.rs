@@ -1,3 +1,5 @@
+//! Set LVGL allocator as Rust's global memory allocator
+
 use core::alloc::{GlobalAlloc, Layout};
 
 // Register the global allocator

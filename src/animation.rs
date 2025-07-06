@@ -1,3 +1,19 @@
+//! # Animations
+//!
+//! Animations are components that need to be added to entities
+//!
+//! ```rust
+//! let anim = Animation::new(
+//!     Duration::from_secs(5),
+//!     LV_OPA_0 as i32,
+//!     LV_OPA_100 as i32,
+//!     |obj, val| {
+//!         lv_obj_set_style_opa(obj, val as u8, LV_PART_MAIN);
+//!     },
+//! );
+//! let mut button_entity = world.spawn((Button, button, anim));
+//! ```
+
 use std::{ffi::c_void, ptr::NonNull, time::Duration};
 
 use bevy_ecs::{

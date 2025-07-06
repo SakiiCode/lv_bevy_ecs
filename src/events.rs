@@ -1,3 +1,4 @@
+//! # Events
 use std::ffi::c_void;
 
 use crate::widgets::Widget;

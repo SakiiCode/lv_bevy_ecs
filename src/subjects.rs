@@ -1,3 +1,19 @@
+//! # Subjects
+//!
+//! ```rust
+//! let mut chart_type_subject = Subject::new_int(0);
+//! 
+//! unsafe {
+//!     lv_dropdown_bind_value(dropdown.raw(), chart_type_subject.raw());
+//! }
+//! 
+//! lv_subject_add_observer_obj(&mut chart_type_subject, &mut chart, |observer, subject|{
+//!     // ...
+//! });
+//! lv_subject_set_int(&mut chart_type_subject, 1);
+//! 
+//! ```
+
 use std::{
     ffi::{CStr, c_char, c_void},
     mem::MaybeUninit,
@@ -115,8 +131,11 @@ pub fn lv_subject_get_previous_pointer(subject: &mut Subject) -> *const c_void {
     unsafe { lvgl_sys::lv_subject_get_previous_pointer(subject.raw()) }
 }
 
-pub fn lv_subject_add_observer_obj<'a, F>(subject: &'a mut Subject, object: &mut Widget, callback: F)
-where
+pub fn lv_subject_add_observer_obj<'a, F>(
+    subject: &'a mut Subject,
+    object: &mut Widget,
+    callback: F,
+) where
     F: FnMut(*mut lvgl_sys::lv_observer_t, *mut lvgl_sys::lv_subject_t) + 'a,
 {
     unsafe {

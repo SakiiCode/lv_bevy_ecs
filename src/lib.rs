@@ -1,3 +1,4 @@
+#![doc = include_str!("../README.md")]
 use std::time::Duration;
 
 use bevy_ecs::world::World;
@@ -18,6 +19,7 @@ pub mod timers;
 pub mod widgets;
 
 pub mod prelude {
+    //! Re-exported modules from bevy_ecs and lvgl_sys
     pub use bevy_ecs::*;
     pub use lvgl_sys::*;
 }

@@ -1,3 +1,18 @@
+//! # Styles
+//!
+//! Styles are components that need to be added to entities.
+//! Right now a Style can be only applied to a single widget.
+//!
+//! ```rust
+//! let mut button = Button::create_widget()?;
+//! let mut button_entity = world.spawn((Button, button));
+//!
+//! let mut style = Style::default();
+//! lv_style_set_opa(&mut style, LV_OPA_50 as u8);
+//!
+//! button_entity.insert(style);
+//! ```
+
 use bevy_ecs::{
     component::{Component, HookContext},
     world::DeferredWorld,

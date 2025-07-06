@@ -1,3 +1,47 @@
+//! # Display
+//! 
+//! The `embedded-graphics` crate is used to drive the screens. Examples use `embedded-graphics-simulator` to try them on PC.
+//! ## Simulator
+//! ```rust
+//! const HOR_RES: u32 = 800;
+//! const VER_RES: u32 = 480;
+//! const LINE_HEIGHT: u32 = 10;
+//! let mut sim_display: SimulatorDisplay<Rgb565> =
+//!        SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
+
+//! ```
+//! ## ESP32
+//! ```rust
+//! let mut delay = Delay::default();
+//! let mut tft_display = Builder::new(ST7789, di)
+//!     .color_order(mipidsi::options::ColorOrder::Rgb)
+//!     .orientation(
+//!         mipidsi::options::Orientation::default().rotate(mipidsi::options::Rotation::Deg270),
+//!     )
+//!     .reset_pin(gpio::PinDriver::output(pins.gpio4)?)
+//!     .init(&mut delay)
+//!     .expect("Cannot initialize display");
+//! ```
+//! 
+//! ## Display refresh callback
+//! ```rust
+//! let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
+//! 
+//! let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }>::create(
+//!         HOR_RES,
+//!         LINE_HEIGHT,
+//!         lv_color_format_t_LV_COLOR_FORMAT_RGB565,
+//! );
+//! display.register(buffer, |refresh| {
+//!     // alternative (slower): sim_display.draw_iter(refresh.as_pixels()).unwrap();
+//!     sim_display
+//!         .fill_contiguous(
+//!             &refresh.rectangle,
+//!             refresh.colors.take().unwrap().map(|c| c.into()),
+//!         )
+//!         .unwrap();
+//! });
+//! ```
 use std::{ptr::NonNull, u16};
 
 use cty::c_void;

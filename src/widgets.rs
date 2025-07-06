@@ -1,12 +1,56 @@
+//! # Widgets
+//!
+//! ```rust
+//! let mut label: Widget = Label::create_widget()?;
+//! lv_label_set_text(&mut label, cstr!("Example label"));
+//! world.spawn((Label, label));
+//! ```
+//!
+//! To create widgets, you have to use "zero-sized marker structs" (Arc, Label, Button, ...) that create `Widget` objects
+//! using the `create_widget` function.
+//!
+//! Most of the LVGL functions have been kept with original names and they will use this `Widget` as their first parameter.
+//!
+//! In order to ECS to know the type of the Widget, pass the marker struct next to it when spawning the entity. (This is not mandatory but useful for queries)
+//!
+//! ## Modifying Widgets
+//!
+//! To access widgets after moving them to the World with the `spawn()` function, you have to use queries
+//! ```rust
+//! let mut labels = world.query_filtered::<&mut Widget, With<Label>>();
+//! for label in labels.iter_mut(){
+//!   //...
+//! }
+//! ```
+//!
+//! In case of a unique entity:
+//! ```rust
+//! let mut label = world.query_filtered::<&mut Widget, With<Label>>().single_mut().unwrap();
+//! ```
+//!
+//! You are free to define any kind of custom component:
+//!
+//! ```rust
+//! #[derive(Component)]
+//! struct DynamicLabel;
+//! // ...
+//! world.spawn((Label, label, DynamicLabel));
+//! //...
+//! let mut label = world.query_filtered::<&mut Widget, With<DynamicLabel>>().single_mut().unwrap();
+//! ```
+//! 
+//! ## Child widgets
+//! To add a widget as a child, set it as child entity
+//! ```rust
+//! let mut button_entity = world.spawn((Button, button));
+//! let mut label_entity = button_entity.with_child((Label, label));
+//! ```
+
 use std::ptr::NonNull;
 
 use crate::support::LvError;
 use bevy_ecs::{
-    component::Component,
-    hierarchy::{ChildOf},
-    observer::Trigger,
-    system::Query,
-    world::OnInsert,
+    component::Component, hierarchy::ChildOf, observer::Trigger, system::Query, world::OnInsert,
 };
 use lvgl_sys::lv_obj_delete;
 
@@ -126,8 +170,8 @@ impl_widget!(Slider, lvgl_sys::lv_slider_create);
 
 impl_widget!(List, lvgl_sys::lv_list_create);
 
-#[cfg(feature="qrcode")]
+#[cfg(feature = "qrcode")]
 impl_widget!(QrCode, lvgl_sys::lv_qrcode_create);
 
-#[cfg(feature="barcode")]
+#[cfg(feature = "barcode")]
 impl_widget!(Barcode, lvgl_sys::lv_barcode_create);

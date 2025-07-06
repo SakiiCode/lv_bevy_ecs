@@ -1,3 +1,5 @@
+//! Utility structs and functions
+
 use core::convert::TryInto;
 use core::fmt;
 use embedded_graphics::pixelcolor::{Rgb565, Rgb888};
