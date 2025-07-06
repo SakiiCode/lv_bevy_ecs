@@ -2,6 +2,14 @@
 name = "lv_bevy_ecs"
 version = "0.1.0"
 edition = "2024"
+description = "Safe Rust bindings to the LVGL graphics library using Bevy's ECS framework"
+readme = "README.md"
+authors = ["SakiiCode"]
+homepage = "https://github.com/SakiiCode/lv_bevy_ecs"
+repository = "https://github.com/SakiiCode/lv_bevy_ecs"
+categories = ["embedded", "gui", "graphics"]
+keywords = ["lvgl", "ecs", "bevy", "embedded", "graphics"]
+
 
 [lib]
 name = "lv_bevy_ecs"
@@ -28,6 +36,6 @@ lvgl-sys = { path = "../lvgl-sys", default-features = false, features = [
 ] }
 
 [features]
-qrcode=[]
-barcode=[]
-lvgl-alloc=[]
+qrcode = []
+barcode = []
+lvgl-alloc = []
