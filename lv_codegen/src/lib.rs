@@ -1,3 +1,4 @@
+use inflector::cases::pascalcase::to_pascal_case;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use quote::{ToTokens, format_ident};
@@ -18,7 +19,7 @@ const FUNCTION_BLACKLIST: [&'static str; 8] = [
     "lv_obj_remove_style_all",
     "lv_obj_refresh_style",
     "lv_style_init",
-    "lv_obj_set_parent"
+    "lv_obj_set_parent",
 ];
 
 #[derive(Debug, Copy, Clone)]
@@ -48,6 +49,21 @@ impl Rusty for LvWidget {
         Ok(quote! {
             #(#methods)*
         })
+    }
+}
+
+impl LvWidget {
+    pub fn gen_impl(&self) -> WrapperResult<TokenStream> {
+        let pascal_name = format_ident!("{}", to_pascal_case(&self.name));
+        let create_function = format_ident!("lv_{}_create", &self.name);
+
+        if self.name == "obj" || self.name == "style" {
+            Err(WrapperError::Skip)
+        } else {
+            Ok(quote! {
+                impl_widget!(#pascal_name, lvgl_sys::#create_function);
+            })
+        }
     }
 }
 
@@ -126,7 +142,7 @@ impl Rusty for LvFunc {
                 else {
                     quote! {#args_accumulator, #next_arg}
                 }
-            }else{
+            } else {
                 args_accumulator
             }
         });
@@ -321,7 +337,7 @@ impl LvArg {
             quote! {
                 #ident_raw
             }
-        }else if self.typ.is_const_style() || self.typ.is_mut_style() {
+        } else if self.typ.is_const_style() || self.typ.is_mut_style() {
             quote! {
                 #ident.raw()
             }

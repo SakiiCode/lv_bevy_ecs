@@ -7,6 +7,9 @@ use crate::widgets::on_insert_parent;
 
 #[cfg(feature = "lvgl-alloc")]
 mod alloc;
+
+#[macro_use]
+pub mod widgets;
 pub mod animation;
 pub mod display;
 pub mod events;
@@ -16,7 +19,6 @@ pub mod styles;
 pub mod subjects;
 pub mod support;
 pub mod timers;
-pub mod widgets;
 
 pub mod prelude {
     //! Re-exported modules from bevy_ecs and lvgl_sys

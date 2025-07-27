@@ -138,6 +138,7 @@ pub fn lv_subject_add_observer_obj<'a, F>(
 ) where
     F: FnMut(*mut lvgl_sys::lv_observer_t, *mut lvgl_sys::lv_subject_t) + 'a,
 {
+    println!("lv_subject_add_observer_obj");
     unsafe {
         lvgl_sys::lv_subject_add_observer_obj(
             &mut subject.raw,

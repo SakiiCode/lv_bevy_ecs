@@ -36,6 +36,4 @@ lvgl-sys = { git = "https://github.com/SakiiCode/lvgl-sys.git", default-features
 ] }
 
 [features]
-qrcode = []
-barcode = []
 lvgl-alloc = []

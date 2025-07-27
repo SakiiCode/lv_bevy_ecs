@@ -38,7 +38,7 @@
 //! //...
 //! let mut label = world.query_filtered::<&mut Widget, With<DynamicLabel>>().single_mut().unwrap();
 //! ```
-//! 
+//!
 //! ## Child widgets
 //! To add a widget as a child, set it as child entity
 //! ```rust
@@ -48,7 +48,6 @@
 
 use std::ptr::NonNull;
 
-use crate::support::LvError;
 use bevy_ecs::{
     component::Component, hierarchy::ChildOf, observer::Trigger, system::Query, world::OnInsert,
 };
@@ -65,7 +64,13 @@ impl Widget {
     }
 
     pub fn from_raw(ptr: *mut lvgl_sys::lv_obj_t) -> Option<Self> {
-        NonNull::new(ptr).map(|raw| Self { raw })
+        Some(Self {
+            raw: NonNull::new(ptr)?,
+        })
+    }
+
+    pub fn from_non_null(ptr: NonNull<lvgl_sys::lv_obj_t>) -> Self {
+        Self { raw: ptr }
     }
 }
 
@@ -83,20 +88,20 @@ impl Drop for Widget {
 
 macro_rules! impl_widget {
     ($t:ident, $func:path) => {
-        #[derive(Component)]
+        #[derive(bevy_ecs::component::Component)]
         pub struct $t;
 
         impl $t {
             #[allow(dead_code)]
-            pub fn create_widget() -> Result<Widget, LvError> {
+            pub fn create_widget() -> Result<crate::widgets::Widget, crate::support::LvError> {
                 unsafe {
                     let default_screen =
                         lvgl_sys::lv_display_get_screen_active(lvgl_sys::lv_display_get_default());
                     let ptr = $func(default_screen);
                     if let Some(raw) = core::ptr::NonNull::new(ptr) {
-                        Ok(Widget { raw })
+                        Ok(crate::widgets::Widget::from_non_null(raw))
                     } else {
-                        Err(LvError::InvalidReference)
+                        Err(crate::support::LvError::InvalidReference)
                     }
                 }
             }
@@ -118,60 +123,4 @@ pub fn on_insert_parent(
     dbg!("On Insert Parent");
 }
 
-impl_widget!(Button, lvgl_sys::lv_button_create);
-
-impl_widget!(Label, lvgl_sys::lv_label_create);
-
-impl_widget!(Keyboard, lvgl_sys::lv_keyboard_create);
-
-impl_widget!(Menu, lvgl_sys::lv_menu_create);
-
-impl_widget!(Dropdown, lvgl_sys::lv_dropdown_create);
-
-impl_widget!(Led, lvgl_sys::lv_dropdown_create);
-
-impl_widget!(Arc, lvgl_sys::lv_arc_create);
-
-impl_widget!(Table, lvgl_sys::lv_table_create);
-
-impl_widget!(Checkbox, lvgl_sys::lv_checkbox_create);
-
-impl_widget!(Bar, lvgl_sys::lv_bar_create);
-
-impl_widget!(Roller, lvgl_sys::lv_roller_create);
-
-impl_widget!(Canvas, lvgl_sys::lv_canvas_create);
-
-impl_widget!(Calendar, lvgl_sys::lv_calendar_create);
-
-impl_widget!(Line, lvgl_sys::lv_line_create);
-
-impl_widget!(Spinbox, lvgl_sys::lv_spinbox_create);
-
-impl_widget!(TileView, lvgl_sys::lv_tileview_create);
-
-impl_widget!(Image, lvgl_sys::lv_image_create);
-
-impl_widget!(Imagebutton, lvgl_sys::lv_imagebutton_create);
-
-impl_widget!(Switch, lvgl_sys::lv_switch_create);
-
-impl_widget!(Chart, lvgl_sys::lv_chart_create);
-
-impl_widget!(Animimg, lvgl_sys::lv_animimg_create);
-
-impl_widget!(Spangroup, lvgl_sys::lv_spangroup_create);
-
-impl_widget!(Btnmatrix, lvgl_sys::lv_buttonmatrix_create);
-
-impl_widget!(Textarea, lvgl_sys::lv_textarea_create);
-
-impl_widget!(Slider, lvgl_sys::lv_slider_create);
-
-impl_widget!(List, lvgl_sys::lv_list_create);
-
-#[cfg(feature = "qrcode")]
-impl_widget!(QrCode, lvgl_sys::lv_qrcode_create);
-
-#[cfg(feature = "barcode")]
-impl_widget!(Barcode, lvgl_sys::lv_barcode_create);
+include!(concat!(env!("OUT_DIR"), "/widgets.rs"));

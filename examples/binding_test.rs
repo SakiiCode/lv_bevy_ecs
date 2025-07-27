@@ -23,7 +23,7 @@ use lv_bevy_ecs::{
     input::{InputDevice, PointerInputData},
     subjects::{Subject, lv_subject_add_observer_obj, lv_subject_set_int},
     support::{Color, LvError, lv_pct},
-    widgets::{Btnmatrix, Canvas, Chart, Dropdown, Image, Widget},
+    widgets::{Buttonmatrix, Canvas, Chart, Dropdown, Image, Widget},
 };
 
 use embedded_graphics::{
@@ -232,7 +232,7 @@ fn main() -> Result<(), LvError> {
         let mut label_entity = world.spawn((DynamicLabel, Label, label));
         label_entity.insert(style_big_font.clone());
 
-        let mut btnmatrix = Btnmatrix::create_widget()?;
+        let mut btnmatrix = Buttonmatrix::create_widget()?;
         unsafe {
             lv_obj_set_grid_cell(
                 &mut btnmatrix,
@@ -252,7 +252,7 @@ fn main() -> Result<(), LvError> {
                 buttonmatrix_event_cb(&mut world, &mut event);
             });
         }
-        let mut btnmatrix_entity = world.spawn((Btnmatrix, btnmatrix));
+        let mut btnmatrix_entity = world.spawn((Buttonmatrix, btnmatrix));
         let mut style_big_font_2 = Style::new(LV_PART_ITEMS | LV_STATE_CHECKED);
         unsafe {
             lv_style_set_text_font(&mut style_big_font_2, &lv_font_montserrat_24);
@@ -457,6 +457,7 @@ fn main() -> Result<(), LvError> {
 }
 
 fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject_t) {
+    println!("chart_type_observer_cb");
     unsafe {
         let v = lv_subject_get_int(subject);
         let chart = lv_observer_get_target(observer);

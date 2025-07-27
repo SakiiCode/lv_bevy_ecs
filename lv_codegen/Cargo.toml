@@ -8,3 +8,4 @@ proc-macro2 = "1.0.95"
 quote = "1.0.40"
 regex = "1.11.1"
 syn = {version = "2.0.101", features = ["full"]}
+Inflector = "0.11.4"
