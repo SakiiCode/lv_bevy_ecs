@@ -212,6 +212,8 @@ fn main() -> Result<(), LvError> {
         lv_subject_add_observer_obj(&mut chart_type_subject, &mut chart, chart_type_observer_cb);
         lv_subject_set_int(&mut chart_type_subject, 1);
 
+        world.spawn(chart_type_subject);
+
         world.spawn((Chart, chart));
 
         let mut label = Label::create_widget()?;

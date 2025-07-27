@@ -19,10 +19,12 @@ use std::{
     mem::MaybeUninit,
 };
 
+use bevy_ecs::component::Component;
 use lvgl_sys::{lv_color_t, lv_subject_t};
 
 use crate::widgets::Widget;
 
+#[derive(Component)]
 pub struct Subject {
     raw: lv_subject_t,
 }
