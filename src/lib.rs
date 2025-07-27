@@ -1,4 +1,5 @@
 #![doc = include_str!("../README.md")]
+use ctor::ctor;
 use std::{
     ops::{Deref, DerefMut},
     time::Instant,
@@ -7,7 +8,7 @@ use std::{
 use bevy_ecs::{schedule::Schedule, system::Local, world::World};
 
 use crate::{
-    functions::{lv_tick_inc, lv_timer_handler},
+    functions::{lv_init, lv_tick_inc, lv_timer_handler},
     widgets::on_insert_parent,
 };
 
@@ -30,6 +31,12 @@ pub mod prelude {
     //! Re-exported modules from bevy_ecs and lightvgl_sys
     pub use bevy_ecs::*;
     pub use lightvgl_sys::*;
+}
+
+#[cfg(feature = "ctor")]
+#[ctor]
+fn init() {
+    lv_init();
 }
 
 struct FrameInstant(Instant);

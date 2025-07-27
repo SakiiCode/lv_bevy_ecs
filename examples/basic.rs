@@ -6,7 +6,7 @@ use lv_bevy_ecs::{
     display::{Display, DrawBuffer},
     events::{Event, lv_obj_add_event_cb},
     functions::{
-        lv_init, lv_label_set_text, lv_obj_set_align, lv_obj_set_style_opa, lv_style_set_align,
+        lv_label_set_text, lv_obj_set_align, lv_obj_set_style_opa, lv_style_set_align,
         lv_style_set_bg_color, lv_style_set_opa,
     },
     input::{InputDevice, PointerInputData},
@@ -51,8 +51,6 @@ fn main() -> Result<(), LvError> {
     let mut window = Window::new("Button Example", &output_settings);
 
     println!("SIMULATOR OK");
-
-    lv_init();
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 

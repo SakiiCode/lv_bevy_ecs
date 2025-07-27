@@ -14,7 +14,7 @@ use lv_bevy_ecs::{
     functions::{
         lv_buttonmatrix_set_ctrl_map, lv_buttonmatrix_set_selected_button, lv_canvas_fill_bg,
         lv_canvas_set_buffer, lv_chart_set_ext_y_array, lv_dropdown_set_options,
-        lv_image_set_rotation, lv_image_set_scale_x, lv_image_set_src, lv_init, lv_label_set_text,
+        lv_image_set_rotation, lv_image_set_scale_x, lv_image_set_src, lv_label_set_text,
         lv_obj_add_flag, lv_obj_align, lv_obj_get_index, lv_obj_set_flex_flow,
         lv_obj_set_grid_cell, lv_obj_set_pos, lv_obj_set_style_bg_color, lv_obj_set_style_bg_opa,
         lv_obj_set_style_opa, lv_obj_set_style_text_color, lv_obj_set_width,
@@ -85,8 +85,6 @@ fn main() -> Result<(), LvError> {
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
     let mut window = Window::new("Bindings Test Example", &output_settings);
     println!("SIMULATOR OK");
-
-    lv_init();
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 
