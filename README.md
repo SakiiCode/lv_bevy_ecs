@@ -38,7 +38,14 @@ lazy_static! {
 4. Last thing is a Schedule instance with `Schedule::default()`. Then call in every loop cycle
 
 ```rust
-schedule.run(&mut world);
+let schedule = Schedule::default();
+// ...
+loop {
+    // ...
+    schedule.run(&mut world);
+    // ...
+}
+
 ```
 
 
@@ -114,7 +121,7 @@ To increase upload speed set `baudrate = 460800` in `espflash.toml`
 ## Contributing
 
 Feel free to open issues for features you find important and missing. I am not completely satisfied with the API,
-so open to API improvement proposals as well.
+so open to API improvement ideas as well.
 
 
 ## Thanks
