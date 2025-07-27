@@ -55,9 +55,7 @@ Check the respective module documentations and the examples for further usage.
 
 ## Running the demo
 
-Until lvgl-sys is pushed to crates.io, it needs to be cloned to the parent directory
 ```sh
-git clone git@github.com:SakiiCode/lvgl-sys.git
 git clone git@github.com:SakiiCode/lv_bevy_ecs.git
 cd lv_bevy_ecs
 cargo run --example basic
