@@ -1,21 +1,15 @@
-use std::{
-    ffi::CString,
-    process::exit,
-    thread::sleep,
-    time::{Duration, Instant},
-};
+use std::{ffi::CString, process::exit, time::Duration};
 
 use lv_bevy_ecs::{
-    LvglWorld,
+    LvglSchedule, LvglWorld,
     animation::Animation,
     display::{Display, DrawBuffer},
     events::{Event, lv_obj_add_event_cb},
     functions::{
-        lv_label_set_text, lv_obj_set_align, lv_obj_set_style_opa, lv_style_set_align,
+        lv_init, lv_label_set_text, lv_obj_set_align, lv_obj_set_style_opa, lv_style_set_align,
         lv_style_set_bg_color, lv_style_set_opa,
     },
     input::{InputDevice, PointerInputData},
-    lv_tick_inc, lv_timer_handler,
     support::{Align, Color, LvError},
     widgets::Arc,
 };
@@ -34,7 +28,6 @@ use lv_bevy_ecs::widgets::{Button, Label};
 use lv_bevy_ecs::prelude::{
     LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, component::Component, entity::Entity,
     lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_indev_type_t_LV_INDEV_TYPE_POINTER, query::With,
-    schedule::Schedule,
 };
 
 macro_rules! cstr {
@@ -59,7 +52,7 @@ fn main() -> Result<(), LvError> {
 
     println!("SIMULATOR OK");
 
-    lv_bevy_ecs::init();
+    lv_init();
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 
@@ -162,17 +155,10 @@ fn main() -> Result<(), LvError> {
 
     println!("Create OK");
     // Create a new Schedule, which defines an execution strategy for Systems
-    let mut schedule = Schedule::default();
+    let mut schedule = LvglSchedule::new();
 
     let mut is_pointer_down = false;
-
-    let mut prev_time = Instant::now();
-    sleep(Duration::from_millis(5));
     loop {
-        let current_time = Instant::now();
-        let diff = current_time.duration_since(prev_time);
-        prev_time = current_time;
-
         window.update(&sim_display);
         let events = window.events().peekable();
 
@@ -206,10 +192,5 @@ fn main() -> Result<(), LvError> {
 
         // Run the schedule once. If your app has a "loop", you would run this once per loop
         schedule.run(&mut world);
-
-        lv_tick_inc(diff);
-        lv_timer_handler();
-
-        sleep(Duration::from_millis(5));
     }
 }

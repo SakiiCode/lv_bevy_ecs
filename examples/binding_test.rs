@@ -2,19 +2,19 @@ use std::{
     ffi::{CStr, CString, c_void},
     process::exit,
     thread::sleep,
-    time::{Duration, Instant},
+    time::Duration,
 };
 
 use bevy_ecs::{hierarchy::Children, query::With};
 use lv_bevy_ecs::{
-    LvglWorld,
+    LvglSchedule, LvglWorld,
     animation::Animation,
     display::{Display, DrawBuffer},
     events::{Event, lv_event_get_target, lv_obj_add_event_cb},
     functions::{
         lv_buttonmatrix_set_ctrl_map, lv_buttonmatrix_set_selected_button, lv_canvas_fill_bg,
         lv_canvas_set_buffer, lv_chart_set_ext_y_array, lv_dropdown_set_options,
-        lv_image_set_rotation, lv_image_set_scale_x, lv_image_set_src, lv_label_set_text,
+        lv_image_set_rotation, lv_image_set_scale_x, lv_image_set_src, lv_init, lv_label_set_text,
         lv_obj_add_flag, lv_obj_align, lv_obj_get_index, lv_obj_set_flex_flow,
         lv_obj_set_grid_cell, lv_obj_set_pos, lv_obj_set_style_bg_color, lv_obj_set_style_bg_opa,
         lv_obj_set_style_opa, lv_obj_set_style_text_color, lv_obj_set_width,
@@ -55,7 +55,7 @@ use lightvgl_sys::{
 };
 use lv_bevy_ecs::prelude::{
     component::Component, entity::Entity, lv_color_format_t_LV_COLOR_FORMAT_RGB565,
-    lv_indev_type_t_LV_INDEV_TYPE_POINTER, schedule::Schedule, world::World,
+    lv_indev_type_t_LV_INDEV_TYPE_POINTER, world::World,
 };
 
 macro_rules! cstr {
@@ -86,7 +86,7 @@ fn main() -> Result<(), LvError> {
     let mut window = Window::new("Bindings Test Example", &output_settings);
     println!("SIMULATOR OK");
 
-    lv_bevy_ecs::init();
+    lv_init();
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 
@@ -405,17 +405,11 @@ fn main() -> Result<(), LvError> {
 
     println!("Create OK");
     // Create a new Schedule, which defines an execution strategy for Systems
-    let mut schedule = Schedule::default();
+    let mut schedule = LvglSchedule::new();
 
     let mut is_pointer_down = false;
 
-    let mut prev_time = Instant::now();
-    sleep(Duration::from_millis(5));
     loop {
-        let current_time = Instant::now();
-        let diff = current_time.duration_since(prev_time);
-        prev_time = current_time;
-
         window.update(&sim_display);
         let events = window.events().peekable();
 
@@ -449,12 +443,6 @@ fn main() -> Result<(), LvError> {
 
         // Run the schedule once. If your app has a "loop", you would run this once per loop
         schedule.run(&mut world);
-
-        lv_bevy_ecs::lv_tick_inc(diff);
-
-        lv_bevy_ecs::lv_timer_handler();
-
-        sleep(Duration::from_millis(5));
     }
 }
 

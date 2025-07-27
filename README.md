@@ -24,7 +24,7 @@ It is highly recommended to read [Chapter 14 of the Unofficial Bevy Cheat Book](
 DEP_LV_CONFIG_PATH = { relative = true, value = "." }
 ```
 
-2. At the beginning of the main function you have to call `lv_bevy_ecs::init();`
+2. At the beginning of the main function you have to call `lv_init();`
 
 3. Then you have to obtain a World instance with `LvglWorld::new();`.
    This is a global variable, it can be stored in lazy_static! or passed around in an Arc<Mutex<>> if needed elsewhere than in main().
@@ -33,6 +33,18 @@ DEP_LV_CONFIG_PATH = { relative = true, value = "." }
 lazy_static! {
     static ref WORLD: Mutex<World> = Mutex::new(LvglWorld::new());
 }
+```
+
+4. Last thing is a Schedule instance with `LvglSchedule::new()`. Then call in every loop cycle
+
+```rust
+let schedule = LvglSchedule::new();
+// ...
+loop {
+    // ...
+    schedule.run(&mut world);
+}
+
 ```
 
 Check the respective module documentations and the examples for further usage.
