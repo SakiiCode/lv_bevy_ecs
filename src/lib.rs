@@ -1,5 +1,6 @@
 #![doc = include_str!("../README.md")]
-use ctor::ctor;
+#[cfg(feature = "ctor")]
+use ctor_bare::register_ctor;
 use std::{
     ops::{Deref, DerefMut},
     time::Instant,
@@ -34,7 +35,7 @@ pub mod prelude {
 }
 
 #[cfg(feature = "ctor")]
-#[ctor]
+#[register_ctor]
 fn init() {
     lv_init();
 }
