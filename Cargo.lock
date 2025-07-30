@@ -612,7 +612,7 @@ dependencies = [
 [[package]]
 name = "lvgl-sys"
 version = "9.2.2"
-source = "git+https://github.com/SakiiCode/lvgl-sys.git#c9087288c288876fef295be80a108b4cdbfb14f1"
+source = "git+https://github.com/SakiiCode/lvgl-sys.git?rev=c9087288c288876fef295be80a108b4cdbfb14f1#c9087288c288876fef295be80a108b4cdbfb14f1"
 dependencies = [
  "bindgen",
  "cc",
