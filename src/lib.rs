@@ -9,7 +9,7 @@ use std::{
 use bevy_ecs::{schedule::Schedule, system::Local, world::World};
 
 use crate::{
-    functions::{lv_init, lv_tick_inc, lv_timer_handler},
+    functions::{lv_init, lv_tick_inc},
     widgets::on_insert_parent,
 };
 
@@ -66,7 +66,6 @@ fn lvgl_update(mut prev_time: Local<FrameInstant>) {
     let diff = current_time.duration_since(**prev_time);
     **prev_time = current_time;
     lv_tick_inc(diff);
-    lv_timer_handler();
 }
 
 pub struct LvglWorld;

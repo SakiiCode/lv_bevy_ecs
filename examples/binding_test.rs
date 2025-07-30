@@ -18,7 +18,7 @@ use lv_bevy_ecs::{
         lv_obj_add_flag, lv_obj_align, lv_obj_get_index, lv_obj_set_flex_flow,
         lv_obj_set_grid_cell, lv_obj_set_pos, lv_obj_set_style_bg_color, lv_obj_set_style_bg_opa,
         lv_obj_set_style_opa, lv_obj_set_style_text_color, lv_obj_set_width,
-        lv_style_set_text_font,
+        lv_style_set_text_font, lv_timer_handler,
     },
     input::{InputDevice, PointerInputData},
     subjects::{Subject, lv_subject_add_observer_obj, lv_subject_set_int},
@@ -441,6 +441,8 @@ fn main() -> Result<(), LvError> {
 
         // Run the schedule once. If your app has a "loop", you would run this once per loop
         schedule.run(&mut world);
+
+        lv_timer_handler();
     }
 }
 

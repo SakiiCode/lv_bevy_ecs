@@ -1,17 +1,10 @@
 use std::{ffi::CString, process::exit, time::Duration};
 
 use lv_bevy_ecs::{
-    LvglSchedule, LvglWorld,
-    animation::Animation,
-    display::{Display, DrawBuffer},
-    events::{Event, lv_obj_add_event_cb},
-    functions::{
+    animation::Animation, display::{Display, DrawBuffer}, events::{lv_obj_add_event_cb, Event}, functions::{
         lv_label_set_text, lv_obj_set_align, lv_obj_set_style_opa, lv_style_set_align,
-        lv_style_set_bg_color, lv_style_set_opa,
-    },
-    input::{InputDevice, PointerInputData},
-    support::{Align, Color, LvError},
-    widgets::Arc,
+        lv_style_set_bg_color, lv_style_set_opa, lv_timer_handler,
+    }, input::{InputDevice, PointerInputData}, support::{Align, Color, LvError}, widgets::Arc, LvglSchedule, LvglWorld
 };
 
 use embedded_graphics::{
@@ -190,5 +183,7 @@ fn main() -> Result<(), LvError> {
 
         // Run the schedule once. If your app has a "loop", you would run this once per loop
         schedule.run(&mut world);
+
+        lv_timer_handler();
     }
 }

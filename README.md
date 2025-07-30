@@ -43,6 +43,7 @@ let schedule = LvglSchedule::new();
 loop {
     // ...
     schedule.run(&mut world);
+    lv_timer_handler();
 }
 
 ```
