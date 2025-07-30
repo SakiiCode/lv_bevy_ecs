@@ -15,7 +15,14 @@
 //!
 //! ## Modifying Widgets
 //!
-//! To access widgets after moving them to the World with the `spawn()` function, you have to use queries
+//! To access widgets after moving them to the World with the `spawn()` function, you have to store the created Entity ID or use queries.
+//! 
+//! ```rust
+//! let mut label_widget = Label::create_widget();
+//! let label_entity = world.spawn((Label, label_widget)).id();
+//! let mut label_widget = world.get_mut::<Widget>(label_entity).unwrap();
+//! ```
+//! 
 //! ```rust
 //! let mut labels = world.query_filtered::<&mut Widget, With<Label>>();
 //! for label in labels.iter_mut(){

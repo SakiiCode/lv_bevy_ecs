@@ -27,27 +27,13 @@ DEP_LV_CONFIG_PATH = { relative = true, value = "." }
 2. At the beginning of the main function you have to call `lv_bevy_ecs::init();`
 
 3. Then you have to obtain a World instance with `LvglWorld::new();`.
-This is a global variable, it can be stored in lazy_static! or passed around in an Arc<Mutex<>> if needed elsewhere.
+This is a global variable, it can be stored in lazy_static! or passed around in an Arc<Mutex<>> if needed elsewhere than in main().
 
 ```rust
 lazy_static! {
     static ref WORLD: Mutex<World> = Mutex::new(LvglWorld::new());
 }
 ```
-
-4. Last thing is a Schedule instance with `Schedule::default()`. Then call in every loop cycle
-
-```rust
-let schedule = Schedule::default();
-// ...
-loop {
-    // ...
-    schedule.run(&mut world);
-    // ...
-}
-
-```
-
 
 
 
@@ -112,7 +98,7 @@ To increase upload speed set `baudrate = 460800` in `espflash.toml`
 - [ ] File system
 - [ ] Custom fonts
 - [ ] Snapshots
-- [ ] Unimplemented widget functions
+- [ ] Some widget functions
 - [ ] Layouts
 - [ ] XML UI
 
