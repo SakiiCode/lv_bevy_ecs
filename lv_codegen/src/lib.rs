@@ -1,11 +1,11 @@
 use inflector::cases::pascalcase::to_pascal_case;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
-use quote::{format_ident, ToTokens};
+use quote::{ToTokens, format_ident};
 use regex::Regex;
 use std::collections::HashMap;
 use std::error::Error;
-use syn::{parse_str, FnArg, ForeignItem, ForeignItemFn, Item, ReturnType, TypePath};
+use syn::{FnArg, ForeignItem, ForeignItemFn, Item, ReturnType, TypePath, parse_str};
 
 type CGResult<T> = Result<T, Box<dyn Error>>;
 
@@ -726,7 +726,7 @@ mod test {
         let code = dropdown_get_selected_str.code(&parent_widget).unwrap();
         let expected_code = quote! {
 
-            pub fn lv_dropdown_get_selected_str(obj: &mut crate::widgets::Widget, buf: &mut std::ffi::CString, buf_size:u32) -> () {
+            pub fn lv_dropdown_get_selected_str(obj: &crate::widgets::Widget, buf: &mut std::ffi::CString, buf_size:u32) -> () {
                 unsafe {
                     let buf_raw = buf.clone().into_raw();
                     lightvgl_sys::lv_dropdown_get_selected_str(
@@ -796,7 +796,7 @@ mod test {
 
         let code = arc_rotate_obj_to_angle.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_arc_rotate_obj_to_angle(obj: &mut crate::widgets::Widget, obj_to_rotate: &mut crate::widgets::Widget, r_offset: lv_coord_t) -> () {
+            pub fn lv_arc_rotate_obj_to_angle(obj: &crate::widgets::Widget, obj_to_rotate: &mut crate::widgets::Widget, r_offset: lv_coord_t) -> () {
                 unsafe {
                     lightvgl_sys::lv_arc_rotate_obj_to_angle(
                         obj.raw(),
