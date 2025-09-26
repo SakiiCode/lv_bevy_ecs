@@ -9,7 +9,7 @@ homepage = "https://github.com/SakiiCode/lv_bevy_ecs"
 repository = "https://github.com/SakiiCode/lv_bevy_ecs"
 categories = ["embedded", "gui", "graphics"]
 keywords = ["lvgl", "ecs", "bevy", "embedded", "graphics"]
-
+license = "MIT"
 
 [lib]
 name = "lv_bevy_ecs"
@@ -28,7 +28,7 @@ lightvgl-sys = { version = "~9.2.0", default-features = false, features = [
 embedded-graphics-simulator = "0.5.0"
 
 [build-dependencies]
-lv_codegen = { path = "lv_codegen" }
+lv_codegen = { path = "lv_codegen", version = "0.1.0" }
 proc-macro2 = "1.0.95"
 quote = "1.0.40"
 lightvgl-sys = { version = "~9.2.0", default-features = false, features = [
