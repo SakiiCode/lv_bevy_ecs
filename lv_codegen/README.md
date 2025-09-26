@@ -1,0 +1,1 @@
+This is the code generation crate for safe bindings of [lightvgl-sys](https://github.com/SakiiCode/lightvgl-sys/). This crate is only supposed to be used to build [lv_bevy_ecs](https://github.com/SakiiCode/lv_bevy_ecs).
