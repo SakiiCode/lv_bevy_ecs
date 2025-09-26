@@ -14,10 +14,10 @@ so that they don't go out of scope and get deallocated. Bevy's Observers will mi
 
 It is highly recommended to read [Chapter 14 of the Unofficial Bevy Cheat Book](https://bevy-cheatbook.github.io/programming.html) before using this library.
 
-1. This package depends on [lvgl-sys](https://github.com/SakiiCode/lvgl-sys) to generate the raw unsafe bindings.
-It needs an environment variable called `DEP_LV_CONFIG_PATH` that specifies the path to the folder containing `lv_conf.h` file.
+1.  This package depends on [lightvgl-sys](https://github.com/SakiiCode/lightvgl-sys) to generate the raw unsafe bindings.
+    It needs an environment variable called `DEP_LV_CONFIG_PATH` that specifies the path to the folder containing `lv_conf.h` file.
 
-    It is recommended to put it into `.cargo/config.toml`
+        It is recommended to put it into `.cargo/config.toml`
 
 ```toml
 [env]
@@ -27,7 +27,7 @@ DEP_LV_CONFIG_PATH = { relative = true, value = "." }
 2. At the beginning of the main function you have to call `lv_bevy_ecs::init();`
 
 3. Then you have to obtain a World instance with `LvglWorld::new();`.
-This is a global variable, it can be stored in lazy_static! or passed around in an Arc<Mutex<>> if needed elsewhere than in main().
+   This is a global variable, it can be stored in lazy_static! or passed around in an Arc<Mutex<>> if needed elsewhere than in main().
 
 ```rust
 lazy_static! {
@@ -35,13 +35,13 @@ lazy_static! {
 }
 ```
 
-
-
 Check the respective module documentations and the examples for further usage.
 
 ## Running the demo
 
 ```sh
+sudo apt install libsdl2-dev
+
 git clone git@github.com:SakiiCode/lv_bevy_ecs.git
 cd lv_bevy_ecs
 cargo run --example basic
@@ -52,6 +52,7 @@ cargo run --example basic
 This package has been tested with ESP32 only.
 
 You need three more env variables in config.toml and the PATH applied from ~/export-esp.sh
+
 ```
 LIBCLANG_PATH="..."
 CROSS_COMPILE="xtensa-esp32-elf"
@@ -63,19 +64,21 @@ BINDGEN_EXTRA_CLANG_ARGS="--sysroot ..."
 `BINDGEN_EXTRA_CLANG_ARGS` sysroot can be found with `xtensa-esp32-elf-ld --print-sysroot`
 
 ### LVGL Global Allocator
+
 A [global allocator](https://doc.rust-lang.org/std/alloc/trait.GlobalAlloc.html) for Rust leveraging the [LVGL memory allocator](https://github.com/lvgl/lvgl/blob/master/src/misc/lv_mem.h) is provided, but not enabled by default.
 Can be enabled by the feature lvgl-alloc. This will make all dynamic memory to be allocated by LVGL internal memory manager.
 
 ### Partitions
 
 It can happen that the project does not fit in the default main partition. To fix that you need to generate a partitions.csv with
+
 ```sh
 cargo espflash partition-table -o partitions.csv --to-csv target/xtensa-esp32-espidf/release/partition-table.bin
 ```
+
 and increase the `factory` partition size.
 
 Then add `partition_table = "partitions.csv"` to `espflash.toml`
-
 
 ### Upload speed
 
@@ -106,7 +109,6 @@ To increase upload speed set `baudrate = 460800` in `espflash.toml`
 
 Feel free to open issues for features you find important and missing. I am not completely satisfied with the API,
 so open to API improvement ideas as well.
-
 
 ## Thanks
 

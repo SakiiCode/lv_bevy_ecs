@@ -37,11 +37,7 @@ use embedded_graphics_simulator::{
 use lv_bevy_ecs::styles::Style;
 use lv_bevy_ecs::widgets::{Button, Label};
 
-use lv_bevy_ecs::prelude::{
-    component::Component, entity::Entity, lv_color_format_t_LV_COLOR_FORMAT_RGB565,
-    lv_indev_type_t_LV_INDEV_TYPE_POINTER, schedule::Schedule, world::World,
-};
-use lvgl_sys::{
+use lightvgl_sys::{
     LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST, LV_OPA_50, LV_OPA_60, LV_OPA_70, LV_OPA_COVER,
     LV_PART_ITEMS, LV_STATE_CHECKED, LV_SYMBOL_FILE, lv_align_t_LV_ALIGN_BOTTOM_RIGHT, lv_area_t,
     lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
@@ -57,6 +53,10 @@ use lvgl_sys::{
     lv_observer_get_target, lv_observer_t, lv_palette_darken, lv_palette_t_LV_PALETTE_BLUE,
     lv_screen_active, lv_subject_get_int, lv_subject_t,
 };
+use lv_bevy_ecs::prelude::{
+    component::Component, entity::Entity, lv_color_format_t_LV_COLOR_FORMAT_RGB565,
+    lv_indev_type_t_LV_INDEV_TYPE_POINTER, schedule::Schedule, world::World,
+};
 
 macro_rules! cstr {
     ($txt:literal) => {{
@@ -67,7 +67,7 @@ macro_rules! cstr {
 
 macro_rules! lv_grid_fr {
     ($x:literal) => {
-        lvgl_sys::LV_COORD_MAX - 100 + $x
+        lightvgl_sys::LV_COORD_MAX - 100 + $x
     };
 }
 
@@ -162,7 +162,7 @@ fn main() -> Result<(), LvError> {
         ];
 
         unsafe {
-            lvgl_sys::lv_obj_set_grid_dsc_array(
+            lightvgl_sys::lv_obj_set_grid_dsc_array(
                 lv_screen_active(),
                 grid_cols.as_mut_ptr(),
                 grid_rows.as_mut_ptr(),
@@ -246,7 +246,7 @@ fn main() -> Result<(), LvError> {
                 1,
             );
 
-            lvgl_sys::lv_buttonmatrix_set_map(btnmatrix.raw(), &btnmatrix_options[0]);
+            lightvgl_sys::lv_buttonmatrix_set_map(btnmatrix.raw(), &btnmatrix_options[0]);
             lv_buttonmatrix_set_ctrl_map(&mut btnmatrix, &btnmatrix_ctrl[0]);
 
             lv_buttonmatrix_set_selected_button(&mut btnmatrix, 1);
@@ -464,7 +464,7 @@ fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject
         let v = lv_subject_get_int(subject);
         let chart = lv_observer_get_target(observer);
         lv_chart_set_type(
-            chart as *mut lvgl_sys::lv_obj_t,
+            chart as *mut lightvgl_sys::lv_obj_t,
             if v == 0 {
                 lv_chart_type_t_LV_CHART_TYPE_LINE
             } else {
@@ -476,13 +476,13 @@ fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject
 
 fn buttonmatrix_event_cb(world: &mut World, e: &mut lv_event_t) {
     unsafe {
-        let buttonmatrix = lv_event_get_target(e) as *const lvgl_sys::lv_obj_t;
+        let buttonmatrix = lv_event_get_target(e) as *const lightvgl_sys::lv_obj_t;
 
         let idx = lv_buttonmatrix_get_selected_button(buttonmatrix);
         let text = lv_buttonmatrix_get_button_text(buttonmatrix, idx);
         let text_owned = CStr::from_ptr(text).to_string_lossy().into_owned();
         let text_cstring = CString::new(text_owned).unwrap();
-        //lvgl_sys::lv_label_set_text(label, text_cstring.as_ptr());
+        //lightvgl_sys::lv_label_set_text(label, text_cstring.as_ptr());
         for mut label in world
             .query_filtered::<&mut Widget, With<DynamicLabel>>()
             .iter_mut(world)
@@ -526,7 +526,7 @@ fn list_button_create(world: &mut World, parent: Entity) -> Result<Entity, LvErr
 fn draw_to_canvas(canvas: &mut Widget) {
     let mut layer = unsafe {
         let mut layer = std::mem::MaybeUninit::<lv_layer_t>::uninit();
-        lvgl_sys::lv_canvas_init_layer(canvas.raw(), layer.as_mut_ptr());
+        lightvgl_sys::lv_canvas_init_layer(canvas.raw(), layer.as_mut_ptr());
 
         layer.assume_init()
     };
@@ -540,7 +540,7 @@ fn draw_to_canvas(canvas: &mut Widget) {
     };
     let mut image_draw_dsc = unsafe {
         let mut image_draw_dsc = std::mem::MaybeUninit::<lv_draw_image_dsc_t>::uninit();
-        lvgl_sys::lv_draw_image_dsc_init(image_draw_dsc.as_mut_ptr());
+        lightvgl_sys::lv_draw_image_dsc_init(image_draw_dsc.as_mut_ptr());
         image_draw_dsc.assume_init()
     };
     image_draw_dsc.src = test_img_lvgl_logo_png;
@@ -555,29 +555,35 @@ fn draw_to_canvas(canvas: &mut Widget) {
         y2: 10 + HEIGHT - 1,
     };
     unsafe {
-        lvgl_sys::lv_draw_image(&mut layer, &image_draw_dsc, &coords);
+        lightvgl_sys::lv_draw_image(&mut layer, &image_draw_dsc, &coords);
 
         /*Reuse the draw descriptor*/
-        lvgl_sys::lv_area_move(&mut coords, 40, 40);
+        lightvgl_sys::lv_area_move(&mut coords, 40, 40);
         image_draw_dsc.opa = LV_OPA_50 as u8;
-        lvgl_sys::lv_draw_image(&mut layer, &image_draw_dsc, &coords);
+        lightvgl_sys::lv_draw_image(&mut layer, &image_draw_dsc, &coords);
 
         let mut line_draw_dsc = std::mem::MaybeUninit::<lv_draw_line_dsc_t>::uninit();
-        lvgl_sys::lv_draw_line_dsc_init(line_draw_dsc.as_mut_ptr());
+        lightvgl_sys::lv_draw_line_dsc_init(line_draw_dsc.as_mut_ptr());
         let mut line_draw_dsc = line_draw_dsc.assume_init();
         line_draw_dsc.color = lv_color_hex3(0xCA8);
         line_draw_dsc.width = 8;
         line_draw_dsc.set_round_start(1);
         line_draw_dsc.set_round_end(1);
-        lvgl_sys::lv_point_precise_set(&mut line_draw_dsc.p1, 150, 30);
-        lvgl_sys::lv_point_precise_set(&mut line_draw_dsc.p2, 350, 55);
-        lvgl_sys::lv_draw_line(&mut layer, &line_draw_dsc);
+        lightvgl_sys::lv_point_precise_set(&mut line_draw_dsc.p1, 150, 30);
+        lightvgl_sys::lv_point_precise_set(&mut line_draw_dsc.p2, 350, 55);
+        lightvgl_sys::lv_draw_line(&mut layer, &line_draw_dsc);
 
-        lvgl_sys::lv_canvas_finish_layer(canvas.raw(), &mut layer);
+        lightvgl_sys::lv_canvas_finish_layer(canvas.raw(), &mut layer);
 
         let c = Color::from_rgb(255, 0, 0);
         for i in 0..50 {
-            lvgl_sys::lv_canvas_set_px(canvas.raw(), 100 + i * 2, 10, c.into(), LV_OPA_COVER as u8);
+            lightvgl_sys::lv_canvas_set_px(
+                canvas.raw(),
+                100 + i * 2,
+                10,
+                c.into(),
+                LV_OPA_COVER as u8,
+            );
         }
     }
 }

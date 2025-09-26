@@ -26,7 +26,7 @@ use crate::widgets::Widget;
 #[derive(Component)]
 #[component(on_insert=add_animation)]
 pub struct Animation {
-    raw: Option<lvgl_sys::lv_anim_t>,
+    raw: Option<lightvgl_sys::lv_anim_t>,
 }
 
 impl Animation {
@@ -35,8 +35,8 @@ impl Animation {
         F: FnMut(&mut Widget, i32),
     {
         let mut raw = unsafe {
-            let mut anim = std::mem::MaybeUninit::<lvgl_sys::lv_anim_t>::uninit();
-            lvgl_sys::lv_anim_init(anim.as_mut_ptr());
+            let mut anim = std::mem::MaybeUninit::<lightvgl_sys::lv_anim_t>::uninit();
+            lightvgl_sys::lv_anim_init(anim.as_mut_ptr());
             anim.assume_init()
         };
         raw.duration = duration.as_millis().try_into().unwrap_or(0);
@@ -51,11 +51,11 @@ impl Animation {
 
     pub fn start(&mut self) {
         unsafe {
-            self.raw = Some(*lvgl_sys::lv_anim_start(&self.raw.take().unwrap()));
+            self.raw = Some(*lightvgl_sys::lv_anim_start(&self.raw.take().unwrap()));
         }
     }
 
-    pub fn raw(&mut self) -> &mut lvgl_sys::lv_anim_t {
+    pub fn raw(&mut self) -> &mut lightvgl_sys::lv_anim_t {
         self.raw.as_mut().unwrap()
     }
 }
@@ -81,9 +81,10 @@ where
 {
     unsafe {
         let anim =
-            NonNull::new(lvgl_sys::lv_anim_get(obj, None) as *mut lvgl_sys::lv_anim_t).unwrap();
+            NonNull::new(lightvgl_sys::lv_anim_get(obj, None) as *mut lightvgl_sys::lv_anim_t)
+                .unwrap();
         // yes, we have to do it this way. Casting `obj` directly to `&mut Obj` segfaults
-        let obj = obj as *mut lvgl_sys::lv_obj_t;
+        let obj = obj as *mut lightvgl_sys::lv_obj_t;
         if !anim.as_ref().user_data.is_null() {
             let callback = &mut *(anim.as_ref().user_data as *mut F);
             let mut obj_nondrop = Widget::from_raw(obj).unwrap();

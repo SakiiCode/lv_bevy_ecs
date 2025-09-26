@@ -3,15 +3,15 @@
 use core::convert::TryInto;
 use core::fmt;
 use embedded_graphics::pixelcolor::{Rgb565, Rgb888};
-use lvgl_sys::lv_coord_t;
+use lightvgl_sys::lv_coord_t;
 use std::error::Error;
 
 pub type LvResult<T> = Result<T, LvError>;
 
-pub const LV_SIZE_CONTENT: u32 = 2001 | lvgl_sys::LV_COORD_TYPE_SPEC;
+pub const LV_SIZE_CONTENT: u32 = 2001 | lightvgl_sys::LV_COORD_TYPE_SPEC;
 
 pub fn lv_pct(pct: lv_coord_t) -> lv_coord_t {
-    unsafe { lvgl_sys::lv_pct(pct) }
+    unsafe { lightvgl_sys::lv_pct(pct) }
 }
 
 /// Generic LVGL error. All other errors can be coerced into it.
@@ -80,12 +80,12 @@ impl From<LvError> for DisplayError {
 /// An LVGL color. Equivalent to `lv_color_t`.
 #[derive(Copy, Clone)]
 pub struct Color {
-    pub(crate) raw: lvgl_sys::lv_color_t,
+    pub(crate) raw: lightvgl_sys::lv_color_t,
 }
 
 impl Default for Color {
     fn default() -> Self {
-        let raw = unsafe { lvgl_sys::lv_color_black() };
+        let raw = unsafe { lightvgl_sys::lv_color_black() };
         Self { raw }
     }
 }
@@ -93,11 +93,11 @@ impl Default for Color {
 impl Color {
     /// Creates a `Color` from red, green, and blue values.
     pub fn from_rgb(r: u8, g: u8, b: u8) -> Self {
-        let raw = unsafe { lvgl_sys::lv_color_make(r, g, b) };
+        let raw = unsafe { lightvgl_sys::lv_color_make(r, g, b) };
         Self { raw }
     }
     /// Creates a `Color` from a native `lv_color_t` instance.
-    pub fn from_raw(raw: lvgl_sys::lv_color_t) -> Self {
+    pub fn from_raw(raw: lightvgl_sys::lv_color_t) -> Self {
         Self { raw }
     }
     /// Returns the value of the red channel.
@@ -134,7 +134,7 @@ impl From<Color> for Rgb565 {
     }
 }
 
-impl From<Color> for lvgl_sys::lv_color_t {
+impl From<Color> for lightvgl_sys::lv_color_t {
     fn from(val: Color) -> Self {
         val.raw
     }
@@ -165,32 +165,32 @@ pub enum Align {
     OutRightBottom,
 }
 
-impl From<Align> for lvgl_sys::lv_align_t {
-    fn from(value: Align) -> lvgl_sys::lv_align_t {
+impl From<Align> for lightvgl_sys::lv_align_t {
+    fn from(value: Align) -> lightvgl_sys::lv_align_t {
         let native = match value {
-            Align::Center => lvgl_sys::lv_align_t_LV_ALIGN_CENTER,
-            Align::TopLeft => lvgl_sys::lv_align_t_LV_ALIGN_TOP_LEFT,
-            Align::TopMid => lvgl_sys::lv_align_t_LV_ALIGN_TOP_MID,
-            Align::TopRight => lvgl_sys::lv_align_t_LV_ALIGN_TOP_RIGHT,
-            Align::BottomLeft => lvgl_sys::lv_align_t_LV_ALIGN_BOTTOM_LEFT,
-            Align::BottomMid => lvgl_sys::lv_align_t_LV_ALIGN_BOTTOM_MID,
-            Align::BottomRight => lvgl_sys::lv_align_t_LV_ALIGN_BOTTOM_RIGHT,
-            Align::LeftMid => lvgl_sys::lv_align_t_LV_ALIGN_LEFT_MID,
-            Align::RightMid => lvgl_sys::lv_align_t_LV_ALIGN_RIGHT_MID,
-            Align::OutTopLeft => lvgl_sys::lv_align_t_LV_ALIGN_OUT_TOP_LEFT,
-            Align::OutTopMid => lvgl_sys::lv_align_t_LV_ALIGN_OUT_TOP_MID,
-            Align::OutTopRight => lvgl_sys::lv_align_t_LV_ALIGN_OUT_TOP_RIGHT,
-            Align::OutBottomLeft => lvgl_sys::lv_align_t_LV_ALIGN_OUT_BOTTOM_LEFT,
-            Align::OutBottomMid => lvgl_sys::lv_align_t_LV_ALIGN_OUT_BOTTOM_MID,
-            Align::OutBottomRight => lvgl_sys::lv_align_t_LV_ALIGN_OUT_BOTTOM_RIGHT,
-            Align::OutLeftTop => lvgl_sys::lv_align_t_LV_ALIGN_OUT_LEFT_TOP,
-            Align::OutLeftMid => lvgl_sys::lv_align_t_LV_ALIGN_OUT_LEFT_MID,
-            Align::OutLeftBottom => lvgl_sys::lv_align_t_LV_ALIGN_OUT_LEFT_BOTTOM,
-            Align::OutRightTop => lvgl_sys::lv_align_t_LV_ALIGN_OUT_RIGHT_TOP,
-            Align::OutRightMid => lvgl_sys::lv_align_t_LV_ALIGN_OUT_RIGHT_MID,
-            Align::OutRightBottom => lvgl_sys::lv_align_t_LV_ALIGN_OUT_RIGHT_BOTTOM,
+            Align::Center => lightvgl_sys::lv_align_t_LV_ALIGN_CENTER,
+            Align::TopLeft => lightvgl_sys::lv_align_t_LV_ALIGN_TOP_LEFT,
+            Align::TopMid => lightvgl_sys::lv_align_t_LV_ALIGN_TOP_MID,
+            Align::TopRight => lightvgl_sys::lv_align_t_LV_ALIGN_TOP_RIGHT,
+            Align::BottomLeft => lightvgl_sys::lv_align_t_LV_ALIGN_BOTTOM_LEFT,
+            Align::BottomMid => lightvgl_sys::lv_align_t_LV_ALIGN_BOTTOM_MID,
+            Align::BottomRight => lightvgl_sys::lv_align_t_LV_ALIGN_BOTTOM_RIGHT,
+            Align::LeftMid => lightvgl_sys::lv_align_t_LV_ALIGN_LEFT_MID,
+            Align::RightMid => lightvgl_sys::lv_align_t_LV_ALIGN_RIGHT_MID,
+            Align::OutTopLeft => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_TOP_LEFT,
+            Align::OutTopMid => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_TOP_MID,
+            Align::OutTopRight => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_TOP_RIGHT,
+            Align::OutBottomLeft => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_BOTTOM_LEFT,
+            Align::OutBottomMid => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_BOTTOM_MID,
+            Align::OutBottomRight => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_BOTTOM_RIGHT,
+            Align::OutLeftTop => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_LEFT_TOP,
+            Align::OutLeftMid => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_LEFT_MID,
+            Align::OutLeftBottom => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_LEFT_BOTTOM,
+            Align::OutRightTop => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_RIGHT_TOP,
+            Align::OutRightMid => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_RIGHT_MID,
+            Align::OutRightBottom => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_RIGHT_BOTTOM,
         };
-        native as lvgl_sys::lv_align_t
+        native as lightvgl_sys::lv_align_t
     }
 }
 
@@ -201,15 +201,15 @@ pub enum TextAlign {
     Right,
 }
 
-impl From<TextAlign> for lvgl_sys::lv_align_t {
+impl From<TextAlign> for lightvgl_sys::lv_align_t {
     fn from(value: TextAlign) -> Self {
         let native = match value {
-            TextAlign::Auto => lvgl_sys::lv_text_align_t_LV_TEXT_ALIGN_AUTO,
-            TextAlign::Center => lvgl_sys::lv_text_align_t_LV_TEXT_ALIGN_CENTER,
-            TextAlign::Left => lvgl_sys::lv_text_align_t_LV_TEXT_ALIGN_LEFT,
-            TextAlign::Right => lvgl_sys::lv_text_align_t_LV_TEXT_ALIGN_RIGHT,
+            TextAlign::Auto => lightvgl_sys::lv_text_align_t_LV_TEXT_ALIGN_AUTO,
+            TextAlign::Center => lightvgl_sys::lv_text_align_t_LV_TEXT_ALIGN_CENTER,
+            TextAlign::Left => lightvgl_sys::lv_text_align_t_LV_TEXT_ALIGN_LEFT,
+            TextAlign::Right => lightvgl_sys::lv_text_align_t_LV_TEXT_ALIGN_RIGHT,
         };
-        native as lvgl_sys::lv_align_t
+        native as lightvgl_sys::lv_align_t
     }
 }
 
@@ -219,22 +219,22 @@ pub enum AnimationState {
     OFF,
 }
 
-impl From<AnimationState> for lvgl_sys::lv_anim_enable_t {
+impl From<AnimationState> for lightvgl_sys::lv_anim_enable_t {
     fn from(anim: AnimationState) -> Self {
         match anim {
-            AnimationState::ON => lvgl_sys::lv_anim_enable_t_LV_ANIM_ON,
-            AnimationState::OFF => lvgl_sys::lv_anim_enable_t_LV_ANIM_OFF,
+            AnimationState::ON => lightvgl_sys::lv_anim_enable_t_LV_ANIM_ON,
+            AnimationState::OFF => lightvgl_sys::lv_anim_enable_t_LV_ANIM_OFF,
         }
     }
 }
 
 #[repr(u32)]
 pub enum LabelLongMode {
-    Clip = lvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_CLIP,
-    Dot = lvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_DOT,
-    Scroll = lvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_SCROLL,
-    ScrollCircular = lvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_SCROLL_CIRCULAR,
-    Wrap = lvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_WRAP,
+    Clip = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_CLIP,
+    Dot = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_DOT,
+    Scroll = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_SCROLL,
+    ScrollCircular = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_SCROLL_CIRCULAR,
+    Wrap = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_WRAP,
 }
 
 impl From<LabelLongMode> for u8 {
@@ -251,11 +251,11 @@ mod test {
     fn color_properties_accessible() {
         let color = Color::from_rgb(206, 51, 255);
 
-        if lvgl_sys::LV_COLOR_DEPTH == 32 {
+        if lightvgl_sys::LV_COLOR_DEPTH == 32 {
             assert_eq!(color.r(), 206);
             assert_eq!(color.g(), 51);
             assert_eq!(color.b(), 255);
-        } else if lvgl_sys::LV_COLOR_DEPTH == 16 {
+        } else if lightvgl_sys::LV_COLOR_DEPTH == 16 {
             assert_eq!(color.r(), 25);
             assert_eq!(color.g(), 12);
             assert_eq!(color.b(), 31);

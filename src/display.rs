@@ -1,5 +1,5 @@
 //! # Display
-//! 
+//!
 //! The `embedded-graphics` crate is used to drive the screens. Examples use `embedded-graphics-simulator` to try them on PC.
 //! ## Simulator
 //! ```rust
@@ -22,11 +22,11 @@
 //!     .init(&mut delay)
 //!     .expect("Cannot initialize display");
 //! ```
-//! 
+//!
 //! ## Display refresh callback
 //! ```rust
 //! let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
-//! 
+//!
 //! let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }>::create(
 //!         HOR_RES,
 //!         LINE_HEIGHT,
@@ -50,7 +50,7 @@ use embedded_graphics::{
     prelude::{PixelColor, Point, Size},
     primitives::Rectangle,
 };
-use lvgl_sys::{
+use lightvgl_sys::{
     lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL, lv_display_t, lv_draw_buf_t,
 };
 
@@ -63,7 +63,7 @@ pub struct Display {
 impl Display {
     pub fn create(hor_res: i32, ver_res: i32) -> Self {
         unsafe {
-            let raw = NonNull::new(lvgl_sys::lv_display_create(hor_res, ver_res)).unwrap();
+            let raw = NonNull::new(lightvgl_sys::lv_display_create(hor_res, ver_res)).unwrap();
             Self { raw }
         }
     }
@@ -73,7 +73,7 @@ impl Display {
         F: FnMut(&mut DisplayRefresh<N>) + 'a,
     {
         unsafe {
-            lvgl_sys::lv_display_set_buffers(
+            lightvgl_sys::lv_display_set_buffers(
                 self.raw(),
                 buffer.raw.as_ptr() as *mut c_void,
                 std::ptr::null_mut(),
@@ -110,9 +110,9 @@ where
     F: FnMut(&mut DisplayRefresh<N>),
 {
     unsafe {
-        lvgl_sys::lv_display_set_flush_cb(display, Some(disp_flush_trampoline::<F, N>));
+        lightvgl_sys::lv_display_set_flush_cb(display, Some(disp_flush_trampoline::<F, N>));
         println!("Callback OK");
-        lvgl_sys::lv_display_set_user_data(
+        lightvgl_sys::lv_display_set_user_data(
             display,
             Box::into_raw(Box::new(callback)) as *mut _ as *mut c_void,
         );
@@ -120,8 +120,8 @@ where
 }
 
 unsafe extern "C" fn disp_flush_trampoline<F, const N: usize>(
-    display: *mut lvgl_sys::lv_display_t,
-    area: *const lvgl_sys::lv_area_t,
+    display: *mut lightvgl_sys::lv_display_t,
+    area: *const lightvgl_sys::lv_area_t,
     color_p: *mut u8,
 ) where
     F: FnMut(&mut DisplayRefresh<N>),
@@ -167,7 +167,7 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize>(
         // Not doing this causes a segfault in rust >= 1.69.0
         //*disp_drv = display_driver;
         // Indicate to LVGL that we are ready with the flushing
-        lvgl_sys::lv_display_flush_ready(display);
+        lightvgl_sys::lv_display_flush_ready(display);
     }
 }
 
@@ -196,10 +196,10 @@ pub struct DrawBuffer<const N: usize> {
 }
 
 impl<const N: usize> DrawBuffer<N> {
-    pub fn create(w: u32, h: u32, cf: lvgl_sys::lv_color_format_t) -> Self {
+    pub fn create(w: u32, h: u32, cf: lightvgl_sys::lv_color_format_t) -> Self {
         assert_eq!(w * h, N as u32);
         unsafe {
-            let raw = NonNull::new(lvgl_sys::lv_draw_buf_create(w, h, cf, 0)).unwrap();
+            let raw = NonNull::new(lightvgl_sys::lv_draw_buf_create(w, h, cf, 0)).unwrap();
             Self { raw }
         }
     }

@@ -1,5 +1,5 @@
 //! # Timers
-//! 
+//!
 //! Timers are components, can be used as a standalone entity or attached to another entity
 //! ```rust
 //! let timer = Timer::new(
@@ -11,9 +11,9 @@
 //! world.spawn(timer);
 //! ```
 //! To delete a timer, despawn the entity or remove the component and it will be automatically dropped.
-//! 
+//!
 //! ## Async calls
-//! 
+//!
 //! Closure will be executed on the next `lv_timer_handler()`. It needs `'static` lifetime.
 //! ```rust
 //! lv_async_call(||{
@@ -24,7 +24,7 @@
 use std::{ffi::c_void, marker::PhantomData, ptr::NonNull, time::Duration};
 
 use bevy_ecs::component::Component;
-use lvgl_sys::lv_timer_t;
+use lightvgl_sys::lv_timer_t;
 
 use crate::support::LvError;
 
@@ -38,7 +38,7 @@ pub struct Timer<'a> {
 impl Drop for Timer<'_> {
     fn drop(&mut self) {
         unsafe {
-            lvgl_sys::lv_timer_delete(self.raw.as_ptr());
+            lightvgl_sys::lv_timer_delete(self.raw.as_ptr());
         }
     }
 }
@@ -52,7 +52,7 @@ impl<'a> Timer<'a> {
         F: FnMut(*mut lv_timer_t) + 'a,
     {
         unsafe {
-            let timer = lvgl_sys::lv_timer_create(
+            let timer = lightvgl_sys::lv_timer_create(
                 Some(timer_trampoline::<F>),
                 period.as_millis() as u32,
                 Box::into_raw(Box::new(callback)) as *mut _,
@@ -84,7 +84,7 @@ where
     F: FnMut() + 'static,
 {
     unsafe {
-        lvgl_sys::lv_async_call(
+        lightvgl_sys::lv_async_call(
             Some(async_call_trampoline::<F>),
             Box::into_raw(Box::new(callback)) as *mut _,
         );

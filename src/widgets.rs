@@ -16,13 +16,13 @@
 //! ## Modifying Widgets
 //!
 //! To access widgets after moving them to the World with the `spawn()` function, you have to store the created Entity ID or use queries.
-//! 
+//!
 //! ```rust
 //! let mut label_widget = Label::create_widget();
 //! let label_entity = world.spawn((Label, label_widget)).id();
 //! let mut label_widget = world.get_mut::<Widget>(label_entity).unwrap();
 //! ```
-//! 
+//!
 //! ```rust
 //! let mut labels = world.query_filtered::<&mut Widget, With<Label>>();
 //! for label in labels.iter_mut(){
@@ -58,25 +58,25 @@ use std::ptr::NonNull;
 use bevy_ecs::{
     component::Component, hierarchy::ChildOf, observer::Trigger, system::Query, world::OnInsert,
 };
-use lvgl_sys::lv_obj_delete;
+use lightvgl_sys::lv_obj_delete;
 
 #[derive(Component)]
 pub struct Widget {
-    raw: NonNull<lvgl_sys::lv_obj_t>,
+    raw: NonNull<lightvgl_sys::lv_obj_t>,
 }
 
 impl Widget {
-    pub fn raw(&self) -> *mut lvgl_sys::lv_obj_t {
+    pub fn raw(&self) -> *mut lightvgl_sys::lv_obj_t {
         self.raw.as_ptr()
     }
 
-    pub fn from_raw(ptr: *mut lvgl_sys::lv_obj_t) -> Option<Self> {
+    pub fn from_raw(ptr: *mut lightvgl_sys::lv_obj_t) -> Option<Self> {
         Some(Self {
             raw: NonNull::new(ptr)?,
         })
     }
 
-    pub fn from_non_null(ptr: NonNull<lvgl_sys::lv_obj_t>) -> Self {
+    pub fn from_non_null(ptr: NonNull<lightvgl_sys::lv_obj_t>) -> Self {
         Self { raw: ptr }
     }
 }
@@ -102,8 +102,9 @@ macro_rules! impl_widget {
             #[allow(dead_code)]
             pub fn create_widget() -> Result<crate::widgets::Widget, crate::support::LvError> {
                 unsafe {
-                    let default_screen =
-                        lvgl_sys::lv_display_get_screen_active(lvgl_sys::lv_display_get_default());
+                    let default_screen = lightvgl_sys::lv_display_get_screen_active(
+                        lightvgl_sys::lv_display_get_default(),
+                    );
                     let ptr = $func(default_screen);
                     if let Some(raw) = core::ptr::NonNull::new(ptr) {
                         Ok(crate::widgets::Widget::from_non_null(raw))
@@ -125,7 +126,7 @@ pub fn on_insert_parent(
     let parent_ptr = widgets.get(parent_widget.1.0).unwrap().raw();
     let child_ptr = children.get(trigger.target()).unwrap().0.raw();
     unsafe {
-        lvgl_sys::lv_obj_set_parent(child_ptr, parent_ptr);
+        lightvgl_sys::lv_obj_set_parent(child_ptr, parent_ptr);
     }
     dbg!("On Insert Parent");
 }

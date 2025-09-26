@@ -2,16 +2,16 @@
 //!
 //! ```rust
 //! let mut chart_type_subject = Subject::new_int(0);
-//! 
+//!
 //! unsafe {
 //!     lv_dropdown_bind_value(dropdown.raw(), chart_type_subject.raw());
 //! }
-//! 
+//!
 //! lv_subject_add_observer_obj(&mut chart_type_subject, &mut chart, |observer, subject|{
 //!     // ...
 //! });
 //! lv_subject_set_int(&mut chart_type_subject, 1);
-//! 
+//!
 //! ```
 
 use std::{
@@ -20,7 +20,7 @@ use std::{
 };
 
 use bevy_ecs::component::Component;
-use lvgl_sys::{lv_color_t, lv_subject_t};
+use lightvgl_sys::{lv_color_t, lv_subject_t};
 
 use crate::widgets::Widget;
 
@@ -32,7 +32,7 @@ pub struct Subject {
 impl Drop for Subject {
     fn drop(&mut self) {
         unsafe {
-            lvgl_sys::lv_subject_deinit(&mut self.raw);
+            lightvgl_sys::lv_subject_deinit(&mut self.raw);
         }
     }
 }
@@ -43,8 +43,8 @@ unsafe impl Sync for Subject {}
 impl Subject {
     pub fn new_int(value: i32) -> Self {
         unsafe {
-            let mut subject = MaybeUninit::<lvgl_sys::lv_subject_t>::uninit();
-            lvgl_sys::lv_subject_init_int(subject.as_mut_ptr(), value);
+            let mut subject = MaybeUninit::<lightvgl_sys::lv_subject_t>::uninit();
+            lightvgl_sys::lv_subject_init_int(subject.as_mut_ptr(), value);
             Self {
                 raw: subject.assume_init(),
             }
@@ -53,10 +53,10 @@ impl Subject {
 
     pub fn new_string(value: &CStr) -> Self {
         unsafe {
-            let mut subject = MaybeUninit::<lvgl_sys::lv_subject_t>::uninit();
+            let mut subject = MaybeUninit::<lightvgl_sys::lv_subject_t>::uninit();
             let len = value.count_bytes();
             let zero: c_char = 0;
-            lvgl_sys::lv_subject_init_string(
+            lightvgl_sys::lv_subject_init_string(
                 subject.as_mut_ptr(),
                 &mut Box::leak(vec![zero; len].into_boxed_slice())[0],
                 std::ptr::null_mut(),
@@ -71,8 +71,8 @@ impl Subject {
 
     pub fn new_ptr(value: *mut c_void) -> Self {
         unsafe {
-            let mut subject = MaybeUninit::<lvgl_sys::lv_subject_t>::uninit();
-            lvgl_sys::lv_subject_init_pointer(subject.as_mut_ptr(), value);
+            let mut subject = MaybeUninit::<lightvgl_sys::lv_subject_t>::uninit();
+            lightvgl_sys::lv_subject_init_pointer(subject.as_mut_ptr(), value);
             Self {
                 raw: subject.assume_init(),
             }
@@ -86,51 +86,51 @@ impl Subject {
 
 pub fn lv_subject_set_int(subject: &mut Subject, value: i32) {
     unsafe {
-        lvgl_sys::lv_subject_set_int(subject.raw(), value);
+        lightvgl_sys::lv_subject_set_int(subject.raw(), value);
     }
 }
 
 pub fn lv_subject_set_string(subject: &mut Subject, value: *mut c_void) {
     unsafe {
-        lvgl_sys::lv_subject_set_pointer(subject.raw(), value);
+        lightvgl_sys::lv_subject_set_pointer(subject.raw(), value);
     }
 }
 
 pub fn lv_subject_set_color(subject: &mut Subject, value: lv_color_t) {
     unsafe {
-        lvgl_sys::lv_subject_set_color(subject.raw(), value);
+        lightvgl_sys::lv_subject_set_color(subject.raw(), value);
     }
 }
 
 pub fn lv_subject_get_int(subject: &mut Subject) -> i32 {
-    unsafe { lvgl_sys::lv_subject_get_int(subject.raw()) }
+    unsafe { lightvgl_sys::lv_subject_get_int(subject.raw()) }
 }
 
 pub fn lv_subject_get_ptr(subject: &mut Subject) -> *const c_void {
-    unsafe { lvgl_sys::lv_subject_get_pointer(subject.raw()) }
+    unsafe { lightvgl_sys::lv_subject_get_pointer(subject.raw()) }
 }
 
 pub fn lv_subject_get_color(subject: &mut Subject) -> lv_color_t {
-    unsafe { lvgl_sys::lv_subject_get_color(subject.raw()) }
+    unsafe { lightvgl_sys::lv_subject_get_color(subject.raw()) }
 }
 
 pub fn lv_subject_get_string(subject: &mut Subject) -> &CStr {
-    unsafe { CStr::from_ptr(lvgl_sys::lv_subject_get_string(subject.raw())) }
+    unsafe { CStr::from_ptr(lightvgl_sys::lv_subject_get_string(subject.raw())) }
 }
 
 pub fn lv_subject_get_previous_color(subject: &mut Subject) -> lv_color_t {
-    unsafe { lvgl_sys::lv_subject_get_previous_color(subject.raw()) }
+    unsafe { lightvgl_sys::lv_subject_get_previous_color(subject.raw()) }
 }
 
 pub fn lv_subject_get_previous_int(subject: &mut Subject) -> i32 {
-    unsafe { lvgl_sys::lv_subject_get_previous_int(subject.raw()) }
+    unsafe { lightvgl_sys::lv_subject_get_previous_int(subject.raw()) }
 }
 
 pub fn lv_subject_get_previous_string(subject: &mut Subject) -> &CStr {
-    unsafe { CStr::from_ptr(lvgl_sys::lv_subject_get_previous_string(subject.raw())) }
+    unsafe { CStr::from_ptr(lightvgl_sys::lv_subject_get_previous_string(subject.raw())) }
 }
 pub fn lv_subject_get_previous_pointer(subject: &mut Subject) -> *const c_void {
-    unsafe { lvgl_sys::lv_subject_get_previous_pointer(subject.raw()) }
+    unsafe { lightvgl_sys::lv_subject_get_previous_pointer(subject.raw()) }
 }
 
 pub fn lv_subject_add_observer_obj<'a, F>(
@@ -138,11 +138,11 @@ pub fn lv_subject_add_observer_obj<'a, F>(
     object: &mut Widget,
     callback: F,
 ) where
-    F: FnMut(*mut lvgl_sys::lv_observer_t, *mut lvgl_sys::lv_subject_t) + 'a,
+    F: FnMut(*mut lightvgl_sys::lv_observer_t, *mut lightvgl_sys::lv_subject_t) + 'a,
 {
     println!("lv_subject_add_observer_obj");
     unsafe {
-        lvgl_sys::lv_subject_add_observer_obj(
+        lightvgl_sys::lv_subject_add_observer_obj(
             &mut subject.raw,
             Some(subject_callback::<F>),
             object.raw(),
@@ -152,10 +152,10 @@ pub fn lv_subject_add_observer_obj<'a, F>(
 }
 
 pub(crate) unsafe extern "C" fn subject_callback<F>(
-    observer: *mut lvgl_sys::lv_observer_t,
-    subject: *mut lvgl_sys::lv_subject_t,
+    observer: *mut lightvgl_sys::lv_observer_t,
+    subject: *mut lightvgl_sys::lv_subject_t,
 ) where
-    F: FnMut(*mut lvgl_sys::lv_observer_t, *mut lvgl_sys::lv_subject_t),
+    F: FnMut(*mut lightvgl_sys::lv_observer_t, *mut lightvgl_sys::lv_subject_t),
 {
     unsafe {
         let callback = &mut *((*observer).user_data as *mut F);

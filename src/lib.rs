@@ -21,26 +21,26 @@ pub mod support;
 pub mod timers;
 
 pub mod prelude {
-    //! Re-exported modules from bevy_ecs and lvgl_sys
+    //! Re-exported modules from bevy_ecs and lightvgl_sys
     pub use bevy_ecs::*;
-    pub use lvgl_sys::*;
+    pub use lightvgl_sys::*;
 }
 
 pub fn init() {
     unsafe {
-        lvgl_sys::lv_init();
+        lightvgl_sys::lv_init();
     }
 }
 
 pub fn lv_tick_inc(diff: Duration) {
     unsafe {
-        lvgl_sys::lv_tick_inc(diff.as_millis() as u32);
+        lightvgl_sys::lv_tick_inc(diff.as_millis() as u32);
     }
 }
 
 pub fn lv_timer_handler() {
     unsafe {
-        lvgl_sys::lv_timer_handler();
+        lightvgl_sys::lv_timer_handler();
     }
 }
 

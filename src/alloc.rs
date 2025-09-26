@@ -13,15 +13,15 @@ unsafe impl GlobalAlloc for LvglAlloc {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         unsafe {
             // Make sure LVGL is initialized!
-            lvgl_sys::lv_init();
-            lvgl_sys::lv_malloc(layout.size() as cty::size_t) as *mut u8
+            lightvgl_sys::lv_init();
+            lightvgl_sys::lv_malloc(layout.size() as cty::size_t) as *mut u8
         }
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, _layout: Layout) {
         unsafe {
-            lvgl_sys::lv_init();
-            lvgl_sys::lv_free(ptr as *mut cty::c_void)
+            lightvgl_sys::lv_init();
+            lightvgl_sys::lv_free(ptr as *mut cty::c_void)
         }
     }
 }

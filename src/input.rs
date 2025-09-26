@@ -61,19 +61,19 @@ pub enum BufferStatus {
 
 #[allow(dead_code)]
 pub struct InputDevice {
-    raw: NonNull<lvgl_sys::lv_indev_t>,
+    raw: NonNull<lightvgl_sys::lv_indev_t>,
 }
 
 impl InputDevice {
-    pub fn create<F>(indev_type: lvgl_sys::lv_indev_type_t, read_cb: F) -> Self
+    pub fn create<F>(indev_type: lightvgl_sys::lv_indev_type_t, read_cb: F) -> Self
     where
         F: Fn() -> BufferStatus,
     {
         unsafe {
-            let raw = NonNull::new(lvgl_sys::lv_indev_create()).unwrap();
-            lvgl_sys::lv_indev_set_type(raw.as_ptr(), indev_type);
-            lvgl_sys::lv_indev_set_read_cb(raw.as_ptr(), Some(read_input::<F>));
-            lvgl_sys::lv_indev_set_user_data(
+            let raw = NonNull::new(lightvgl_sys::lv_indev_create()).unwrap();
+            lightvgl_sys::lv_indev_set_type(raw.as_ptr(), indev_type);
+            lightvgl_sys::lv_indev_set_read_cb(raw.as_ptr(), Some(read_input::<F>));
+            lightvgl_sys::lv_indev_set_user_data(
                 raw.as_ptr(),
                 Box::into_raw(Box::new(read_cb)) as *mut c_void,
             );
@@ -84,8 +84,8 @@ impl InputDevice {
 }
 
 unsafe extern "C" fn read_input<F>(
-    indev: *mut lvgl_sys::lv_indev_t,
-    data: *mut lvgl_sys::lv_indev_data_t,
+    indev: *mut lightvgl_sys::lv_indev_t,
+    data: *mut lightvgl_sys::lv_indev_data_t,
 ) where
     F: Fn() -> BufferStatus,
 {
@@ -106,24 +106,24 @@ unsafe extern "C" fn read_input<F>(
             InputState::Pressed(d) => {
                 match d {
                     Data::Pointer(PointerInputData::Touch(point)) => {
-                        (*data).point.x = point.x as lvgl_sys::lv_coord_t;
-                        (*data).point.y = point.y as lvgl_sys::lv_coord_t;
+                        (*data).point.x = point.x as lightvgl_sys::lv_coord_t;
+                        (*data).point.y = point.y as lightvgl_sys::lv_coord_t;
                     }
                     Data::Pointer(PointerInputData::Key(_)) => {}
                     _ => panic!("Non-pointer data returned from pointer device!"),
                 }
-                lvgl_sys::lv_indev_state_t_LV_INDEV_STATE_PRESSED
+                lightvgl_sys::lv_indev_state_t_LV_INDEV_STATE_PRESSED
             }
             InputState::Released(d) => {
                 match d {
                     Data::Pointer(PointerInputData::Touch(point)) => {
-                        (*data).point.x = point.x as lvgl_sys::lv_coord_t;
-                        (*data).point.y = point.y as lvgl_sys::lv_coord_t;
+                        (*data).point.x = point.x as lightvgl_sys::lv_coord_t;
+                        (*data).point.y = point.y as lightvgl_sys::lv_coord_t;
                     }
                     Data::Pointer(PointerInputData::Key(_)) => {}
                     _ => panic!("Non-pointer data returned from pointer device!"),
                 }
-                lvgl_sys::lv_indev_state_t_LV_INDEV_STATE_RELEASED
+                lightvgl_sys::lv_indev_state_t_LV_INDEV_STATE_RELEASED
             }
         };
     }

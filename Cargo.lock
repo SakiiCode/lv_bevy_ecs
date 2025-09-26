@@ -568,6 +568,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "lightvgl-sys"
+version = "9.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "474b7e48ad79c93ef278435cd88978450b46037670a8135bccd089d4c046d646"
+dependencies = [
+ "bindgen",
+ "cc",
+]
+
+[[package]]
 name = "lock_api"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -592,8 +602,8 @@ dependencies = [
  "cty",
  "embedded-graphics",
  "embedded-graphics-simulator",
+ "lightvgl-sys",
  "lv_codegen",
- "lvgl-sys",
  "proc-macro2",
  "quote",
 ]
@@ -607,15 +617,6 @@ dependencies = [
  "quote",
  "regex",
  "syn 2.0.101",
-]
-
-[[package]]
-name = "lvgl-sys"
-version = "9.2.2"
-source = "git+https://github.com/SakiiCode/lvgl-sys.git?rev=c9087288c288876fef295be80a108b4cdbfb14f1#c9087288c288876fef295be80a108b4cdbfb14f1"
-dependencies = [
- "bindgen",
- "cc",
 ]
 
 [[package]]

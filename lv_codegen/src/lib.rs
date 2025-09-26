@@ -1,11 +1,11 @@
 use inflector::cases::pascalcase::to_pascal_case;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
-use quote::{ToTokens, format_ident};
+use quote::{format_ident, ToTokens};
 use regex::Regex;
 use std::collections::HashMap;
 use std::error::Error;
-use syn::{FnArg, ForeignItem, ForeignItemFn, Item, ReturnType, TypePath, parse_str};
+use syn::{parse_str, FnArg, ForeignItem, ForeignItemFn, Item, ReturnType, TypePath};
 
 type CGResult<T> = Result<T, Box<dyn Error>>;
 
@@ -61,7 +61,7 @@ impl LvWidget {
             Err(WrapperError::Skip)
         } else {
             Ok(quote! {
-                impl_widget!(#pascal_name, lvgl_sys::#create_function);
+                impl_widget!(#pascal_name, lightvgl_sys::#create_function);
             })
         }
     }
@@ -239,7 +239,7 @@ impl Rusty for LvFunc {
             pub fn #func_name(#args_decl) -> #return_type {
                 unsafe {
                     #args_preprocessing
-                    lvgl_sys::#func_name(#ffi_args)#optional_semicolon
+                    lightvgl_sys::#func_name(#ffi_args)#optional_semicolon
                     #args_postprocessing
                     #explicit_ok
                 }
@@ -665,7 +665,7 @@ mod test {
         let expected_code = quote! {
             pub fn lv_arc_set_bg_end_angle(obj: &mut crate::widgets::Widget, end: u16) -> () {
                 unsafe {
-                    lvgl_sys::lv_arc_set_bg_end_angle(obj.raw(), end);
+                    lightvgl_sys::lv_arc_set_bg_end_angle(obj.raw(), end);
                 }
             }
         };
@@ -696,7 +696,7 @@ mod test {
 
             pub fn lv_label_set_text(label: &mut crate::widgets::Widget, text: &std::ffi::CStr) -> () {
                 unsafe {
-                    lvgl_sys::lv_label_set_text(
+                    lightvgl_sys::lv_label_set_text(
                         label.raw(),
                         text.as_ptr()
                     );
@@ -729,7 +729,7 @@ mod test {
             pub fn lv_dropdown_get_selected_str(obj: &mut crate::widgets::Widget, buf: &mut std::ffi::CString, buf_size:u32) -> () {
                 unsafe {
                     let buf_raw = buf.clone().into_raw();
-                    lvgl_sys::lv_dropdown_get_selected_str(
+                    lightvgl_sys::lv_dropdown_get_selected_str(
                         obj.raw(),
                         buf_raw,
                         buf_size
@@ -765,7 +765,7 @@ mod test {
         let expected_code = quote! {
             pub fn lv_label_set_text(label: &mut crate::widgets::Widget, text: &std::ffi::CStr) -> () {
                 unsafe {
-                    lvgl_sys::lv_label_set_text(
+                    lightvgl_sys::lv_label_set_text(
                         label.raw(),
                         text.as_ptr()
                     );
@@ -798,7 +798,7 @@ mod test {
         let expected_code = quote! {
             pub fn lv_arc_rotate_obj_to_angle(obj: &mut crate::widgets::Widget, obj_to_rotate: &mut crate::widgets::Widget, r_offset: lv_coord_t) -> () {
                 unsafe {
-                    lvgl_sys::lv_arc_rotate_obj_to_angle(
+                    lightvgl_sys::lv_arc_rotate_obj_to_angle(
                         obj.raw(),
                         obj_to_rotate.raw(),
                         r_offset
@@ -829,7 +829,7 @@ mod test {
         let expected_code = quote! {
             pub fn lv_label_get_recolor(label: &mut crate::widgets::Widget) -> bool {
                 unsafe {
-                    lvgl_sys::lv_label_get_recolor(
+                    lightvgl_sys::lv_label_get_recolor(
                         label.raw()
                     )
                 }
@@ -858,7 +858,7 @@ mod test {
         let expected_code = quote! {
             pub fn lv_label_get_text_selection_start(label: &mut crate::widgets::Widget) -> u32 {
                 unsafe {
-                    lvgl_sys::lv_label_get_text_selection_start(
+                    lightvgl_sys::lv_label_get_text_selection_start(
                         label.raw()
                     )
                 }
