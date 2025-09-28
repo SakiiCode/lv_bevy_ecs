@@ -118,6 +118,12 @@ To increase upload speed set `baudrate = 460800` in `espflash.toml`
 - [ ] Layouts
 - [ ] XML UI
 
+## Compatibility table
+
+| lv_bevy_ecs | bevy_ecs | lightvgl-sys | LVGL  |
+| ----------- | -------- | ------------ | ----- |
+| 0.2         | 0.16.0   | 9.2.0        | 9.2.2 |
+
 ## Contributing
 
 Feel free to open issues for features you find important and missing. I am not completely satisfied with the API,
