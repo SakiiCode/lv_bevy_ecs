@@ -21,21 +21,26 @@
 //! })
 //! ```
 
-use std::{ffi::c_void, marker::PhantomData, ptr::NonNull, time::Duration};
+use std::{ffi::c_void, ptr::NonNull, time::Duration};
 
-use bevy_ecs::component::Component;
+use bevy_ecs::{
+    component::Component,
+    schedule::{IntoScheduleConfigs, Schedule},
+    system::ScheduleSystem,
+    world::World,
+};
 use lightvgl_sys::lv_timer_t;
 
 use crate::support::LvError;
 
 #[allow(dead_code)]
 #[derive(Component)]
-pub struct Timer<'a> {
+pub struct Timer {
     raw: NonNull<lv_timer_t>,
-    phantom: PhantomData<&'a lv_timer_t>,
+    schedule: Schedule,
 }
 
-impl Drop for Timer<'_> {
+impl Drop for Timer {
     fn drop(&mut self) {
         unsafe {
             lightvgl_sys::lv_timer_delete(self.raw.as_ptr());
@@ -43,39 +48,35 @@ impl Drop for Timer<'_> {
     }
 }
 
-unsafe impl Send for Timer<'_> {}
-unsafe impl Sync for Timer<'_> {}
+unsafe impl Send for Timer {}
+unsafe impl Sync for Timer {}
 
-impl<'a> Timer<'a> {
-    pub fn new<F>(callback: F, period: Duration) -> Result<Self, LvError>
-    where
-        F: FnMut(*mut lv_timer_t) + 'a,
-    {
+impl Timer {
+    pub fn new(world: &mut World, period: Duration) -> Result<Self, LvError> {
+        let mut schedule = Schedule::default();
         unsafe {
             let timer = lightvgl_sys::lv_timer_create(
-                Some(timer_trampoline::<F>),
+                Some(timer_trampoline),
                 period.as_millis() as u32,
-                Box::into_raw(Box::new(callback)) as *mut _,
+                Box::into_raw(Box::new((&mut schedule, world))) as *mut _,
             );
             if let Some(ptr) = NonNull::new(timer) {
-                Ok(Self {
-                    raw: ptr,
-                    phantom: PhantomData,
-                })
+                Ok(Self { raw: ptr, schedule })
             } else {
                 Err(LvError::InvalidReference)
             }
         }
     }
+
+    pub fn add_systems<M>(&mut self, system: impl IntoScheduleConfigs<ScheduleSystem, M>) {
+        self.schedule.add_systems(system);
+    }
 }
 
-unsafe extern "C" fn timer_trampoline<F>(timer: *mut lv_timer_t)
-where
-    F: FnMut(*mut lv_timer_t),
-{
+unsafe extern "C" fn timer_trampoline(timer: *mut lv_timer_t) {
     unsafe {
-        let callback = &mut *((*timer).user_data as *mut F);
-        callback(timer);
+        let (schedule, world) = &mut *((*timer).user_data as *mut (&mut Schedule, &mut World));
+        schedule.run(world);
     }
 }
 

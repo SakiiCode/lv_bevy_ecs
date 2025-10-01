@@ -1,9 +1,17 @@
 #![doc = include_str!("../README.md")]
-use std::time::Duration;
+#[cfg(feature = "ctor")]
+use ctor_bare::register_ctor;
+use std::{
+    ops::{Deref, DerefMut},
+    time::Instant,
+};
 
-use bevy_ecs::world::World;
+use bevy_ecs::{schedule::Schedule, system::Local, world::World};
 
-use crate::widgets::on_insert_parent;
+use crate::{
+    functions::{lv_init, lv_tick_inc},
+    widgets::on_insert_parent,
+};
 
 #[cfg(feature = "lvgl-alloc")]
 mod alloc;
@@ -26,22 +34,38 @@ pub mod prelude {
     pub use lightvgl_sys::*;
 }
 
-pub fn init() {
-    unsafe {
-        lightvgl_sys::lv_init();
+#[cfg(feature = "ctor")]
+#[register_ctor]
+fn init() {
+    lv_init();
+}
+
+struct FrameInstant(Instant);
+
+impl Default for FrameInstant {
+    fn default() -> Self {
+        Self(Instant::now())
     }
 }
 
-pub fn lv_tick_inc(diff: Duration) {
-    unsafe {
-        lightvgl_sys::lv_tick_inc(diff.as_millis() as u32);
+impl Deref for FrameInstant {
+    type Target = Instant;
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
-pub fn lv_timer_handler() {
-    unsafe {
-        lightvgl_sys::lv_timer_handler();
+impl DerefMut for FrameInstant {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
+}
+
+fn lvgl_update(mut prev_time: Local<FrameInstant>) {
+    let current_time = Instant::now();
+    let diff = current_time.duration_since(**prev_time);
+    **prev_time = current_time;
+    lv_tick_inc(diff);
 }
 
 pub struct LvglWorld;
@@ -51,5 +75,15 @@ impl LvglWorld {
         let mut world = World::new();
         world.add_observer(on_insert_parent);
         world
+    }
+}
+
+pub struct LvglSchedule;
+
+impl LvglSchedule {
+    pub fn new() -> Schedule {
+        let mut schedule = Schedule::default();
+        schedule.add_systems(lvgl_update);
+        schedule
     }
 }

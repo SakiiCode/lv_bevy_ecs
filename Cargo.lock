@@ -114,9 +114,9 @@ dependencies = [
 
 [[package]]
 name = "bevy_macro_utils"
-version = "0.16.0"
+version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a2473db70d8785b5c75d6dd951a2e51e9be2c2311122db9692c79c9d887517b"
+checksum = "052eeebcb8e7e072beea5031b227d9a290f8a7fbbb947573ab6ec81df0fb94be"
 dependencies = [
  "parking_lot",
  "proc-macro2",
@@ -323,6 +323,26 @@ checksum = "dd98742e4fdca832d40cab219dc2e3048de17d873248f83f17df47c1bea70956"
 dependencies = [
  "cty",
  "memchr",
+]
+
+[[package]]
+name = "ctor_bare"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e4e5ae3c454dc1efb0e5821dc17344539849391b2de18c89596ea563f1909f93"
+dependencies = [
+ "ctor_bare_macros",
+]
+
+[[package]]
+name = "ctor_bare_macros"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a49d5cd78b1c748184d41407b14a58af8403c13328ff2b9f49b0a418c24e3ff"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.101",
 ]
 
 [[package]]
@@ -608,6 +628,7 @@ version = "0.2.0"
 dependencies = [
  "bevy_ecs",
  "cstr_core",
+ "ctor_bare",
  "cty",
  "embedded-graphics",
  "embedded-graphics-simulator",
