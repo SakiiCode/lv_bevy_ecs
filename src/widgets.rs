@@ -11,7 +11,8 @@
 //!
 //! Most of the LVGL functions have been kept with original names and they will use this `Widget` as their first parameter.
 //!
-//! In order to ECS to know the type of the Widget, pass the marker struct next to it when spawning the entity. (This is not mandatory but useful for queries)
+//! If you need to know the type of the Widget later on, pass the marker struct next to it when spawning the entity.
+//! This is not mandatory but useful for queries. If marker structs are omitted, the storage will be slightly better optimized.
 //!
 //! ## Modifying Widgets
 //!
