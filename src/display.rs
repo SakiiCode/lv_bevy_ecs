@@ -27,18 +27,11 @@
 //! ```rust
 //! let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 //!
-//! let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }>::create(
-//!         HOR_RES,
-//!         LINE_HEIGHT,
-//!         lv_color_format_t_LV_COLOR_FORMAT_RGB565,
-//! );
+//! let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(HOR_RES, LINE_HEIGHT);
 //! display.register(buffer, |refresh| {
 //!     // alternative (slower): sim_display.draw_iter(refresh.as_pixels()).unwrap();
 //!     sim_display
-//!         .fill_contiguous(
-//!             &refresh.rectangle,
-//!             refresh.colors.take().unwrap().map(|c| c.into()),
-//!         )
+//!         .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
 //!         .unwrap();
 //! });
 //! ```
@@ -68,12 +61,12 @@ impl Display {
         }
     }
 
-    pub fn register<'a, F, const N: usize, C: LvglColorFormat>(
-        &'a mut self,
+    pub fn register<F, const N: usize, C: LvglColorFormat>(
+        &mut self,
         buffer: DrawBuffer<N, C>,
         callback: F,
     ) where
-        F: FnMut(&mut DisplayRefresh<N, C>) + 'a,
+        F: FnMut(&mut DisplayRefresh<N, C>),
     {
         unsafe {
             lightvgl_sys::lv_display_set_buffers(
@@ -167,7 +160,7 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
 }
 
 impl<const N: usize, C> DisplayRefresh<'_, N, C> {
-    pub fn as_pixels<PC>(&self) -> impl IntoIterator<Item = Pixel<PC>> + '_
+    pub fn as_pixels<PC>(&self) -> impl IntoIterator<Item = Pixel<PC>>
     where
         C: Clone,
         PC: PixelColor + From<C>,

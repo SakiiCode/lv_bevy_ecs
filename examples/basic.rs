@@ -44,7 +44,8 @@ fn main() -> Result<(), LvError> {
     const VER_RES: u32 = 240;
     const LINE_HEIGHT: u32 = 16;
 
-    let mut sim_display: SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(HOR_RES, 240));
+    let mut sim_display: SimulatorDisplay<Rgb565> =
+        SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
     let mut window = Window::new("Button Example", &output_settings);
@@ -61,10 +62,7 @@ fn main() -> Result<(), LvError> {
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
         sim_display
-            .fill_contiguous(
-                &refresh.rectangle,
-                refresh.colors.iter().cloned().map(|c| c.into()),
-            )
+            .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
             .unwrap();
     });
 
