@@ -2,16 +2,28 @@
 
 use core::convert::TryInto;
 use core::fmt;
-use cstr_core::{CString, cstr};
 use embedded_graphics::pixelcolor::{BinaryColor, Gray8, Rgb565, Rgb888};
 use lightvgl_sys::{lv_coord_t, lv_log_level_t};
 use std::error::Error;
 
+#[cfg(feature = "logging")]
 use crate::functions::lv_log_add;
+#[cfg(feature = "logging")]
+use core::ffi::CStr;
+#[cfg(feature = "logging")]
+use std::ffi::CString;
 
 pub type LvResult<T> = Result<T, LvError>;
 
 pub const LV_SIZE_CONTENT: u32 = 2001 | lightvgl_sys::LV_COORD_TYPE_SPEC;
+
+#[macro_export]
+macro_rules! cstr {
+    ($txt:expr) => {{
+        const STR: &[u8] = concat!($txt, "\0").as_bytes();
+        unsafe { CStr::from_bytes_with_nul_unchecked(STR) }
+    }};
+}
 
 #[macro_export]
 macro_rules! func {
@@ -25,6 +37,7 @@ macro_rules! func {
     }};
 }
 
+#[cfg(feature = "logging")]
 #[macro_export]
 macro_rules! lv_log_trace {
     ($msg:literal) => {
@@ -38,6 +51,7 @@ macro_rules! lv_log_trace {
     };
 }
 
+#[cfg(feature = "logging")]
 #[macro_export]
 macro_rules! lv_log_info {
     ($msg:literal) => {
@@ -51,6 +65,7 @@ macro_rules! lv_log_info {
     };
 }
 
+#[cfg(feature = "logging")]
 #[macro_export]
 macro_rules! lv_log_warn {
     ($msg:literal) => {
@@ -64,6 +79,7 @@ macro_rules! lv_log_warn {
     };
 }
 
+#[cfg(feature = "logging")]
 #[macro_export]
 macro_rules! lv_log_error {
     ($msg:literal) => {
@@ -77,6 +93,7 @@ macro_rules! lv_log_error {
     };
 }
 
+#[cfg(feature = "logging")]
 #[macro_export]
 macro_rules! lv_log_user {
     ($msg:literal) => {
@@ -156,6 +173,7 @@ impl LvglColorFormat for Gray8 {
 
 impl LvglColorFormat for BinaryColor {
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
+        #[cfg(feature = "logging")]
         lv_log_warn!("Monochrome buffers are not supported. Proceed with caution!");
         lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_I1
     }
