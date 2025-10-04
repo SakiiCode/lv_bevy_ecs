@@ -6,11 +6,11 @@ use lv_bevy_ecs::{
     display::{Display, DrawBuffer},
     events::{Event, lv_obj_add_event_cb},
     functions::{
-        lv_label_set_text, lv_obj_set_align, lv_obj_set_style_opa, lv_style_set_align,
-        lv_style_set_bg_color, lv_style_set_opa, lv_timer_handler,
+        lv_color_make, lv_label_set_text, lv_obj_set_align, lv_obj_set_style_opa,
+        lv_style_set_align, lv_style_set_bg_color, lv_style_set_opa, lv_timer_handler,
     },
     input::{InputDevice, PointerInputData},
-    support::{Align, Color, LvError},
+    support::{Align, LvError},
     widgets::Arc,
 };
 
@@ -135,7 +135,7 @@ fn main() -> Result<(), LvError> {
         let mut style = Style::default();
         lv_style_set_opa(&mut style, LV_OPA_50 as u8);
         lv_style_set_align(&mut style, Align::TopLeft.into());
-        lv_style_set_bg_color(&mut style, Color::from_rgb(255, 0, 0).into());
+        lv_style_set_bg_color(&mut style, lv_color_make(255, 0, 0));
 
         button_entity.insert(style);
         //button_entity.remove::<Style>();

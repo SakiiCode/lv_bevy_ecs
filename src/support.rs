@@ -53,94 +53,6 @@ impl Error for LvError {
     }
 }
 
-/*
-impl From<DisplayError> for LvError {
-    fn from(err: DisplayError) -> Self {
-        use LvError::*;
-        match err {
-            DisplayError::NotAvailable => Uninitialized,
-            DisplayError::FailedToRegister => InvalidReference,
-            DisplayError::NotRegistered => Uninitialized,
-        }
-    }
-}*/
-
-/*
-impl From<LvError> for DisplayError {
-    fn from(err: LvError) -> Self {
-        use DisplayError::*;
-        match err {
-            LvError::InvalidReference => FailedToRegister,
-            LvError::Uninitialized => NotAvailable,
-            LvError::LvOOMemory => FailedToRegister,
-            LvError::AlreadyInUse => FailedToRegister,
-        }
-    }
-}*/
-
-/// An LVGL color. Equivalent to `lv_color_t`.
-#[derive(Copy, Clone)]
-pub struct Color {
-    pub(crate) raw: lightvgl_sys::lv_color_t,
-}
-
-impl Default for Color {
-    fn default() -> Self {
-        let raw = unsafe { lightvgl_sys::lv_color_black() };
-        Self { raw }
-    }
-}
-
-impl Color {
-    /// Creates a `Color` from red, green, and blue values.
-    pub fn from_rgb(r: u8, g: u8, b: u8) -> Self {
-        let raw = unsafe { lightvgl_sys::lv_color_make(r, g, b) };
-        Self { raw }
-    }
-    /// Creates a `Color` from a native `lv_color_t` instance.
-    pub fn from_raw(raw: lightvgl_sys::lv_color_t) -> Self {
-        Self { raw }
-    }
-    /// Returns the value of the red channel.
-    pub fn r(&self) -> u8 {
-        (self.raw.red) as u8
-    }
-    /// Returns the value of the green channel.
-    pub fn g(&self) -> u8 {
-        self.raw.green as u8
-    }
-    /// Returns the value of the blue channel.
-    pub fn b(&self) -> u8 {
-        self.raw.blue as u8
-    }
-}
-
-impl From<Color> for Rgb888 {
-    fn from(color: Color) -> Self {
-        Rgb888::new(
-            color.raw.red as u8,
-            color.raw.green as u8,
-            color.raw.blue as u8,
-        )
-    }
-}
-
-impl From<Color> for Rgb565 {
-    fn from(color: Color) -> Self {
-        Rgb565::new(
-            color.raw.red as u8,
-            color.raw.green as u8,
-            color.raw.blue as u8,
-        )
-    }
-}
-
-impl From<Color> for lightvgl_sys::lv_color_t {
-    fn from(val: Color) -> Self {
-        val.raw
-    }
-}
-
 pub trait LvglColorFormat {
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t;
 }
@@ -273,25 +185,5 @@ pub enum LabelLongMode {
 impl From<LabelLongMode> for u8 {
     fn from(value: LabelLongMode) -> Self {
         unsafe { (value as u32).try_into().unwrap_unchecked() }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn color_properties_accessible() {
-        let color = Color::from_rgb(206, 51, 255);
-
-        if lightvgl_sys::LV_COLOR_DEPTH == 32 {
-            assert_eq!(color.r(), 206);
-            assert_eq!(color.g(), 51);
-            assert_eq!(color.b(), 255);
-        } else if lightvgl_sys::LV_COLOR_DEPTH == 16 {
-            assert_eq!(color.r(), 25);
-            assert_eq!(color.g(), 12);
-            assert_eq!(color.b(), 31);
-        }
     }
 }

@@ -20,4 +20,8 @@ pub fn lv_timer_handler() {
     }
 }
 
+pub fn lv_color_make(r: u8, g: u8, b: u8) -> lightvgl_sys::lv_color_t {
+    unsafe { lightvgl_sys::lv_color_make(r, g, b) }
+}
+
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));

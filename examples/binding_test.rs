@@ -13,7 +13,7 @@ use lv_bevy_ecs::{
     events::{Event, lv_event_get_target, lv_obj_add_event_cb},
     functions::{
         lv_buttonmatrix_set_ctrl_map, lv_buttonmatrix_set_selected_button, lv_canvas_fill_bg,
-        lv_canvas_set_buffer, lv_chart_set_ext_y_array, lv_dropdown_set_options,
+        lv_canvas_set_buffer, lv_chart_set_ext_y_array, lv_color_make, lv_dropdown_set_options,
         lv_image_set_rotation, lv_image_set_scale_x, lv_image_set_src, lv_label_set_text,
         lv_obj_add_flag, lv_obj_align, lv_obj_get_index, lv_obj_set_flex_flow,
         lv_obj_set_grid_cell, lv_obj_set_pos, lv_obj_set_style_bg_color, lv_obj_set_style_bg_opa,
@@ -22,7 +22,7 @@ use lv_bevy_ecs::{
     },
     input::{InputDevice, PointerInputData},
     subjects::{Subject, lv_subject_add_observer_obj, lv_subject_set_int},
-    support::{Color, LvError, lv_pct},
+    support::{LvError, lv_pct},
     widgets::{Buttonmatrix, Canvas, Chart, Dropdown, Image, Widget},
 };
 
@@ -134,7 +134,7 @@ fn main() -> Result<(), LvError> {
     ];
 
     {
-        let c1: lv_color_t = Color::from_rgb(255, 0, 0).into();
+        let c1: lv_color_t = lv_color_make(255, 0, 0);
         let c2: lv_color_t = unsafe { lv_palette_darken(lv_palette_t_LV_PALETTE_BLUE, 2) };
         let c3: lv_color_t = unsafe { lv_color_mix(c1, c2, LV_OPA_60 as u8) };
 
@@ -560,15 +560,9 @@ fn draw_to_canvas(canvas: &mut Widget) {
 
         lightvgl_sys::lv_canvas_finish_layer(canvas.raw(), &mut layer);
 
-        let c = Color::from_rgb(255, 0, 0);
+        let c = lv_color_make(255, 0, 0);
         for i in 0..50 {
-            lightvgl_sys::lv_canvas_set_px(
-                canvas.raw(),
-                100 + i * 2,
-                10,
-                c.into(),
-                LV_OPA_COVER as u8,
-            );
+            lightvgl_sys::lv_canvas_set_px(canvas.raw(), 100 + i * 2, 10, c, LV_OPA_COVER as u8);
         }
     }
 }
