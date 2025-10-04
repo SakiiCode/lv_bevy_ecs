@@ -9,7 +9,7 @@ use lv_bevy_ecs::{
         lv_color_make, lv_label_set_text, lv_obj_set_align, lv_obj_set_style_opa,
         lv_style_set_align, lv_style_set_bg_color, lv_style_set_opa, lv_timer_handler,
     },
-    input::{BufferStatus, InputDevice, InputState, LvglInputEvent, TouchInputData},
+    input::{BufferStatus, InputDevice, InputState, LvglInputEvent},
     support::{Align, LvError},
     widgets::Arc,
 };
@@ -73,7 +73,7 @@ fn main() -> Result<(), LvError> {
     let mut latest_touch_status = LvglInputEvent {
         status: lv_bevy_ecs::input::BufferStatus::Once,
         state: lv_bevy_ecs::input::InputState::Released,
-        data: TouchInputData(Point::new(0, 0)),
+        data: Point::new(0, 0),
         device_type: PhantomData,
     };
 
@@ -170,7 +170,7 @@ fn main() -> Result<(), LvError> {
                     latest_touch_status = LvglInputEvent {
                         status: BufferStatus::Once,
                         state: InputState::Pressed,
-                        data: TouchInputData(point),
+                        data: point,
                         device_type: PhantomData,
                     };
                     is_pointer_down = true;
@@ -183,7 +183,7 @@ fn main() -> Result<(), LvError> {
                     latest_touch_status = LvglInputEvent {
                         status: BufferStatus::Once,
                         state: InputState::Released,
-                        data: TouchInputData(point),
+                        data: point,
                         device_type: PhantomData,
                     };
                     is_pointer_down = false;
@@ -194,7 +194,7 @@ fn main() -> Result<(), LvError> {
                         latest_touch_status = LvglInputEvent {
                             status: BufferStatus::Once,
                             state: InputState::Pressed,
-                            data: TouchInputData(point),
+                            data: point,
                             device_type: PhantomData,
                         };
                     }

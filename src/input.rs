@@ -5,36 +5,19 @@ use cty::c_void;
 use embedded_graphics::prelude::Point;
 
 pub trait InputData<T: LvglInputType> {
-    type DataType;
-    fn get_data(&self) -> Self::DataType;
     fn set_lv_indev_data(&self, data: &mut lightvgl_sys::lv_indev_data_t);
 }
 
-#[derive(Clone, Copy)]
-pub struct TouchInputData(pub Point);
-
-impl InputData<PointerInputDevice> for TouchInputData {
-    type DataType = Point;
-    fn get_data(&self) -> Self::DataType {
-        self.0
-    }
+impl InputData<PointerInputDevice> for Point {
     fn set_lv_indev_data(&self, data: &mut lightvgl_sys::lv_indev_data_t) {
-        data.point.x = self.0.x;
-        data.point.y = self.0.y;
+        data.point.x = self.x;
+        data.point.y = self.y;
     }
 }
 
-#[derive(Clone, Copy)]
-pub struct KeyInputData(pub u32);
-
-impl InputData<KeypadInputDevice> for KeyInputData {
-    type DataType = u32;
-    fn get_data(&self) -> Self::DataType {
-        self.0
-    }
-
+impl InputData<KeypadInputDevice> for u32 {
     fn set_lv_indev_data(&self, data: &mut lightvgl_sys::lv_indev_data_t) {
-        data.key = self.0
+        data.key = *self
     }
 }
 

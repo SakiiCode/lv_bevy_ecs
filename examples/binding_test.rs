@@ -21,9 +21,7 @@ use lv_bevy_ecs::{
         lv_obj_set_style_opa, lv_obj_set_style_text_color, lv_obj_set_width,
         lv_style_set_text_font, lv_timer_handler,
     },
-    input::{
-        BufferStatus, InputDevice, InputState, LvglInputEvent, PointerInputDevice, TouchInputData,
-    },
+    input::{BufferStatus, InputDevice, InputState, LvglInputEvent},
     subjects::{Subject, lv_subject_add_observer_obj, lv_subject_set_int},
     support::{LvError, lv_pct},
     widgets::{Buttonmatrix, Canvas, Chart, Dropdown, Image, Widget},
@@ -110,10 +108,10 @@ fn main() -> Result<(), LvError> {
     // Define the initial state of your input
     //let mut latest_touch_status = PointerInputData::Touch(Point::new(0, 0)).released().once();
 
-    let mut latest_touch_status = LvglInputEvent::<PointerInputDevice, TouchInputData> {
+    let mut latest_touch_status = LvglInputEvent {
         status: lv_bevy_ecs::input::BufferStatus::Once,
         state: lv_bevy_ecs::input::InputState::Released,
-        data: TouchInputData(Point::new(0, 0)),
+        data: Point::new(0, 0),
         device_type: PhantomData,
     };
 
@@ -427,7 +425,7 @@ fn main() -> Result<(), LvError> {
                     latest_touch_status = LvglInputEvent {
                         status: BufferStatus::Once,
                         state: InputState::Pressed,
-                        data: TouchInputData(point),
+                        data: point,
                         device_type: PhantomData,
                     };
                     is_pointer_down = true;
@@ -440,7 +438,7 @@ fn main() -> Result<(), LvError> {
                     latest_touch_status = LvglInputEvent {
                         status: BufferStatus::Once,
                         state: InputState::Released,
-                        data: TouchInputData(point),
+                        data: point,
                         device_type: PhantomData,
                     };
                     is_pointer_down = false;
@@ -451,7 +449,7 @@ fn main() -> Result<(), LvError> {
                         latest_touch_status = LvglInputEvent {
                             status: BufferStatus::Once,
                             state: InputState::Pressed,
-                            data: TouchInputData(point),
+                            data: point,
                             device_type: PhantomData,
                         };
                     }
