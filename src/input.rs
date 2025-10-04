@@ -1,52 +1,58 @@
 //! Input
-use std::ptr::NonNull;
+use std::{marker::PhantomData, ptr::NonNull};
 
 use cty::c_void;
 use embedded_graphics::prelude::Point;
 
-/// Pointer-specific input data. Contains the point clicked and the key.
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
-pub enum PointerInputData {
-    Touch(Point),
-    Key(u32),
+pub trait InputData<T: LvglInputType> {
+    type DataType;
+    fn get_data(&self) -> Self::DataType;
+    fn set_lv_indev_data(&self, data: &mut lightvgl_sys::lv_indev_data_t);
 }
 
-impl PointerInputData {
-    pub fn pressed(self) -> InputState {
-        InputState::Pressed(Data::Pointer(self))
-    }
+#[derive(Clone, Copy)]
+pub struct TouchInputData(pub Point);
 
-    pub fn released(self) -> InputState {
-        InputState::Released(Data::Pointer(self))
+impl InputData<PointerInputDevice> for TouchInputData {
+    type DataType = Point;
+    fn get_data(&self) -> Self::DataType {
+        self.0
+    }
+    fn set_lv_indev_data(&self, data: &mut lightvgl_sys::lv_indev_data_t) {
+        data.point.x = self.0.x;
+        data.point.y = self.0.y;
     }
 }
 
-/// Generic data which can be associated with an input device driver. Varies
-/// based on the concrete type of the input device driver
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
-pub enum Data {
-    /// Pointer-specific data.
-    Pointer(PointerInputData),
-    Encoder,
+#[derive(Clone, Copy)]
+pub struct KeyInputData(pub u32);
+
+impl InputData<KeypadInputDevice> for KeyInputData {
+    type DataType = u32;
+    fn get_data(&self) -> Self::DataType {
+        self.0
+    }
+
+    fn set_lv_indev_data(&self, data: &mut lightvgl_sys::lv_indev_data_t) {
+        data.key = self.0
+    }
 }
 
 /// Boolean states for an input.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub enum InputState {
     /// Input device key is currently pressed down.
-    Pressed(Data),
+    Pressed,
     /// Input device key is currently released.
-    Released(Data),
+    Released,
 }
 
 impl InputState {
-    /// Represents an input device with one entry in the buffer.
-    pub fn once(self) -> BufferStatus {
-        BufferStatus::Once(self)
-    }
-    /// Represents an input device with multiple entries in the buffer.
-    pub fn and_continued(self) -> BufferStatus {
-        BufferStatus::Buffered(self)
+    fn as_lv_indev_state(&self) -> lightvgl_sys::lv_indev_state_t {
+        match self {
+            InputState::Pressed => lightvgl_sys::lv_indev_state_t_LV_INDEV_STATE_PRESSED,
+            InputState::Released => lightvgl_sys::lv_indev_state_t_LV_INDEV_STATE_RELEASED,
+        }
     }
 }
 
@@ -54,77 +60,104 @@ impl InputState {
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub enum BufferStatus {
     /// One instance of `InputState` remains to be read.
-    Once(InputState),
+    Once,
     /// Multiple instances of `InputState` remain to be read.
-    Buffered(InputState),
+    Buffered,
+}
+
+#[derive(Clone, Copy)]
+pub struct LvglInputEvent<T: LvglInputType, D: InputData<T>> {
+    pub status: BufferStatus,
+    pub state: InputState,
+    pub data: D,
+    pub device_type: PhantomData<T>,
+}
+
+pub trait LvglInputType {
+    fn as_lv_indev_type() -> lightvgl_sys::lv_indev_type_t;
+}
+
+#[derive(Clone, Copy)]
+pub struct PointerInputDevice;
+
+impl LvglInputType for PointerInputDevice {
+    fn as_lv_indev_type() -> lightvgl_sys::lv_indev_type_t {
+        lightvgl_sys::lv_indev_type_t_LV_INDEV_TYPE_POINTER
+    }
+}
+
+pub struct KeypadInputDevice;
+
+impl LvglInputType for KeypadInputDevice {
+    fn as_lv_indev_type() -> lightvgl_sys::lv_indev_type_t {
+        lightvgl_sys::lv_indev_type_t_LV_INDEV_TYPE_KEYPAD
+    }
+}
+pub struct EncoderInputDevice;
+
+impl LvglInputType for EncoderInputDevice {
+    fn as_lv_indev_type() -> lightvgl_sys::lv_indev_type_t {
+        lightvgl_sys::lv_indev_type_t_LV_INDEV_TYPE_ENCODER
+    }
+}
+pub struct ButtonInputDevice;
+
+impl LvglInputType for ButtonInputDevice {
+    fn as_lv_indev_type() -> lightvgl_sys::lv_indev_type_t {
+        lightvgl_sys::lv_indev_type_t_LV_INDEV_TYPE_BUTTON
+    }
 }
 
 #[allow(dead_code)]
-pub struct InputDevice {
+pub struct InputDevice<T: LvglInputType> {
     raw: NonNull<lightvgl_sys::lv_indev_t>,
+    r#type: PhantomData<T>,
 }
 
-impl InputDevice {
-    pub fn create<F>(indev_type: lightvgl_sys::lv_indev_type_t, read_cb: F) -> Self
+impl<T: LvglInputType> InputDevice<T> {
+    pub fn create<F, D>(read_cb: F) -> Self
     where
-        F: Fn() -> BufferStatus,
+        D: InputData<T>,
+        F: FnMut() -> LvglInputEvent<T, D>,
     {
         unsafe {
             let raw = NonNull::new(lightvgl_sys::lv_indev_create()).unwrap();
-            lightvgl_sys::lv_indev_set_type(raw.as_ptr(), indev_type);
-            lightvgl_sys::lv_indev_set_read_cb(raw.as_ptr(), Some(read_input::<F>));
+            lightvgl_sys::lv_indev_set_type(raw.as_ptr(), T::as_lv_indev_type());
+            lightvgl_sys::lv_indev_set_read_cb(raw.as_ptr(), Some(read_input::<F, T, D>));
             lightvgl_sys::lv_indev_set_user_data(
                 raw.as_ptr(),
                 Box::into_raw(Box::new(read_cb)) as *mut c_void,
             );
 
-            Self { raw }
+            Self {
+                raw,
+                r#type: PhantomData,
+            }
         }
     }
 }
 
-unsafe extern "C" fn read_input<F>(
+unsafe extern "C" fn read_input<F, T, D>(
     indev: *mut lightvgl_sys::lv_indev_t,
     data: *mut lightvgl_sys::lv_indev_data_t,
 ) where
-    F: Fn() -> BufferStatus,
+    T: LvglInputType,
+    D: InputData<T>,
+    F: FnMut() -> LvglInputEvent<T, D>,
 {
     unsafe {
         let callback = &mut *((*indev).user_data as *mut F);
-        let status = callback();
-        let b = match status {
-            BufferStatus::Once(state) => {
+        let event = callback();
+        match event.status {
+            BufferStatus::Once => {
                 (*data).continue_reading = false;
-                state
             }
-            BufferStatus::Buffered(state) => {
+            BufferStatus::Buffered => {
                 (*data).continue_reading = true;
-                state
             }
         };
-        (*data).state = match b {
-            InputState::Pressed(d) => {
-                match d {
-                    Data::Pointer(PointerInputData::Touch(point)) => {
-                        (*data).point.x = point.x as lightvgl_sys::lv_coord_t;
-                        (*data).point.y = point.y as lightvgl_sys::lv_coord_t;
-                    }
-                    Data::Pointer(PointerInputData::Key(_)) => {}
-                    _ => panic!("Non-pointer data returned from pointer device!"),
-                }
-                lightvgl_sys::lv_indev_state_t_LV_INDEV_STATE_PRESSED
-            }
-            InputState::Released(d) => {
-                match d {
-                    Data::Pointer(PointerInputData::Touch(point)) => {
-                        (*data).point.x = point.x as lightvgl_sys::lv_coord_t;
-                        (*data).point.y = point.y as lightvgl_sys::lv_coord_t;
-                    }
-                    Data::Pointer(PointerInputData::Key(_)) => {}
-                    _ => panic!("Non-pointer data returned from pointer device!"),
-                }
-                lightvgl_sys::lv_indev_state_t_LV_INDEV_STATE_RELEASED
-            }
-        };
+        //D::set_lv_indev_data(&self, data);
+        event.data.set_lv_indev_data(data.as_mut().unwrap());
+        (*data).state = event.state.as_lv_indev_state();
     }
 }

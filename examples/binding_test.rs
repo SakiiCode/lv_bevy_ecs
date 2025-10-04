@@ -1,5 +1,6 @@
 use std::{
     ffi::{CStr, CString, c_void},
+    marker::PhantomData,
     process::exit,
     thread::sleep,
     time::Duration,
@@ -20,7 +21,9 @@ use lv_bevy_ecs::{
         lv_obj_set_style_opa, lv_obj_set_style_text_color, lv_obj_set_width,
         lv_style_set_text_font, lv_timer_handler,
     },
-    input::{InputDevice, PointerInputData},
+    input::{
+        BufferStatus, InputDevice, InputState, LvglInputEvent, PointerInputDevice, TouchInputData,
+    },
     subjects::{Subject, lv_subject_add_observer_obj, lv_subject_set_int},
     support::{LvError, lv_pct},
     widgets::{Buttonmatrix, Canvas, Chart, Dropdown, Image, Widget},
@@ -54,8 +57,7 @@ use lightvgl_sys::{
     lv_screen_active, lv_subject_get_int, lv_subject_t,
 };
 use lv_bevy_ecs::prelude::{
-    component::Component, entity::Entity, lv_color_format_t_LV_COLOR_FORMAT_RGB565,
-    lv_indev_type_t_LV_INDEV_TYPE_POINTER, world::World,
+    component::Component, entity::Entity, lv_color_format_t_LV_COLOR_FORMAT_RGB565, world::World,
 };
 
 macro_rules! cstr {
@@ -106,12 +108,17 @@ fn main() -> Result<(), LvError> {
     println!("Display Driver OK");
 
     // Define the initial state of your input
-    let mut latest_touch_status = PointerInputData::Touch(Point::new(0, 0)).released().once();
+    //let mut latest_touch_status = PointerInputData::Touch(Point::new(0, 0)).released().once();
+
+    let mut latest_touch_status = LvglInputEvent::<PointerInputDevice, TouchInputData> {
+        status: lv_bevy_ecs::input::BufferStatus::Once,
+        state: lv_bevy_ecs::input::InputState::Released,
+        data: TouchInputData(Point::new(0, 0)),
+        device_type: PhantomData,
+    };
 
     // Register a new input device that's capable of reading the current state of the input
-    let _touch_screen = InputDevice::create(lv_indev_type_t_LV_INDEV_TYPE_POINTER, || {
-        latest_touch_status
-    });
+    let _touch_screen = InputDevice::create(|| latest_touch_status);
 
     println!("Input OK");
 
@@ -416,19 +423,37 @@ fn main() -> Result<(), LvError> {
                     point,
                 } => {
                     println!("Clicked on: {:?}", point);
-                    latest_touch_status = PointerInputData::Touch(point).pressed().once();
+                    //latest_touch_status = PointerInputData::Touch(point).pressed().once();
+                    latest_touch_status = LvglInputEvent {
+                        status: BufferStatus::Once,
+                        state: InputState::Pressed,
+                        data: TouchInputData(point),
+                        device_type: PhantomData,
+                    };
                     is_pointer_down = true;
                 }
                 SimulatorEvent::MouseButtonUp {
                     mouse_btn: _,
                     point,
                 } => {
-                    latest_touch_status = PointerInputData::Touch(point).released().once();
+                    //latest_touch_status = PointerInputData::Touch(point).released().once();
+                    latest_touch_status = LvglInputEvent {
+                        status: BufferStatus::Once,
+                        state: InputState::Released,
+                        data: TouchInputData(point),
+                        device_type: PhantomData,
+                    };
                     is_pointer_down = false;
                 }
                 SimulatorEvent::MouseMove { point } => {
                     if is_pointer_down {
-                        latest_touch_status = PointerInputData::Touch(point).pressed().once();
+                        //latest_touch_status = PointerInputData::Touch(point).pressed().once();
+                        latest_touch_status = LvglInputEvent {
+                            status: BufferStatus::Once,
+                            state: InputState::Pressed,
+                            data: TouchInputData(point),
+                            device_type: PhantomData,
+                        };
                     }
                 }
                 SimulatorEvent::Quit => exit(0),
