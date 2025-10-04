@@ -2,14 +2,93 @@
 
 use core::convert::TryInto;
 use core::fmt;
-use cstr_core::cstr;
+use cstr_core::{CString, cstr};
 use embedded_graphics::pixelcolor::{BinaryColor, Gray8, Rgb565, Rgb888};
-use lightvgl_sys::{LV_LOG_LEVEL_WARN, lv_coord_t, lv_log_add};
+use lightvgl_sys::{lv_coord_t, lv_log_level_t};
 use std::error::Error;
+
+use crate::functions::lv_log_add;
 
 pub type LvResult<T> = Result<T, LvError>;
 
 pub const LV_SIZE_CONTENT: u32 = 2001 | lightvgl_sys::LV_COORD_TYPE_SPEC;
+
+#[macro_export]
+macro_rules! func {
+    () => {{
+        fn f() {}
+        fn type_name_of<T>(_: T) -> &'static str {
+            std::any::type_name::<T>()
+        }
+        let name = type_name_of(f);
+        name[..name.len() - 3].split("::").last().unwrap()
+    }};
+}
+
+#[macro_export]
+macro_rules! lv_log_trace {
+    ($msg:literal) => {
+        lv_log_add(
+            LogLevel::Trace,
+            cstr!(file!()),
+            line!(),
+            CString::new(func!()).unwrap().as_c_str(),
+            cstr!($msg),
+        );
+    };
+}
+
+#[macro_export]
+macro_rules! lv_log_info {
+    ($msg:literal) => {
+        lv_log_add(
+            LogLevel::Info,
+            cstr!(file!()),
+            line!(),
+            CString::new(func!()).unwrap().as_c_str(),
+            cstr!($msg),
+        );
+    };
+}
+
+#[macro_export]
+macro_rules! lv_log_warn {
+    ($msg:literal) => {
+        lv_log_add(
+            LogLevel::Warn,
+            cstr!(file!()),
+            line!(),
+            CString::new(func!()).unwrap().as_c_str(),
+            cstr!($msg),
+        );
+    };
+}
+
+#[macro_export]
+macro_rules! lv_log_error {
+    ($msg:literal) => {
+        lv_log_add(
+            LogLevel::Error,
+            cstr!(file!()),
+            line!(),
+            CString::new(func!()).unwrap().as_c_str(),
+            cstr!($msg),
+        );
+    };
+}
+
+#[macro_export]
+macro_rules! lv_log_user {
+    ($msg:literal) => {
+        lv_log_add(
+            LogLevel::User,
+            cstr!(file!()),
+            line!(),
+            CStr::from_bytes_with_nul(func!().as_bytes()).unwrap(),
+            cstr!($msg),
+        );
+    };
+}
 
 pub fn lv_pct(pct: lv_coord_t) -> lv_coord_t {
     unsafe { lightvgl_sys::lv_pct(pct) }
@@ -76,12 +155,31 @@ impl LvglColorFormat for Gray8 {
 }
 
 impl LvglColorFormat for BinaryColor {
-    #[rustfmt::skip]
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
-        unsafe {
-            lv_log_add(LV_LOG_LEVEL_WARN as i8, cstr!(file!()).as_ptr(), line!() as i32, cstr!("as_lv_color_format_t").as_ptr(), cstr!("Monochrome buffers are not supported. Proceed with caution!").as_ptr());
-        }
+        lv_log_warn!("Monochrome buffers are not supported. Proceed with caution!");
         lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_I1
+    }
+}
+
+pub enum LogLevel {
+    Trace,
+    Info,
+    Warn,
+    Error,
+    User,
+    None,
+}
+
+impl From<LogLevel> for lv_log_level_t {
+    fn from(value: LogLevel) -> Self {
+        (match value {
+            LogLevel::Trace => lightvgl_sys::LV_LOG_LEVEL_TRACE,
+            LogLevel::Info => lightvgl_sys::LV_LOG_LEVEL_INFO,
+            LogLevel::Warn => lightvgl_sys::LV_LOG_LEVEL_WARN,
+            LogLevel::Error => lightvgl_sys::LV_LOG_LEVEL_ERROR,
+            LogLevel::User => lightvgl_sys::LV_LOG_LEVEL_USER,
+            LogLevel::None => lightvgl_sys::LV_LOG_LEVEL_NONE,
+        }) as lv_log_level_t
     }
 }
 
