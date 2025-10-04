@@ -14,19 +14,21 @@ so that they don't go out of scope and get deallocated. Bevy's Observers will mi
 
 It is highly recommended to read [Chapter 14 of the Unofficial Bevy Cheat Book](https://bevy-cheatbook.github.io/programming.html) before using this library.
 
-1.  This package depends on [lightvgl-sys](https://github.com/SakiiCode/lightvgl-sys) to generate the raw unsafe bindings.
+1.  Create a project with `cargo new` or `esp-generate`, then
+
+        cargo add lv_bevy_ecs
+
+2.  This package depends on [lightvgl-sys](https://github.com/SakiiCode/lightvgl-sys) to generate the raw unsafe bindings.
     It needs an environment variable called `DEP_LV_CONFIG_PATH` that specifies the path to the folder containing `lv_conf.h` file.
 
-        It is recommended to put it into `.cargo/config.toml`
+    It is recommended to put it into `.cargo/config.toml`
 
 ```toml
 [env]
 DEP_LV_CONFIG_PATH = { relative = true, value = "." }
 ```
 
-2. At the beginning of the main function you have to call `lv_init();`
-
-3. Then you have to obtain a World instance with `LvglWorld::new();`.
+3. You have to obtain a World instance with `LvglWorld::new();`.
    This is a global variable, it can be stored in lazy_static! or passed around in an Arc<Mutex<>> if needed elsewhere than in main().
 
 ```rust
@@ -35,7 +37,7 @@ lazy_static! {
 }
 ```
 
-4. Last thing is a Schedule instance with `LvglSchedule::new()`. Then call in every loop cycle
+5. Last thing is a Schedule instance with `LvglSchedule::new()`. Then call in every loop cycle
 
 ```rust
 let schedule = LvglSchedule::new();
@@ -117,6 +119,12 @@ To increase upload speed set `baudrate = 460800` in `espflash.toml`
 - [ ] Some widget functions
 - [ ] Layouts
 - [ ] XML UI
+
+## Compatibility table
+
+| lv_bevy_ecs | bevy_ecs | lightvgl-sys | LVGL  |
+| ----------- | -------- | ------------ | ----- |
+| 0.2         | 0.16.0   | 9.2.0        | 9.2.2 |
 
 ## Contributing
 
