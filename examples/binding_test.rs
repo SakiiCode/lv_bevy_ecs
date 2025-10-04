@@ -1,6 +1,5 @@
 use std::{
     ffi::{CStr, CString, c_void},
-    marker::PhantomData,
     process::exit,
     thread::sleep,
     time::Duration,
@@ -21,7 +20,7 @@ use lv_bevy_ecs::{
         lv_obj_set_style_opa, lv_obj_set_style_text_color, lv_obj_set_width,
         lv_style_set_text_font, lv_timer_handler,
     },
-    input::{BufferStatus, InputDevice, InputState, LvglInputEvent},
+    input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     subjects::{Subject, lv_subject_add_observer_obj, lv_subject_set_int},
     support::{LvError, lv_pct},
     widgets::{Buttonmatrix, Canvas, Chart, Dropdown, Image, Widget},
@@ -108,15 +107,14 @@ fn main() -> Result<(), LvError> {
     // Define the initial state of your input
     //let mut latest_touch_status = PointerInputData::Touch(Point::new(0, 0)).released().once();
 
-    let mut latest_touch_status = LvglInputEvent {
+    let mut latest_touch_status = InputEvent {
         status: lv_bevy_ecs::input::BufferStatus::Once,
         state: lv_bevy_ecs::input::InputState::Released,
         data: Point::new(0, 0),
-        device_type: PhantomData,
     };
 
     // Register a new input device that's capable of reading the current state of the input
-    let _touch_screen = InputDevice::create(|| latest_touch_status);
+    let _touch_screen = InputDevice::<Pointer>::create(|| latest_touch_status);
 
     println!("Input OK");
 
@@ -422,11 +420,10 @@ fn main() -> Result<(), LvError> {
                 } => {
                     println!("Clicked on: {:?}", point);
                     //latest_touch_status = PointerInputData::Touch(point).pressed().once();
-                    latest_touch_status = LvglInputEvent {
+                    latest_touch_status = InputEvent {
                         status: BufferStatus::Once,
                         state: InputState::Pressed,
                         data: point,
-                        device_type: PhantomData,
                     };
                     is_pointer_down = true;
                 }
@@ -435,22 +432,20 @@ fn main() -> Result<(), LvError> {
                     point,
                 } => {
                     //latest_touch_status = PointerInputData::Touch(point).released().once();
-                    latest_touch_status = LvglInputEvent {
+                    latest_touch_status = InputEvent {
                         status: BufferStatus::Once,
                         state: InputState::Released,
                         data: point,
-                        device_type: PhantomData,
                     };
                     is_pointer_down = false;
                 }
                 SimulatorEvent::MouseMove { point } => {
                     if is_pointer_down {
                         //latest_touch_status = PointerInputData::Touch(point).pressed().once();
-                        latest_touch_status = LvglInputEvent {
+                        latest_touch_status = InputEvent {
                             status: BufferStatus::Once,
                             state: InputState::Pressed,
                             data: point,
-                            device_type: PhantomData,
                         };
                     }
                 }

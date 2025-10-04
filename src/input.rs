@@ -4,23 +4,6 @@ use std::{marker::PhantomData, ptr::NonNull};
 use cty::c_void;
 use embedded_graphics::prelude::Point;
 
-pub trait InputData<T: LvglInputType> {
-    fn set_lv_indev_data(&self, data: &mut lightvgl_sys::lv_indev_data_t);
-}
-
-impl InputData<PointerInputDevice> for Point {
-    fn set_lv_indev_data(&self, data: &mut lightvgl_sys::lv_indev_data_t) {
-        data.point.x = self.x;
-        data.point.y = self.y;
-    }
-}
-
-impl InputData<KeypadInputDevice> for u32 {
-    fn set_lv_indev_data(&self, data: &mut lightvgl_sys::lv_indev_data_t) {
-        data.key = *self
-    }
-}
-
 /// Boolean states for an input.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub enum InputState {
@@ -49,64 +32,90 @@ pub enum BufferStatus {
 }
 
 #[derive(Clone, Copy)]
-pub struct LvglInputEvent<T: LvglInputType, D: InputData<T>> {
+pub struct InputEvent<T: InputType> {
     pub status: BufferStatus,
     pub state: InputState,
-    pub data: D,
-    pub device_type: PhantomData<T>,
+    pub data: T::DataType,
 }
 
-pub trait LvglInputType {
+pub trait InputType {
+    type DataType;
     fn as_lv_indev_type() -> lightvgl_sys::lv_indev_type_t;
+    fn set_lv_indev_data(event_data: &Self::DataType, data: &mut lightvgl_sys::lv_indev_data_t);
 }
 
 #[derive(Clone, Copy)]
-pub struct PointerInputDevice;
+pub struct Pointer;
 
-impl LvglInputType for PointerInputDevice {
+impl InputType for Pointer {
+    type DataType = Point;
+
     fn as_lv_indev_type() -> lightvgl_sys::lv_indev_type_t {
         lightvgl_sys::lv_indev_type_t_LV_INDEV_TYPE_POINTER
     }
+
+    fn set_lv_indev_data(event: &Self::DataType, data: &mut lightvgl_sys::lv_indev_data_t) {
+        data.point.x = event.x;
+        data.point.y = event.y;
+    }
 }
 
-pub struct KeypadInputDevice;
+pub struct Keypad;
 
-impl LvglInputType for KeypadInputDevice {
+impl InputType for Keypad {
+    type DataType = u32;
+
     fn as_lv_indev_type() -> lightvgl_sys::lv_indev_type_t {
         lightvgl_sys::lv_indev_type_t_LV_INDEV_TYPE_KEYPAD
     }
-}
-pub struct EncoderInputDevice;
 
-impl LvglInputType for EncoderInputDevice {
+    fn set_lv_indev_data(event_data: &Self::DataType, data: &mut lightvgl_sys::lv_indev_data_t) {
+        data.key = *event_data;
+    }
+}
+
+pub struct Encoder;
+
+impl InputType for Encoder {
+    type DataType = ();
+
     fn as_lv_indev_type() -> lightvgl_sys::lv_indev_type_t {
         lightvgl_sys::lv_indev_type_t_LV_INDEV_TYPE_ENCODER
     }
-}
-pub struct ButtonInputDevice;
 
-impl LvglInputType for ButtonInputDevice {
+    fn set_lv_indev_data(_event_data: &Self::DataType, _data: &mut lightvgl_sys::lv_indev_data_t) {
+        unimplemented!("Encoders are not yet supported");
+    }
+}
+pub struct Button;
+
+impl InputType for Button {
+    type DataType = ();
+
     fn as_lv_indev_type() -> lightvgl_sys::lv_indev_type_t {
         lightvgl_sys::lv_indev_type_t_LV_INDEV_TYPE_BUTTON
+    }
+
+    fn set_lv_indev_data(_event_data: &Self::DataType, _data: &mut lightvgl_sys::lv_indev_data_t) {
+        unimplemented!("Buttons are not yet supported");
     }
 }
 
 #[allow(dead_code)]
-pub struct InputDevice<T: LvglInputType> {
+pub struct InputDevice<T: InputType> {
     raw: NonNull<lightvgl_sys::lv_indev_t>,
     r#type: PhantomData<T>,
 }
 
-impl<T: LvglInputType> InputDevice<T> {
-    pub fn create<F, D>(read_cb: F) -> Self
+impl<T: InputType> InputDevice<T> {
+    pub fn create<F>(read_cb: F) -> Self
     where
-        D: InputData<T>,
-        F: FnMut() -> LvglInputEvent<T, D>,
+        F: FnMut() -> InputEvent<T>,
     {
         unsafe {
             let raw = NonNull::new(lightvgl_sys::lv_indev_create()).unwrap();
             lightvgl_sys::lv_indev_set_type(raw.as_ptr(), T::as_lv_indev_type());
-            lightvgl_sys::lv_indev_set_read_cb(raw.as_ptr(), Some(read_input::<F, T, D>));
+            lightvgl_sys::lv_indev_set_read_cb(raw.as_ptr(), Some(read_input::<F, T>));
             lightvgl_sys::lv_indev_set_user_data(
                 raw.as_ptr(),
                 Box::into_raw(Box::new(read_cb)) as *mut c_void,
@@ -120,13 +129,12 @@ impl<T: LvglInputType> InputDevice<T> {
     }
 }
 
-unsafe extern "C" fn read_input<F, T, D>(
+unsafe extern "C" fn read_input<F, T>(
     indev: *mut lightvgl_sys::lv_indev_t,
     data: *mut lightvgl_sys::lv_indev_data_t,
 ) where
-    T: LvglInputType,
-    D: InputData<T>,
-    F: FnMut() -> LvglInputEvent<T, D>,
+    T: InputType,
+    F: FnMut() -> InputEvent<T>,
 {
     unsafe {
         let callback = &mut *((*indev).user_data as *mut F);
@@ -139,8 +147,7 @@ unsafe extern "C" fn read_input<F, T, D>(
                 (*data).continue_reading = true;
             }
         };
-        //D::set_lv_indev_data(&self, data);
-        event.data.set_lv_indev_data(data.as_mut().unwrap());
+        T::set_lv_indev_data(&event.data, data.as_mut().unwrap());
         (*data).state = event.state.as_lv_indev_state();
     }
 }
