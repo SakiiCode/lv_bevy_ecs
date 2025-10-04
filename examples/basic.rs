@@ -1,10 +1,17 @@
 use std::{ffi::CString, process::exit, time::Duration};
 
 use lv_bevy_ecs::{
-    animation::Animation, display::{Display, DrawBuffer}, events::{lv_obj_add_event_cb, Event}, functions::{
+    LvglSchedule, LvglWorld,
+    animation::Animation,
+    display::{Display, DrawBuffer},
+    events::{Event, lv_obj_add_event_cb},
+    functions::{
         lv_label_set_text, lv_obj_set_align, lv_obj_set_style_opa, lv_style_set_align,
         lv_style_set_bg_color, lv_style_set_opa, lv_timer_handler,
-    }, input::{InputDevice, PointerInputData}, support::{Align, Color, LvError}, widgets::Arc, LvglSchedule, LvglWorld
+    },
+    input::{InputDevice, PointerInputData},
+    support::{Align, Color, LvError},
+    widgets::Arc,
 };
 
 use embedded_graphics::{
@@ -20,7 +27,7 @@ use lv_bevy_ecs::widgets::{Button, Label};
 
 use lv_bevy_ecs::prelude::{
     LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, component::Component, entity::Entity,
-    lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_indev_type_t_LV_INDEV_TYPE_POINTER, query::With,
+    lv_indev_type_t_LV_INDEV_TYPE_POINTER, query::With,
 };
 
 macro_rules! cstr {
@@ -35,10 +42,9 @@ struct DynamicButton;
 fn main() -> Result<(), LvError> {
     const HOR_RES: u32 = 320;
     const VER_RES: u32 = 240;
-    const LINE_HEIGHT: u32 = 10;
+    const LINE_HEIGHT: u32 = 16;
 
-    let mut sim_display: SimulatorDisplay<Rgb565> =
-        SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
+    let mut sim_display: SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(HOR_RES, 240));
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
     let mut window = Window::new("Button Example", &output_settings);
@@ -47,11 +53,8 @@ fn main() -> Result<(), LvError> {
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 
-    let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }>::create(
-        HOR_RES,
-        LINE_HEIGHT,
-        lv_color_format_t_LV_COLOR_FORMAT_RGB565,
-    );
+    let buffer =
+        DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(HOR_RES, LINE_HEIGHT);
 
     println!("Display OK");
 
@@ -60,7 +63,7 @@ fn main() -> Result<(), LvError> {
         sim_display
             .fill_contiguous(
                 &refresh.rectangle,
-                refresh.colors.take().unwrap().map(|c| c.into()),
+                refresh.colors.iter().cloned().map(|c| c.into()),
             )
             .unwrap();
     });

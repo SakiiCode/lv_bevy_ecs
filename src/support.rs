@@ -2,8 +2,9 @@
 
 use core::convert::TryInto;
 use core::fmt;
-use embedded_graphics::pixelcolor::{Rgb565, Rgb888};
-use lightvgl_sys::lv_coord_t;
+use cstr_core::cstr;
+use embedded_graphics::pixelcolor::{BinaryColor, Gray8, Rgb565, Rgb888};
+use lightvgl_sys::{LV_LOG_LEVEL_WARN, lv_coord_t, lv_log_add};
 use std::error::Error;
 
 pub type LvResult<T> = Result<T, LvError>;
@@ -137,6 +138,38 @@ impl From<Color> for Rgb565 {
 impl From<Color> for lightvgl_sys::lv_color_t {
     fn from(val: Color) -> Self {
         val.raw
+    }
+}
+
+pub trait LvglColorFormat {
+    fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t;
+}
+
+impl LvglColorFormat for Rgb565 {
+    fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
+        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB565
+    }
+}
+
+impl LvglColorFormat for Rgb888 {
+    fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
+        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB888
+    }
+}
+
+impl LvglColorFormat for Gray8 {
+    fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
+        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_L8
+    }
+}
+
+impl LvglColorFormat for BinaryColor {
+    #[rustfmt::skip]
+    fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
+        unsafe {
+            lv_log_add(LV_LOG_LEVEL_WARN as i8, cstr!(file!()).as_ptr(), line!() as i32, cstr!("as_lv_color_format_t").as_ptr(), cstr!("Monochrome buffers are not supported. Proceed with caution!").as_ptr());
+        }
+        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_I1
     }
 }
 

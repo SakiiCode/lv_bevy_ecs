@@ -88,11 +88,8 @@ fn main() -> Result<(), LvError> {
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 
-    let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }>::create(
-        HOR_RES,
-        LINE_HEIGHT,
-        lv_color_format_t_LV_COLOR_FORMAT_RGB565,
-    );
+    let buffer =
+        DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(HOR_RES, LINE_HEIGHT);
 
     println!("Display OK");
 
@@ -101,7 +98,7 @@ fn main() -> Result<(), LvError> {
         sim_display
             .fill_contiguous(
                 &refresh.rectangle,
-                refresh.colors.take().unwrap().map(|c| c.into()),
+                refresh.colors.iter().cloned().map(|c| c.into()),
             )
             .unwrap();
     });
