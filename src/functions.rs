@@ -24,12 +24,13 @@ pub fn lv_color_make(r: u8, g: u8, b: u8) -> lightvgl_sys::lv_color_t {
     unsafe { lightvgl_sys::lv_color_make(r, g, b) }
 }
 
+#[cfg(feature = "logging")]
 pub fn lv_log_add(
     level: crate::support::LogLevel,
-    file: &cstr_core::CStr,
+    file: &core::ffi::CStr,
     line: u32,
-    func: &cstr_core::CStr,
-    message: &cstr_core::CStr,
+    func: &core::ffi::CStr,
+    message: &core::ffi::CStr,
 ) {
     unsafe {
         lightvgl_sys::lv_log_add(

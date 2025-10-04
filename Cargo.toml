@@ -39,4 +39,5 @@ lightvgl-sys = { version = "~9.2.0", default-features = false, features = [
 [features]
 default = ["ctor"]
 lvgl-alloc = []
-ctor = [] # Automatically call lv_init() at startup
+ctor = []          # Automatically call lv_init() at startup
+logging = []       # Enable logging macros, requires LV_USE_LOG 1

@@ -57,6 +57,7 @@ use lv_bevy_ecs::prelude::{
     component::Component, entity::Entity, lv_color_format_t_LV_COLOR_FORMAT_RGB565, world::World,
 };
 
+#[macro_export]
 macro_rules! cstr {
     ($txt:literal) => {{
         const STR: &[u8] = concat!($txt, "\0").as_bytes();
