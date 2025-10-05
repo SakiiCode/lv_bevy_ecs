@@ -84,7 +84,6 @@ impl LvglColorFormat for Gray8 {
 
 impl LvglColorFormat for BinaryColor {
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
-        #[cfg(feature = "lvgl-logger")]
         crate::warn!("Monochrome buffers are not supported. Proceed with caution!");
         lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_I1
     }

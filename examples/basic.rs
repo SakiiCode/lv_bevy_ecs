@@ -4,10 +4,12 @@ use lv_bevy_ecs::{
     LvglSchedule, LvglWorld,
     animation::Animation,
     display::{Display, DrawBuffer},
+    error,
     events::{Event, lv_obj_add_event_cb},
     functions::{
-        lv_color_make, lv_label_set_text, lv_obj_set_align, lv_obj_set_style_opa,
-        lv_style_set_align, lv_style_set_bg_color, lv_style_set_opa, lv_timer_handler,
+        lv_color_make, lv_init, lv_label_set_text, lv_log_init, lv_obj_set_align,
+        lv_obj_set_style_opa, lv_style_set_align, lv_style_set_bg_color, lv_style_set_opa,
+        lv_timer_handler,
     },
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
@@ -35,6 +37,11 @@ use lv_bevy_ecs::prelude::{
 struct DynamicButton;
 
 fn main() -> Result<(), LvError> {
+    lv_init();
+    lv_log_init();
+    // to use an other logging backend, simply initialize it instead of lv_log_init()
+    // env_logger::init();
+
     const HOR_RES: u32 = 320;
     const VER_RES: u32 = 240;
     const LINE_HEIGHT: u32 = 16;
@@ -46,6 +53,7 @@ fn main() -> Result<(), LvError> {
     let mut window = Window::new("Button Example", &output_settings);
 
     info!("SIMULATOR OK");
+    error!("Random error");
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 

@@ -14,8 +14,8 @@ use lv_bevy_ecs::{
     functions::{
         lv_buttonmatrix_set_ctrl_map, lv_buttonmatrix_set_selected_button, lv_canvas_fill_bg,
         lv_canvas_set_buffer, lv_chart_set_ext_y_array, lv_color_make, lv_dropdown_set_options,
-        lv_image_set_rotation, lv_image_set_scale_x, lv_image_set_src, lv_label_set_text,
-        lv_obj_add_flag, lv_obj_align, lv_obj_get_index, lv_obj_set_flex_flow,
+        lv_image_set_rotation, lv_image_set_scale_x, lv_image_set_src, lv_init, lv_label_set_text,
+        lv_log_init, lv_obj_add_flag, lv_obj_align, lv_obj_get_index, lv_obj_set_flex_flow,
         lv_obj_set_grid_cell, lv_obj_set_pos, lv_obj_set_style_bg_color, lv_obj_set_style_bg_opa,
         lv_obj_set_style_opa, lv_obj_set_style_text_color, lv_obj_set_width,
         lv_style_set_text_font, lv_timer_handler,
@@ -58,14 +58,6 @@ use lv_bevy_ecs::prelude::{
     component::Component, entity::Entity, lv_color_format_t_LV_COLOR_FORMAT_RGB565, world::World,
 };
 
-#[macro_export]
-macro_rules! cstr {
-    ($txt:literal) => {{
-        const STR: &[u8] = concat!($txt, "\0").as_bytes();
-        unsafe { CStr::from_bytes_with_nul_unchecked(STR) }
-    }};
-}
-
 macro_rules! lv_grid_fr {
     ($x:literal) => {
         lightvgl_sys::LV_COORD_MAX - 100 + $x
@@ -76,6 +68,11 @@ macro_rules! lv_grid_fr {
 struct DynamicLabel;
 
 fn main() -> Result<(), LvError> {
+    lv_init();
+    lv_log_init();
+    // to use an other logging backend, simply initialize it instead of lv_log_init()
+    // env_logger::init();
+
     const HOR_RES: u32 = 800;
     const VER_RES: u32 = 480;
     const LINE_HEIGHT: u32 = 10;

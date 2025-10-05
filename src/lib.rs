@@ -19,7 +19,6 @@ pub mod display;
 pub mod events;
 pub mod functions;
 pub mod input;
-#[cfg(feature = "lvgl-logger")]
 pub mod logging;
 pub mod styles;
 pub mod subjects;
@@ -30,29 +29,6 @@ pub mod prelude {
     //! Re-exported modules from bevy_ecs and lightvgl_sys
     pub use bevy_ecs::*;
     pub use lightvgl_sys::*;
-}
-
-#[cfg(not(feature = "lvgl-logger"))]
-mod logging {
-    #[macro_export]
-    macro_rules! info {
-        ($($args:tt)*) => {};
-    }
-
-    #[macro_export]
-    macro_rules! warn {
-        ($($args:tt)*) => {};
-    }
-
-    #[macro_export]
-    macro_rules! error {
-        ($($args:tt)*) => {};
-    }
-
-    #[macro_export]
-    macro_rules! trace {
-        ($($args:tt)*) => {};
-    }
 }
 
 #[cfg(feature = "ctor")]
