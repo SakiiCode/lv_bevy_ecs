@@ -61,6 +61,8 @@ use bevy_ecs::{
 };
 use lightvgl_sys::lv_obj_delete;
 
+use crate::trace;
+
 #[derive(Component)]
 pub struct Widget {
     raw: NonNull<lightvgl_sys::lv_obj_t>,
@@ -88,7 +90,7 @@ unsafe impl Sync for Widget {}
 impl Drop for Widget {
     fn drop(&mut self) {
         unsafe {
-            println!("Dropping Obj");
+            trace!("Dropping Obj");
             lv_obj_delete(self.raw.as_ptr());
         }
     }
@@ -129,7 +131,7 @@ pub fn on_insert_parent(
     unsafe {
         lightvgl_sys::lv_obj_set_parent(child_ptr, parent_ptr);
     }
-    dbg!("On Insert Parent");
+    trace!("On Insert Parent");
 }
 
 include!(concat!(env!("OUT_DIR"), "/widgets.rs"));

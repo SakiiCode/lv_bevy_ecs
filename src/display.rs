@@ -47,7 +47,7 @@ use lightvgl_sys::{
     lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL, lv_display_t, lv_draw_buf_t,
 };
 
-use crate::support::LvglColorFormat;
+use crate::{info, support::LvglColorFormat};
 
 pub struct Display {
     raw: NonNull<lv_display_t>,
@@ -107,7 +107,7 @@ where
 {
     unsafe {
         lightvgl_sys::lv_display_set_flush_cb(display, Some(disp_flush_trampoline::<F, N, C>));
-        println!("Callback OK");
+        info!("Callback OK");
         lightvgl_sys::lv_display_set_user_data(
             display,
             Box::into_raw(Box::new(callback)) as *mut _ as *mut c_void,
@@ -150,7 +150,7 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
             };
             callback(&mut update);
         } else {
-            println!("User data is null");
+            info!("User data is null");
         }
         // Not doing this causes a segfault in rust >= 1.69.0
         //*disp_drv = display_driver;

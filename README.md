@@ -37,7 +37,7 @@ lazy_static! {
 }
 ```
 
-5. Last thing is a Schedule instance with `LvglSchedule::new()`. Then call in every loop cycle
+5. Last thing is a Schedule instance with `LvglSchedule::new()`. Then call it in every loop cycle
 
 ```rust
 let schedule = LvglSchedule::new();
@@ -93,7 +93,12 @@ cargo espflash partition-table -o partitions.csv --to-csv target/xtensa-esp32-es
 
 and increase the `factory` partition size.
 
-Then add `partition_table = "partitions.csv"` to `espflash.toml`
+Then add this to `espflash.toml`:
+
+```toml
+[idf]
+partition_table = "partitions.csv"
+```
 
 ### Upload speed
 
