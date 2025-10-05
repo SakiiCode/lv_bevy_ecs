@@ -125,11 +125,11 @@ fn main() -> Result<(), LvError> {
     info!("ECS OK");
 
     let btnmatrix_options = [
-        cstr!("First").as_ptr(),
-        cstr!("Second").as_ptr(),
-        cstr!("\n").as_ptr(),
-        cstr!("Third").as_ptr(),
-        cstr!("").as_ptr(),
+        c"First".as_ptr(),
+        c"Second".as_ptr(),
+        c"\n".as_ptr(),
+        c"Third".as_ptr(),
+        c"".as_ptr(),
     ];
 
     let btnmatrix_ctrl = [
@@ -172,7 +172,7 @@ fn main() -> Result<(), LvError> {
         let mut chart_type_subject = Subject::new_int(0);
 
         let mut dropdown = Dropdown::create_widget()?;
-        lv_dropdown_set_options(&mut dropdown, &cstr!("Lines\nBars"));
+        lv_dropdown_set_options(&mut dropdown, c"Lines\nBars");
 
         lv_obj_set_grid_cell(
             &mut dropdown,
@@ -312,7 +312,7 @@ fn main() -> Result<(), LvError> {
                 let mut btn_label_entity = world.get_entity_mut(label_id).unwrap();
                 let mut btn_label = btn_label_entity.get_mut::<Widget>().unwrap();
 
-                lv_label_set_text(&mut btn_label, cstr!("A multi-line text with a ° symbol"));
+                lv_label_set_text(&mut btn_label, c"A multi-line text with a ° symbol");
 
                 lv_obj_set_width(&mut btn_label, lv_pct(100));
             }
@@ -372,16 +372,14 @@ fn main() -> Result<(), LvError> {
 
         world.spawn((Canvas, canvas));
 
-        let test_img_lvgl_logo_png_path =
-            cstr!("A:examples/assets/test_img_lvgl_logo.png").as_ptr();
+        let test_img_lvgl_logo_png_path = c"A:examples/assets/test_img_lvgl_logo.png".as_ptr();
         let test_img_lvgl_logo_png = unsafe {
             (test_img_lvgl_logo_png_path as *mut c_void)
                 .as_mut()
                 .unwrap()
         };
 
-        let test_img_lvgl_logo_jpg_path =
-            cstr!("A:examples/assets/test_img_lvgl_logo.jpg").as_ptr();
+        let test_img_lvgl_logo_jpg_path = c"A:examples/assets/test_img_lvgl_logo.jpg".as_ptr();
         let test_img_lvgl_logo_jpg = unsafe {
             (test_img_lvgl_logo_jpg_path as *mut c_void)
                 .as_mut()
@@ -537,7 +535,7 @@ fn draw_to_canvas(canvas: &mut Widget) {
     };
 
     /*Use draw descriptors*/
-    let test_img_lvgl_logo_png_path = cstr!("A:examples/assets/test_img_lvgl_logo.png").as_ptr();
+    let test_img_lvgl_logo_png_path = c"A:examples/assets/test_img_lvgl_logo.png".as_ptr();
     let test_img_lvgl_logo_png = unsafe {
         (test_img_lvgl_logo_png_path as *mut c_void)
             .as_mut()

@@ -1,4 +1,4 @@
-use std::{ffi::CString, process::exit, time::Duration};
+use std::{process::exit, time::Duration};
 
 use lv_bevy_ecs::{
     LvglSchedule, LvglWorld,
@@ -30,12 +30,6 @@ use lv_bevy_ecs::prelude::{
     LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, component::Component, entity::Entity,
     query::With,
 };
-
-macro_rules! cstr {
-    ($txt:literal) => {
-        CString::new($txt).unwrap().as_c_str()
-    };
-}
 
 #[derive(Component)]
 struct DynamicButton;
@@ -89,7 +83,7 @@ fn main() -> Result<(), LvError> {
     {
         let button = Button::create_widget()?;
         let mut label = Label::create_widget()?;
-        lv_label_set_text(&mut label, cstr!("SPAWN"));
+        lv_label_set_text(&mut label, c"SPAWN");
         //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
         let label_entity = world.spawn((Label, label)).id();
 
@@ -122,7 +116,7 @@ fn main() -> Result<(), LvError> {
                     let mut dynamic_button = Button::create_widget().unwrap();
                     let mut label = Label::create_widget().unwrap();
                     lv_obj_set_align(&mut dynamic_button, Align::TopRight.into());
-                    lv_label_set_text(&mut label, cstr!("This is dynamic"));
+                    lv_label_set_text(&mut label, c"This is dynamic");
                     world
                         .spawn((DynamicButton, Button, dynamic_button))
                         .with_child((Label, label));

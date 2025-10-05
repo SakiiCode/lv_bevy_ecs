@@ -17,8 +17,6 @@ path = "src/lib.rs"
 
 [dependencies]
 bevy_ecs = { version = "0.16.0", default-features = false }
-cstr_core = "0.2.6"
-cty = "0.2.2"
 embedded-graphics = { version = "0.8.0" }
 lightvgl-sys = { version = "~9.2.0", default-features = false, features = [
   "library",

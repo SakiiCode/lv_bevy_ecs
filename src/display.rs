@@ -35,9 +35,8 @@
 //!         .unwrap();
 //! });
 //! ```
-use std::{marker::PhantomData, ptr::NonNull};
+use std::{ffi::c_void, marker::PhantomData, ptr::NonNull};
 
-use cty::c_void;
 use embedded_graphics::{
     Pixel,
     prelude::{PixelColor, Point, Size},
