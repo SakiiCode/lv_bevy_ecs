@@ -20,6 +20,7 @@ use lv_bevy_ecs::{
         lv_obj_set_style_opa, lv_obj_set_style_text_color, lv_obj_set_width,
         lv_style_set_text_font, lv_timer_handler,
     },
+    info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     subjects::{Subject, lv_subject_add_observer_obj, lv_subject_set_int},
     support::{LvError, lv_pct},
@@ -84,14 +85,14 @@ fn main() -> Result<(), LvError> {
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
     let mut window = Window::new("Bindings Test Example", &output_settings);
-    println!("SIMULATOR OK");
+    info!("SIMULATOR OK");
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 
     let buffer =
         DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(HOR_RES, LINE_HEIGHT);
 
-    println!("Display OK");
+    info!("Display OK");
 
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
@@ -103,7 +104,7 @@ fn main() -> Result<(), LvError> {
             .unwrap();
     });
 
-    println!("Display Driver OK");
+    info!("Display Driver OK");
 
     // Define the initial state of your input
     //let mut latest_touch_status = PointerInputData::Touch(Point::new(0, 0)).released().once();
@@ -117,11 +118,11 @@ fn main() -> Result<(), LvError> {
     // Register a new input device that's capable of reading the current state of the input
     let _touch_screen = InputDevice::<Pointer>::create(|| latest_touch_status);
 
-    println!("Input OK");
+    info!("Input OK");
 
     let mut world = LvglWorld::new();
 
-    println!("ECS OK");
+    info!("ECS OK");
 
     let btnmatrix_options = [
         cstr!("First").as_ptr(),
@@ -402,7 +403,7 @@ fn main() -> Result<(), LvError> {
         world.spawn((Image, img));
     }
 
-    println!("Create OK");
+    info!("Create OK");
     // Create a new Schedule, which defines an execution strategy for Systems
     let mut schedule = LvglSchedule::new();
 
@@ -419,7 +420,7 @@ fn main() -> Result<(), LvError> {
                     mouse_btn: _,
                     point,
                 } => {
-                    println!("Clicked on: {:?}", point);
+                    info!("Clicked on: {:?}", point);
                     //latest_touch_status = PointerInputData::Touch(point).pressed().once();
                     latest_touch_status = InputEvent {
                         status: BufferStatus::Once,
@@ -463,7 +464,7 @@ fn main() -> Result<(), LvError> {
 }
 
 fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject_t) {
-    println!("chart_type_observer_cb");
+    info!("chart_type_observer_cb");
     unsafe {
         let v = lv_subject_get_int(subject);
         let chart = lv_observer_get_target(observer);
@@ -508,7 +509,7 @@ fn list_button_create(world: &mut World, parent: Entity) -> Result<Entity, LvErr
     parent.add_child(btn_id);
 
     let idx = lv_obj_get_index(world.get_entity(btn_id).unwrap().get::<Widget>().unwrap());
-    println!("Spawning button {}", idx);
+    info!("Spawning button {}", idx);
 
     let mut label = Label::create_widget()?;
     let file_icon_str = CStr::from_bytes_with_nul(LV_SYMBOL_FILE).unwrap();

@@ -23,6 +23,8 @@ pub mod display;
 pub mod events;
 pub mod functions;
 pub mod input;
+#[cfg(feature = "logging")]
+pub mod logging;
 pub mod styles;
 pub mod subjects;
 pub mod support;
@@ -34,10 +36,42 @@ pub mod prelude {
     pub use lightvgl_sys::*;
 }
 
+#[cfg(not(feature = "logging"))]
+mod logging {
+    #[macro_export]
+    macro_rules! info {
+        ($($args:tt)*) => {};
+    }
+
+    #[macro_export]
+    macro_rules! warn {
+        ($($args:tt)*) => {};
+    }
+
+    #[macro_export]
+    macro_rules! error {
+        ($($args:tt)*) => {};
+    }
+
+    #[macro_export]
+    macro_rules! trace {
+        ($($args:tt)*) => {};
+    }
+}
+
 #[cfg(feature = "ctor")]
 #[register_ctor]
 fn init() {
     lv_init();
+    #[cfg(feature = "logging")]
+    {
+        use crate::logging::LvglLogger;
+
+        match log::set_logger(&LvglLogger) {
+            Ok(_) => log::set_max_level(log::LevelFilter::Trace),
+            Err(err) => println!("Could not initialize logging: {}", err.to_string()),
+        };
+    }
 }
 
 struct FrameInstant(Instant);

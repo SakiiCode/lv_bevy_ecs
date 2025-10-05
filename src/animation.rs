@@ -21,7 +21,7 @@ use bevy_ecs::{
     world::DeferredWorld,
 };
 
-use crate::widgets::Widget;
+use crate::{trace, widgets::Widget};
 
 #[derive(Component)]
 #[component(on_insert=add_animation)]
@@ -72,7 +72,7 @@ pub fn add_animation(mut world: DeferredWorld, ctx: HookContext) {
     let mut anim = world.get_mut::<Animation>(ctx.entity).unwrap();
     anim.raw.as_mut().unwrap().var = obj as *mut _;
     anim.start();
-    dbg!("Added animation");
+    trace!("Added animation");
 }
 
 unsafe extern "C" fn animator_trampoline<F>(obj: *mut c_void, val: i32)

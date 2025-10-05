@@ -22,7 +22,7 @@ use std::{
 use bevy_ecs::component::Component;
 use lightvgl_sys::{lv_color_t, lv_subject_t};
 
-use crate::widgets::Widget;
+use crate::{trace, widgets::Widget};
 
 #[derive(Component)]
 pub struct Subject {
@@ -140,7 +140,7 @@ pub fn lv_subject_add_observer_obj<'a, F>(
 ) where
     F: FnMut(*mut lightvgl_sys::lv_observer_t, *mut lightvgl_sys::lv_subject_t) + 'a,
 {
-    println!("lv_subject_add_observer_obj");
+    trace!("lv_subject_add_observer_obj");
     unsafe {
         lightvgl_sys::lv_subject_add_observer_obj(
             &mut subject.raw,
