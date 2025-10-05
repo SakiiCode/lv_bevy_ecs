@@ -1,6 +1,5 @@
 #![doc = include_str!("../README.md")]
-#[cfg(feature = "ctor")]
-use ctor_bare::register_ctor;
+
 use std::{
     ops::{Deref, DerefMut},
     time::Instant,
@@ -60,18 +59,9 @@ mod logging {
 }
 
 #[cfg(feature = "ctor")]
-#[register_ctor]
+#[ctor_bare::register_ctor]
 fn init() {
     lv_init();
-    #[cfg(feature = "logging")]
-    {
-        use crate::logging::LvglLogger;
-
-        match log::set_logger(&LvglLogger) {
-            Ok(_) => log::set_max_level(log::LevelFilter::Trace),
-            Err(err) => println!("Could not initialize logging: {}", err.to_string()),
-        };
-    }
 }
 
 struct FrameInstant(Instant);

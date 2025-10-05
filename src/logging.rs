@@ -20,6 +20,15 @@ macro_rules! func {
     }};
 }
 
+#[cfg(feature = "ctor")]
+#[ctor_bare::register_ctor]
+fn init_logger() {
+    match log::set_logger(&LvglLogger) {
+        Ok(_) => log::set_max_level(log::LevelFilter::Trace),
+        Err(err) => println!("Could not initialize logging: {}", err.to_string()),
+    };
+}
+
 pub fn to_lv_log_level(level: Level) -> lightvgl_sys::lv_log_level_t {
     (match level {
         Level::Trace => lightvgl_sys::LV_LOG_LEVEL_TRACE,
