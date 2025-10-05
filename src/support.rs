@@ -4,8 +4,6 @@ use core::convert::TryInto;
 use core::fmt;
 use embedded_graphics::pixelcolor::{BinaryColor, Gray8, Rgb565, Rgb888};
 use lightvgl_sys::lv_coord_t;
-#[cfg(feature = "logging")]
-use log::warn;
 use std::error::Error;
 
 pub type LvResult<T> = Result<T, LvError>;
@@ -86,8 +84,8 @@ impl LvglColorFormat for Gray8 {
 
 impl LvglColorFormat for BinaryColor {
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
-        #[cfg(feature = "logging")]
-        warn!("Monochrome buffers are not supported. Proceed with caution!");
+        #[cfg(feature = "lvgl-logger")]
+        crate::warn!("Monochrome buffers are not supported. Proceed with caution!");
         lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_I1
     }
 }

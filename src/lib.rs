@@ -7,10 +7,7 @@ use std::{
 
 use bevy_ecs::{schedule::Schedule, system::Local, world::World};
 
-use crate::{
-    functions::{lv_init, lv_tick_inc},
-    widgets::on_insert_parent,
-};
+use crate::{functions::lv_tick_inc, widgets::on_insert_parent};
 
 #[cfg(feature = "lvgl-alloc")]
 mod alloc;
@@ -22,7 +19,7 @@ pub mod display;
 pub mod events;
 pub mod functions;
 pub mod input;
-#[cfg(feature = "logging")]
+#[cfg(feature = "lvgl-logger")]
 pub mod logging;
 pub mod styles;
 pub mod subjects;
@@ -35,7 +32,7 @@ pub mod prelude {
     pub use lightvgl_sys::*;
 }
 
-#[cfg(not(feature = "logging"))]
+#[cfg(not(feature = "lvgl-logger"))]
 mod logging {
     #[macro_export]
     macro_rules! info {
@@ -61,7 +58,7 @@ mod logging {
 #[cfg(feature = "ctor")]
 #[ctor_bare::register_ctor]
 fn init() {
-    lv_init();
+    crate::functions::lv_init();
 }
 
 struct FrameInstant(Instant);

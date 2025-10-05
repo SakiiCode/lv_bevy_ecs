@@ -23,7 +23,7 @@ embedded-graphics = { version = "0.8.0" }
 lightvgl-sys = { version = "~9.2.0", default-features = false, features = [
   "library",
 ] }
-ctor_bare = "0.2.1"
+ctor_bare = { version = "0.2.1", optional = true }
 log = { version = "0.4", optional = true }
 
 [dev-dependencies]
@@ -38,13 +38,13 @@ lightvgl-sys = { version = "~9.2.0", default-features = false, features = [
 ] }
 
 [features]
-default = ["ctor"]
+default = []
 
 lvgl-alloc = []
 
-# Automatically call lv_init() at startup
-ctor = []
+# Automatically call lv_init() and set_logger() at startup
+ctor = ["dep:ctor_bare"]
 
 # Enable logging macros, requires LV_USE_LOG 1
-# If disabled, then those macros are no-op
-logging = ["dep:log"]
+# If disabled, those macros are no-op and you can use other logging solution
+lvgl-logger = ["dep:log"]
