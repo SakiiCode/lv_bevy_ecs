@@ -21,8 +21,8 @@ macro_rules! func {
 }
 
 #[cfg(feature = "ctor")]
-#[ctor_bare::register_ctor]
-fn init_logger() {
+#[small_ctor::ctor]
+unsafe fn init_logger() {
     match log::set_logger(&LvglLogger) {
         Ok(_) => log::set_max_level(log::LevelFilter::Trace),
         Err(err) => println!("Could not initialize logging: {}", err.to_string()),

@@ -59,8 +59,8 @@ mod logging {
 }
 
 #[cfg(feature = "ctor")]
-#[ctor_bare::register_ctor]
-fn init() {
+#[small_ctor::ctor]
+unsafe fn init() {
     lv_init();
 }
 
