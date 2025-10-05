@@ -23,7 +23,7 @@ embedded-graphics = { version = "0.8.0" }
 lightvgl-sys = { version = "~9.2.0", default-features = false, features = [
   "library",
 ] }
-ctor_bare = "0.2.1"
+ctor-lite = "0.1.0"
 
 [dev-dependencies]
 embedded-graphics-simulator = "0.5.0"
@@ -39,4 +39,4 @@ lightvgl-sys = { version = "~9.2.0", default-features = false, features = [
 [features]
 default = ["ctor"]
 lvgl-alloc = []
-ctor = [] # Automatically call lv_init() at startup
+ctor = []          # Automatically call lv_init() at startup

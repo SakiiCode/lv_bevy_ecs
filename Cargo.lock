@@ -326,24 +326,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "ctor_bare"
-version = "0.2.1"
+name = "ctor-lite"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4e5ae3c454dc1efb0e5821dc17344539849391b2de18c89596ea563f1909f93"
-dependencies = [
- "ctor_bare_macros",
-]
-
-[[package]]
-name = "ctor_bare_macros"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a49d5cd78b1c748184d41407b14a58af8403c13328ff2b9f49b0a418c24e3ff"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.101",
-]
+checksum = "1f791803201ab277ace03903de1594460708d2d54df6053f2d9e82f592b19e3b"
 
 [[package]]
 name = "cty"
@@ -628,7 +614,7 @@ version = "0.2.0"
 dependencies = [
  "bevy_ecs",
  "cstr_core",
- "ctor_bare",
+ "ctor-lite",
  "cty",
  "embedded-graphics",
  "embedded-graphics-simulator",
