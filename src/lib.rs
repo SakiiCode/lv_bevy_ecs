@@ -32,7 +32,7 @@ pub mod prelude {
 }
 
 #[cfg(feature = "ctor")]
-#[ctor_bare::register_ctor]
+#[ctor::ctor]
 fn init() {
     crate::functions::lv_init();
 }

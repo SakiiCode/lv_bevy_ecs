@@ -17,11 +17,11 @@ path = "src/lib.rs"
 
 [dependencies]
 bevy_ecs = { version = "0.16.0", default-features = false }
+ctor = { git = "https://github.com/SakiiCode/rust-ctor-xtensa.git", optional = true }
 embedded-graphics = { version = "0.8.0" }
 lightvgl-sys = { version = "~9.2.0", default-features = false, features = [
   "library",
 ] }
-ctor_bare = { version = "0.2.1", optional = true }
 log = { version = "0.4" }
 
 [dev-dependencies]
@@ -42,4 +42,4 @@ default = []
 lvgl-alloc = []
 
 # Automatically call lv_init() at startup
-ctor = ["dep:ctor_bare"]
+ctor = ["dep:ctor"]
