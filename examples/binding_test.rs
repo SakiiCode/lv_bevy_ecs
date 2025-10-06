@@ -14,12 +14,13 @@ use lv_bevy_ecs::{
     functions::{
         lv_buttonmatrix_set_ctrl_map, lv_buttonmatrix_set_selected_button, lv_canvas_fill_bg,
         lv_canvas_set_buffer, lv_chart_set_ext_y_array, lv_color_make, lv_dropdown_set_options,
-        lv_image_set_rotation, lv_image_set_scale_x, lv_image_set_src, lv_label_set_text,
-        lv_obj_add_flag, lv_obj_align, lv_obj_get_index, lv_obj_set_flex_flow,
+        lv_image_set_rotation, lv_image_set_scale_x, lv_image_set_src, lv_init, lv_label_set_text,
+        lv_log_init, lv_obj_add_flag, lv_obj_align, lv_obj_get_index, lv_obj_set_flex_flow,
         lv_obj_set_grid_cell, lv_obj_set_pos, lv_obj_set_style_bg_color, lv_obj_set_style_bg_opa,
         lv_obj_set_style_opa, lv_obj_set_style_text_color, lv_obj_set_width,
         lv_style_set_text_font, lv_timer_handler,
     },
+    info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     subjects::{Subject, lv_subject_add_observer_obj, lv_subject_set_int},
     support::{LvError, lv_pct},
@@ -57,13 +58,6 @@ use lv_bevy_ecs::prelude::{
     component::Component, entity::Entity, lv_color_format_t_LV_COLOR_FORMAT_RGB565, world::World,
 };
 
-macro_rules! cstr {
-    ($txt:literal) => {{
-        const STR: &[u8] = concat!($txt, "\0").as_bytes();
-        unsafe { CStr::from_bytes_with_nul_unchecked(STR) }
-    }};
-}
-
 macro_rules! lv_grid_fr {
     ($x:literal) => {
         lightvgl_sys::LV_COORD_MAX - 100 + $x
@@ -74,6 +68,11 @@ macro_rules! lv_grid_fr {
 struct DynamicLabel;
 
 fn main() -> Result<(), LvError> {
+    lv_init();
+    lv_log_init();
+    // to use an other logging backend, simply initialize it instead of lv_log_init()
+    // env_logger::init();
+
     const HOR_RES: u32 = 800;
     const VER_RES: u32 = 480;
     const LINE_HEIGHT: u32 = 10;
@@ -83,14 +82,14 @@ fn main() -> Result<(), LvError> {
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
     let mut window = Window::new("Bindings Test Example", &output_settings);
-    println!("SIMULATOR OK");
+    info!("SIMULATOR OK");
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 
     let buffer =
         DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(HOR_RES, LINE_HEIGHT);
 
-    println!("Display OK");
+    info!("Display OK");
 
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
@@ -102,7 +101,7 @@ fn main() -> Result<(), LvError> {
             .unwrap();
     });
 
-    println!("Display Driver OK");
+    info!("Display Driver OK");
 
     // Define the initial state of your input
     //let mut latest_touch_status = PointerInputData::Touch(Point::new(0, 0)).released().once();
@@ -116,18 +115,18 @@ fn main() -> Result<(), LvError> {
     // Register a new input device that's capable of reading the current state of the input
     let _touch_screen = InputDevice::<Pointer>::create(|| latest_touch_status);
 
-    println!("Input OK");
+    info!("Input OK");
 
     let mut world = LvglWorld::new();
 
-    println!("ECS OK");
+    info!("ECS OK");
 
     let btnmatrix_options = [
-        cstr!("First").as_ptr(),
-        cstr!("Second").as_ptr(),
-        cstr!("\n").as_ptr(),
-        cstr!("Third").as_ptr(),
-        cstr!("").as_ptr(),
+        c"First".as_ptr(),
+        c"Second".as_ptr(),
+        c"\n".as_ptr(),
+        c"Third".as_ptr(),
+        c"".as_ptr(),
     ];
 
     let btnmatrix_ctrl = [
@@ -170,7 +169,7 @@ fn main() -> Result<(), LvError> {
         let mut chart_type_subject = Subject::new_int(0);
 
         let mut dropdown = Dropdown::create_widget()?;
-        lv_dropdown_set_options(&mut dropdown, &cstr!("Lines\nBars"));
+        lv_dropdown_set_options(&mut dropdown, c"Lines\nBars");
 
         lv_obj_set_grid_cell(
             &mut dropdown,
@@ -310,7 +309,7 @@ fn main() -> Result<(), LvError> {
                 let mut btn_label_entity = world.get_entity_mut(label_id).unwrap();
                 let mut btn_label = btn_label_entity.get_mut::<Widget>().unwrap();
 
-                lv_label_set_text(&mut btn_label, cstr!("A multi-line text with a ° symbol"));
+                lv_label_set_text(&mut btn_label, c"A multi-line text with a ° symbol");
 
                 lv_obj_set_width(&mut btn_label, lv_pct(100));
             }
@@ -370,16 +369,14 @@ fn main() -> Result<(), LvError> {
 
         world.spawn((Canvas, canvas));
 
-        let test_img_lvgl_logo_png_path =
-            cstr!("A:examples/assets/test_img_lvgl_logo.png").as_ptr();
+        let test_img_lvgl_logo_png_path = c"A:examples/assets/test_img_lvgl_logo.png".as_ptr();
         let test_img_lvgl_logo_png = unsafe {
             (test_img_lvgl_logo_png_path as *mut c_void)
                 .as_mut()
                 .unwrap()
         };
 
-        let test_img_lvgl_logo_jpg_path =
-            cstr!("A:examples/assets/test_img_lvgl_logo.jpg").as_ptr();
+        let test_img_lvgl_logo_jpg_path = c"A:examples/assets/test_img_lvgl_logo.jpg".as_ptr();
         let test_img_lvgl_logo_jpg = unsafe {
             (test_img_lvgl_logo_jpg_path as *mut c_void)
                 .as_mut()
@@ -401,7 +398,7 @@ fn main() -> Result<(), LvError> {
         world.spawn((Image, img));
     }
 
-    println!("Create OK");
+    info!("Create OK");
     // Create a new Schedule, which defines an execution strategy for Systems
     let mut schedule = LvglSchedule::new();
 
@@ -418,7 +415,7 @@ fn main() -> Result<(), LvError> {
                     mouse_btn: _,
                     point,
                 } => {
-                    println!("Clicked on: {:?}", point);
+                    info!("Clicked on: {:?}", point);
                     //latest_touch_status = PointerInputData::Touch(point).pressed().once();
                     latest_touch_status = InputEvent {
                         status: BufferStatus::Once,
@@ -462,7 +459,7 @@ fn main() -> Result<(), LvError> {
 }
 
 fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject_t) {
-    println!("chart_type_observer_cb");
+    info!("chart_type_observer_cb");
     unsafe {
         let v = lv_subject_get_int(subject);
         let chart = lv_observer_get_target(observer);
@@ -507,7 +504,7 @@ fn list_button_create(world: &mut World, parent: Entity) -> Result<Entity, LvErr
     parent.add_child(btn_id);
 
     let idx = lv_obj_get_index(world.get_entity(btn_id).unwrap().get::<Widget>().unwrap());
-    println!("Spawning button {}", idx);
+    info!("Spawning button {}", idx);
 
     let mut label = Label::create_widget()?;
     let file_icon_str = CStr::from_bytes_with_nul(LV_SYMBOL_FILE).unwrap();
@@ -535,7 +532,7 @@ fn draw_to_canvas(canvas: &mut Widget) {
     };
 
     /*Use draw descriptors*/
-    let test_img_lvgl_logo_png_path = cstr!("A:examples/assets/test_img_lvgl_logo.png").as_ptr();
+    let test_img_lvgl_logo_png_path = c"A:examples/assets/test_img_lvgl_logo.png".as_ptr();
     let test_img_lvgl_logo_png = unsafe {
         (test_img_lvgl_logo_png_path as *mut c_void)
             .as_mut()

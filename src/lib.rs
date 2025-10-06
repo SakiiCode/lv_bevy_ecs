@@ -1,6 +1,5 @@
 #![doc = include_str!("../README.md")]
-#[cfg(feature = "ctor")]
-use ctor_bare::register_ctor;
+
 use std::{
     ops::{Deref, DerefMut},
     time::Instant,
@@ -8,10 +7,7 @@ use std::{
 
 use bevy_ecs::{schedule::Schedule, system::Local, world::World};
 
-use crate::{
-    functions::{lv_init, lv_tick_inc},
-    widgets::on_insert_parent,
-};
+use crate::{functions::lv_tick_inc, widgets::on_insert_parent};
 
 #[cfg(feature = "lvgl-alloc")]
 mod alloc;
@@ -23,6 +19,7 @@ pub mod display;
 pub mod events;
 pub mod functions;
 pub mod input;
+pub mod logging;
 pub mod styles;
 pub mod subjects;
 pub mod support;
@@ -35,9 +32,9 @@ pub mod prelude {
 }
 
 #[cfg(feature = "ctor")]
-#[register_ctor]
+#[ctor_bare::register_ctor]
 fn init() {
-    lv_init();
+    crate::functions::lv_init();
 }
 
 struct FrameInstant(Instant);

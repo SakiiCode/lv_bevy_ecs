@@ -1,14 +1,17 @@
-use std::{ffi::CString, process::exit, time::Duration};
+use std::{process::exit, time::Duration};
 
 use lv_bevy_ecs::{
     LvglSchedule, LvglWorld,
     animation::Animation,
     display::{Display, DrawBuffer},
+    error,
     events::{Event, lv_obj_add_event_cb},
     functions::{
-        lv_color_make, lv_label_set_text, lv_obj_set_align, lv_obj_set_style_opa,
-        lv_style_set_align, lv_style_set_bg_color, lv_style_set_opa, lv_timer_handler,
+        lv_color_make, lv_init, lv_label_set_text, lv_log_init, lv_obj_set_align,
+        lv_obj_set_style_opa, lv_style_set_align, lv_style_set_bg_color, lv_style_set_opa,
+        lv_timer_handler,
     },
+    info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     support::{Align, LvError},
     widgets::Arc,
@@ -30,16 +33,15 @@ use lv_bevy_ecs::prelude::{
     query::With,
 };
 
-macro_rules! cstr {
-    ($txt:literal) => {
-        CString::new($txt).unwrap().as_c_str()
-    };
-}
-
 #[derive(Component)]
 struct DynamicButton;
 
 fn main() -> Result<(), LvError> {
+    lv_init();
+    lv_log_init();
+    // to use an other logging backend, simply initialize it instead of lv_log_init()
+    // env_logger::init();
+
     const HOR_RES: u32 = 320;
     const VER_RES: u32 = 240;
     const LINE_HEIGHT: u32 = 16;
@@ -50,14 +52,15 @@ fn main() -> Result<(), LvError> {
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
     let mut window = Window::new("Button Example", &output_settings);
 
-    println!("SIMULATOR OK");
+    info!("SIMULATOR OK");
+    error!("Random error");
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 
     let buffer =
         DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(HOR_RES, LINE_HEIGHT);
 
-    println!("Display OK");
+    info!("Display OK");
 
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
@@ -66,7 +69,7 @@ fn main() -> Result<(), LvError> {
             .unwrap();
     });
 
-    println!("Display Driver OK");
+    info!("Display Driver OK");
 
     // Define the initial state of your input
     //let mut latest_touch_status = PointerInputData::Touch(Point::new(0, 0)).released().once();
@@ -79,16 +82,16 @@ fn main() -> Result<(), LvError> {
     // Register a new input device that's capable of reading the current state of the input
     let _touch_screen = InputDevice::<Pointer>::create(|| latest_touch_status);
 
-    println!("Input OK");
+    info!("Input OK");
 
     let mut world = LvglWorld::new();
 
-    println!("ECS OK");
+    info!("ECS OK");
 
     {
         let button = Button::create_widget()?;
         let mut label = Label::create_widget()?;
-        lv_label_set_text(&mut label, cstr!("SPAWN"));
+        lv_label_set_text(&mut label, c"SPAWN");
         //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
         let label_entity = world.spawn((Label, label)).id();
 
@@ -121,7 +124,7 @@ fn main() -> Result<(), LvError> {
                     let mut dynamic_button = Button::create_widget().unwrap();
                     let mut label = Label::create_widget().unwrap();
                     lv_obj_set_align(&mut dynamic_button, Align::TopRight.into());
-                    lv_label_set_text(&mut label, cstr!("This is dynamic"));
+                    lv_label_set_text(&mut label, c"This is dynamic");
                     world
                         .spawn((DynamicButton, Button, dynamic_button))
                         .with_child((Label, label));
@@ -148,7 +151,7 @@ fn main() -> Result<(), LvError> {
         world.spawn((Arc, arc));
     }
 
-    println!("Create OK");
+    info!("Create OK");
     // Create a new Schedule, which defines an execution strategy for Systems
     let mut schedule = LvglSchedule::new();
 
@@ -164,7 +167,7 @@ fn main() -> Result<(), LvError> {
                     mouse_btn: _,
                     point,
                 } => {
-                    println!("Clicked on: {:?}", point);
+                    info!("Clicked on: {:?}", point);
                     //latest_touch_status = PointerInputData::Touch(point).pressed().once();
                     latest_touch_status = InputEvent {
                         status: BufferStatus::Once,

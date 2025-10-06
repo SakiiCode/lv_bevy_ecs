@@ -1,7 +1,6 @@
 //! Input
-use std::{marker::PhantomData, ptr::NonNull};
+use std::{ffi::c_void, marker::PhantomData, ptr::NonNull};
 
-use cty::c_void;
 use embedded_graphics::prelude::Point;
 
 /// Boolean states for an input.
