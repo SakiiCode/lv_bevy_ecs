@@ -404,8 +404,9 @@ fn main() -> Result<(), LvError> {
 
     let mut is_pointer_down = false;
 
+    window.update(&sim_display);
+
     loop {
-        window.update(&sim_display);
         let events = window.events().peekable();
 
         for event in events {
@@ -455,6 +456,8 @@ fn main() -> Result<(), LvError> {
         schedule.run(&mut world);
 
         lv_timer_handler();
+
+        window.update(&sim_display);
     }
 }
 
