@@ -1,10 +1,17 @@
 use std::{ffi::CString, process::exit, time::Duration};
 
 use lv_bevy_ecs::{
-    animation::Animation, display::{Display, DrawBuffer}, events::{lv_obj_add_event_cb, Event}, functions::{
-        lv_label_set_text, lv_obj_set_align, lv_obj_set_style_opa, lv_style_set_align,
-        lv_style_set_bg_color, lv_style_set_opa, lv_timer_handler,
-    }, input::{InputDevice, PointerInputData}, support::{Align, Color, LvError}, widgets::Arc, LvglSchedule, LvglWorld
+    LvglSchedule, LvglWorld,
+    animation::Animation,
+    display::{Display, DrawBuffer},
+    events::{Event, lv_obj_add_event_cb},
+    functions::{
+        lv_color_make, lv_label_set_text, lv_obj_set_align, lv_obj_set_style_opa,
+        lv_style_set_align, lv_style_set_bg_color, lv_style_set_opa, lv_timer_handler,
+    },
+    input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
+    support::{Align, LvError},
+    widgets::Arc,
 };
 
 use embedded_graphics::{
@@ -20,7 +27,7 @@ use lv_bevy_ecs::widgets::{Button, Label};
 
 use lv_bevy_ecs::prelude::{
     LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, component::Component, entity::Entity,
-    lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_indev_type_t_LV_INDEV_TYPE_POINTER, query::With,
+    query::With,
 };
 
 macro_rules! cstr {
@@ -35,7 +42,7 @@ struct DynamicButton;
 fn main() -> Result<(), LvError> {
     const HOR_RES: u32 = 320;
     const VER_RES: u32 = 240;
-    const LINE_HEIGHT: u32 = 10;
+    const LINE_HEIGHT: u32 = 16;
 
     let mut sim_display: SimulatorDisplay<Rgb565> =
         SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
@@ -47,33 +54,30 @@ fn main() -> Result<(), LvError> {
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 
-    let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }>::create(
-        HOR_RES,
-        LINE_HEIGHT,
-        lv_color_format_t_LV_COLOR_FORMAT_RGB565,
-    );
+    let buffer =
+        DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(HOR_RES, LINE_HEIGHT);
 
     println!("Display OK");
 
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
         sim_display
-            .fill_contiguous(
-                &refresh.rectangle,
-                refresh.colors.take().unwrap().map(|c| c.into()),
-            )
+            .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
             .unwrap();
     });
 
     println!("Display Driver OK");
 
     // Define the initial state of your input
-    let mut latest_touch_status = PointerInputData::Touch(Point::new(0, 0)).released().once();
+    //let mut latest_touch_status = PointerInputData::Touch(Point::new(0, 0)).released().once();
+    let mut latest_touch_status = InputEvent {
+        status: BufferStatus::Once,
+        state: InputState::Released,
+        data: Point::new(0, 0),
+    };
 
     // Register a new input device that's capable of reading the current state of the input
-    let _touch_screen = InputDevice::create(lv_indev_type_t_LV_INDEV_TYPE_POINTER, || {
-        latest_touch_status
-    });
+    let _touch_screen = InputDevice::<Pointer>::create(|| latest_touch_status);
 
     println!("Input OK");
 
@@ -132,7 +136,7 @@ fn main() -> Result<(), LvError> {
         let mut style = Style::default();
         lv_style_set_opa(&mut style, LV_OPA_50 as u8);
         lv_style_set_align(&mut style, Align::TopLeft.into());
-        lv_style_set_bg_color(&mut style, Color::from_rgb(255, 0, 0).into());
+        lv_style_set_bg_color(&mut style, lv_color_make(255, 0, 0));
 
         button_entity.insert(style);
         //button_entity.remove::<Style>();
@@ -161,19 +165,34 @@ fn main() -> Result<(), LvError> {
                     point,
                 } => {
                     println!("Clicked on: {:?}", point);
-                    latest_touch_status = PointerInputData::Touch(point).pressed().once();
+                    //latest_touch_status = PointerInputData::Touch(point).pressed().once();
+                    latest_touch_status = InputEvent {
+                        status: BufferStatus::Once,
+                        state: InputState::Pressed,
+                        data: point,
+                    };
                     is_pointer_down = true;
                 }
                 SimulatorEvent::MouseButtonUp {
                     mouse_btn: _,
                     point,
                 } => {
-                    latest_touch_status = PointerInputData::Touch(point).released().once();
+                    //latest_touch_status = PointerInputData::Touch(point).released().once();
+                    latest_touch_status = InputEvent {
+                        status: BufferStatus::Once,
+                        state: InputState::Released,
+                        data: point,
+                    };
                     is_pointer_down = false;
                 }
                 SimulatorEvent::MouseMove { point } => {
                     if is_pointer_down {
-                        latest_touch_status = PointerInputData::Touch(point).pressed().once();
+                        //latest_touch_status = PointerInputData::Touch(point).pressed().once();
+                        latest_touch_status = InputEvent {
+                            status: BufferStatus::Once,
+                            state: InputState::Pressed,
+                            data: point,
+                        };
                     }
                 }
                 SimulatorEvent::Quit => exit(0),

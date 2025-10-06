@@ -27,22 +27,15 @@
 //! ```rust
 //! let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 //!
-//! let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }>::create(
-//!         HOR_RES,
-//!         LINE_HEIGHT,
-//!         lv_color_format_t_LV_COLOR_FORMAT_RGB565,
-//! );
+//! let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(HOR_RES, LINE_HEIGHT);
 //! display.register(buffer, |refresh| {
 //!     // alternative (slower): sim_display.draw_iter(refresh.as_pixels()).unwrap();
 //!     sim_display
-//!         .fill_contiguous(
-//!             &refresh.rectangle,
-//!             refresh.colors.take().unwrap().map(|c| c.into()),
-//!         )
+//!         .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
 //!         .unwrap();
 //! });
 //! ```
-use std::{ptr::NonNull, u16};
+use std::{marker::PhantomData, ptr::NonNull};
 
 use cty::c_void;
 use embedded_graphics::{
@@ -54,7 +47,7 @@ use lightvgl_sys::{
     lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL, lv_display_t, lv_draw_buf_t,
 };
 
-use crate::support::Color;
+use crate::support::LvglColorFormat;
 
 pub struct Display {
     raw: NonNull<lv_display_t>,
@@ -68,9 +61,12 @@ impl Display {
         }
     }
 
-    pub fn register<'a, F, const N: usize>(&'a mut self, buffer: DrawBuffer<N>, callback: F)
-    where
-        F: FnMut(&mut DisplayRefresh<N>) + 'a,
+    pub fn register<F, const N: usize, C: LvglColorFormat>(
+        &mut self,
+        buffer: DrawBuffer<N, C>,
+        callback: F,
+    ) where
+        F: FnMut(&mut DisplayRefresh<N, C>),
     {
         unsafe {
             lightvgl_sys::lv_display_set_buffers(
@@ -100,17 +96,17 @@ pub struct Area {
 /// An update to the display information, contains the area that is being
 /// updated and the color of the pixels that need to be updated. The colors
 /// are represented in a contiguous array.
-pub struct DisplayRefresh<const N: usize> {
+pub struct DisplayRefresh<'a, const N: usize, C> {
     pub rectangle: Rectangle,
-    pub colors: Option<Box<dyn Iterator<Item = Color>>>,
+    pub colors: &'a [C],
 }
 
-unsafe fn register_display<F, const N: usize>(display: *mut lv_display_t, callback: F)
+unsafe fn register_display<F, const N: usize, C>(display: *mut lv_display_t, callback: F)
 where
-    F: FnMut(&mut DisplayRefresh<N>),
+    F: FnMut(&mut DisplayRefresh<N, C>),
 {
     unsafe {
-        lightvgl_sys::lv_display_set_flush_cb(display, Some(disp_flush_trampoline::<F, N>));
+        lightvgl_sys::lv_display_set_flush_cb(display, Some(disp_flush_trampoline::<F, N, C>));
         println!("Callback OK");
         lightvgl_sys::lv_display_set_user_data(
             display,
@@ -119,29 +115,19 @@ where
     }
 }
 
-unsafe extern "C" fn disp_flush_trampoline<F, const N: usize>(
+unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
     display: *mut lightvgl_sys::lv_display_t,
     area: *const lightvgl_sys::lv_area_t,
     color_p: *mut u8,
 ) where
-    F: FnMut(&mut DisplayRefresh<N>),
+    F: FnMut(&mut DisplayRefresh<N, C>),
 {
     unsafe {
         let display_driver = *display;
         if !display_driver.user_data.is_null() {
             let callback = &mut *(display_driver.user_data as *mut F);
 
-            let buf16 = color_p as *mut u16;
-
-            let iterator = (0..N)
-                .map(move |offset| buf16.add(offset).as_ref().unwrap())
-                .map(|lv_color| {
-                    let r = (*lv_color >> 11) & 0x1F;
-                    let g = (*lv_color >> 5) & 0x3F;
-                    let b = *lv_color & 0x1F;
-
-                    Color::from_rgb(r as u8, g as u8, b as u8).into()
-                });
+            let buf = color_p as *mut C;
 
             let w = (*area).x2 - (*area).x1 + 1;
             let h = (*area).y2 - (*area).y1 + 1;
@@ -156,9 +142,11 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize>(
                 },
             };
 
+            let slice = std::slice::from_raw_parts(buf, (w * h) as usize);
+
             let mut update = DisplayRefresh {
                 rectangle,
-                colors: Some(Box::new(iterator)),
+                colors: slice,
             };
             callback(&mut update);
         } else {
@@ -171,36 +159,50 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize>(
     }
 }
 
-impl<const N: usize> DisplayRefresh<N> {
-    pub fn as_pixels<C>(&mut self) -> impl IntoIterator<Item = Pixel<C>> + '_
+impl<const N: usize, C> DisplayRefresh<'_, N, C> {
+    pub fn as_pixels<PC>(&self) -> impl IntoIterator<Item = Pixel<PC>>
     where
-        C: PixelColor + From<Color>,
+        C: Clone,
+        PC: PixelColor + From<C>,
     {
         let area = &self.rectangle;
-        let Point { x: x1, y: y1 } = area.top_left;
-        let Point { x: x2, y: y2 } = area.bottom_right().unwrap();
+        let top_left = area.top_left;
+        let Point { x: x1, y: y1 } = top_left;
+        let bottom_right = area.bottom_right().unwrap();
+        let Point { x: x2, y: y2 } = bottom_right;
 
         let ys = y1..=y2;
-        let xs = x1..=x2;
+        let xs = (x1..=x2).enumerate();
+        let x_len = (x2 - x1 + 1) as usize;
 
         // We use iterators here to ensure that the Rust compiler can apply all possible
         // optimizations at compile time.
-        ys.flat_map(move |y| xs.clone().map(move |x| Point::new(x as i32, y as i32)))
-            .zip(self.colors.as_mut().unwrap())
-            .map(|(point, color)| Pixel(point, color.into()))
+        ys.enumerate().flat_map(move |(iy, y)| {
+            xs.clone().map(move |(ix, x)| {
+                let color_len = x_len * iy + ix;
+                let raw_color = self.colors[color_len].clone();
+                let color: PC = raw_color.into();
+                Pixel(Point::new(x as i32, y as i32), color)
+            })
+        })
     }
 }
 
-pub struct DrawBuffer<const N: usize> {
+pub struct DrawBuffer<const N: usize, C: LvglColorFormat> {
     raw: NonNull<lv_draw_buf_t>,
+    color_depth: PhantomData<C>,
 }
 
-impl<const N: usize> DrawBuffer<N> {
-    pub fn create(w: u32, h: u32, cf: lightvgl_sys::lv_color_format_t) -> Self {
+impl<const N: usize, C: LvglColorFormat> DrawBuffer<N, C> {
+    pub fn create(w: u32, h: u32) -> Self {
         assert_eq!(w * h, N as u32);
+        let cf = C::as_lv_color_format_t();
         unsafe {
             let raw = NonNull::new(lightvgl_sys::lv_draw_buf_create(w, h, cf, 0)).unwrap();
-            Self { raw }
+            Self {
+                raw,
+                color_depth: PhantomData,
+            }
         }
     }
     pub fn raw(&self) -> *mut lv_draw_buf_t {

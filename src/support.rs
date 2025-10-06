@@ -2,13 +2,93 @@
 
 use core::convert::TryInto;
 use core::fmt;
-use embedded_graphics::pixelcolor::{Rgb565, Rgb888};
-use lightvgl_sys::lv_coord_t;
+use cstr_core::{CString, cstr};
+use embedded_graphics::pixelcolor::{BinaryColor, Gray8, Rgb565, Rgb888};
+use lightvgl_sys::{lv_coord_t, lv_log_level_t};
 use std::error::Error;
+
+use crate::functions::lv_log_add;
 
 pub type LvResult<T> = Result<T, LvError>;
 
 pub const LV_SIZE_CONTENT: u32 = 2001 | lightvgl_sys::LV_COORD_TYPE_SPEC;
+
+#[macro_export]
+macro_rules! func {
+    () => {{
+        fn f() {}
+        fn type_name_of<T>(_: T) -> &'static str {
+            std::any::type_name::<T>()
+        }
+        let name = type_name_of(f);
+        name[..name.len() - 3].split("::").last().unwrap()
+    }};
+}
+
+#[macro_export]
+macro_rules! lv_log_trace {
+    ($msg:literal) => {
+        lv_log_add(
+            LogLevel::Trace,
+            cstr!(file!()),
+            line!(),
+            CString::new(func!()).unwrap().as_c_str(),
+            cstr!($msg),
+        );
+    };
+}
+
+#[macro_export]
+macro_rules! lv_log_info {
+    ($msg:literal) => {
+        lv_log_add(
+            LogLevel::Info,
+            cstr!(file!()),
+            line!(),
+            CString::new(func!()).unwrap().as_c_str(),
+            cstr!($msg),
+        );
+    };
+}
+
+#[macro_export]
+macro_rules! lv_log_warn {
+    ($msg:literal) => {
+        lv_log_add(
+            LogLevel::Warn,
+            cstr!(file!()),
+            line!(),
+            CString::new(func!()).unwrap().as_c_str(),
+            cstr!($msg),
+        );
+    };
+}
+
+#[macro_export]
+macro_rules! lv_log_error {
+    ($msg:literal) => {
+        lv_log_add(
+            LogLevel::Error,
+            cstr!(file!()),
+            line!(),
+            CString::new(func!()).unwrap().as_c_str(),
+            cstr!($msg),
+        );
+    };
+}
+
+#[macro_export]
+macro_rules! lv_log_user {
+    ($msg:literal) => {
+        lv_log_add(
+            LogLevel::User,
+            cstr!(file!()),
+            line!(),
+            CStr::from_bytes_with_nul(func!().as_bytes()).unwrap(),
+            cstr!($msg),
+        );
+    };
+}
 
 pub fn lv_pct(pct: lv_coord_t) -> lv_coord_t {
     unsafe { lightvgl_sys::lv_pct(pct) }
@@ -52,91 +132,54 @@ impl Error for LvError {
     }
 }
 
-/*
-impl From<DisplayError> for LvError {
-    fn from(err: DisplayError) -> Self {
-        use LvError::*;
-        match err {
-            DisplayError::NotAvailable => Uninitialized,
-            DisplayError::FailedToRegister => InvalidReference,
-            DisplayError::NotRegistered => Uninitialized,
-        }
-    }
-}*/
-
-/*
-impl From<LvError> for DisplayError {
-    fn from(err: LvError) -> Self {
-        use DisplayError::*;
-        match err {
-            LvError::InvalidReference => FailedToRegister,
-            LvError::Uninitialized => NotAvailable,
-            LvError::LvOOMemory => FailedToRegister,
-            LvError::AlreadyInUse => FailedToRegister,
-        }
-    }
-}*/
-
-/// An LVGL color. Equivalent to `lv_color_t`.
-#[derive(Copy, Clone)]
-pub struct Color {
-    pub(crate) raw: lightvgl_sys::lv_color_t,
+pub trait LvglColorFormat {
+    fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t;
 }
 
-impl Default for Color {
-    fn default() -> Self {
-        let raw = unsafe { lightvgl_sys::lv_color_black() };
-        Self { raw }
+impl LvglColorFormat for Rgb565 {
+    fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
+        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB565
     }
 }
 
-impl Color {
-    /// Creates a `Color` from red, green, and blue values.
-    pub fn from_rgb(r: u8, g: u8, b: u8) -> Self {
-        let raw = unsafe { lightvgl_sys::lv_color_make(r, g, b) };
-        Self { raw }
-    }
-    /// Creates a `Color` from a native `lv_color_t` instance.
-    pub fn from_raw(raw: lightvgl_sys::lv_color_t) -> Self {
-        Self { raw }
-    }
-    /// Returns the value of the red channel.
-    pub fn r(&self) -> u8 {
-        (self.raw.red) as u8
-    }
-    /// Returns the value of the green channel.
-    pub fn g(&self) -> u8 {
-        self.raw.green as u8
-    }
-    /// Returns the value of the blue channel.
-    pub fn b(&self) -> u8 {
-        self.raw.blue as u8
+impl LvglColorFormat for Rgb888 {
+    fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
+        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB888
     }
 }
 
-impl From<Color> for Rgb888 {
-    fn from(color: Color) -> Self {
-        Rgb888::new(
-            color.raw.red as u8,
-            color.raw.green as u8,
-            color.raw.blue as u8,
-        )
+impl LvglColorFormat for Gray8 {
+    fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
+        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_L8
     }
 }
 
-impl From<Color> for Rgb565 {
-    fn from(color: Color) -> Self {
-        Rgb565::new(
-            color.raw.red as u8,
-            color.raw.green as u8,
-            color.raw.blue as u8,
-        )
+impl LvglColorFormat for BinaryColor {
+    fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
+        lv_log_warn!("Monochrome buffers are not supported. Proceed with caution!");
+        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_I1
     }
 }
 
-impl From<Color> for lightvgl_sys::lv_color_t {
-    fn from(val: Color) -> Self {
-        val.raw
+pub enum LogLevel {
+    Trace,
+    Info,
+    Warn,
+    Error,
+    User,
+    None,
+}
+
+impl From<LogLevel> for lv_log_level_t {
+    fn from(value: LogLevel) -> Self {
+        (match value {
+            LogLevel::Trace => lightvgl_sys::LV_LOG_LEVEL_TRACE,
+            LogLevel::Info => lightvgl_sys::LV_LOG_LEVEL_INFO,
+            LogLevel::Warn => lightvgl_sys::LV_LOG_LEVEL_WARN,
+            LogLevel::Error => lightvgl_sys::LV_LOG_LEVEL_ERROR,
+            LogLevel::User => lightvgl_sys::LV_LOG_LEVEL_USER,
+            LogLevel::None => lightvgl_sys::LV_LOG_LEVEL_NONE,
+        }) as lv_log_level_t
     }
 }
 
@@ -240,25 +283,5 @@ pub enum LabelLongMode {
 impl From<LabelLongMode> for u8 {
     fn from(value: LabelLongMode) -> Self {
         unsafe { (value as u32).try_into().unwrap_unchecked() }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn color_properties_accessible() {
-        let color = Color::from_rgb(206, 51, 255);
-
-        if lightvgl_sys::LV_COLOR_DEPTH == 32 {
-            assert_eq!(color.r(), 206);
-            assert_eq!(color.g(), 51);
-            assert_eq!(color.b(), 255);
-        } else if lightvgl_sys::LV_COLOR_DEPTH == 16 {
-            assert_eq!(color.r(), 25);
-            assert_eq!(color.g(), 12);
-            assert_eq!(color.b(), 31);
-        }
     }
 }
