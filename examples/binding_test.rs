@@ -13,12 +13,12 @@ use lv_bevy_ecs::{
     events::{Event, lv_event_get_target, lv_obj_add_event_cb},
     functions::{
         lv_buttonmatrix_set_ctrl_map, lv_buttonmatrix_set_selected_button, lv_canvas_fill_bg,
-        lv_canvas_set_buffer, lv_chart_set_ext_y_array, lv_color_make, lv_dropdown_set_options,
-        lv_image_set_rotation, lv_image_set_scale_x, lv_image_set_src, lv_label_set_text,
-        lv_log_init, lv_obj_add_flag, lv_obj_align, lv_obj_get_index, lv_obj_set_flex_flow,
-        lv_obj_set_grid_cell, lv_obj_set_pos, lv_obj_set_style_bg_color, lv_obj_set_style_bg_opa,
-        lv_obj_set_style_opa, lv_obj_set_style_text_color, lv_obj_set_width,
-        lv_style_set_text_font, lv_timer_handler,
+        lv_canvas_set_buffer, lv_chart_set_series_ext_y_array, lv_color_make,
+        lv_dropdown_set_options, lv_image_set_rotation, lv_image_set_scale_x, lv_image_set_src,
+        lv_label_set_text, lv_log_init, lv_obj_add_flag, lv_obj_align, lv_obj_get_index,
+        lv_obj_set_flex_flow, lv_obj_set_grid_cell, lv_obj_set_pos, lv_obj_set_style_bg_color,
+        lv_obj_set_style_bg_opa, lv_obj_set_style_opa, lv_obj_set_style_text_color,
+        lv_obj_set_width, lv_style_set_text_font, lv_timer_handler,
     },
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
@@ -202,7 +202,11 @@ fn main() -> Result<(), LvError> {
                 lv_chart_add_series(chart.raw(), c3, lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X);
             let mut chart_y_array = [10, 25, 50, 40, 30, 35, 60, 65, 70, 75];
 
-            lv_chart_set_ext_y_array(&mut chart, series.as_mut().unwrap(), &mut chart_y_array[0]);
+            lv_chart_set_series_ext_y_array(
+                &mut chart,
+                series.as_mut().unwrap(),
+                &mut chart_y_array[0],
+            );
         }
 
         lv_subject_add_observer_obj(&mut chart_type_subject, &mut chart, chart_type_observer_cb);

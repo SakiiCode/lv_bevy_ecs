@@ -162,32 +162,21 @@ impl From<TextAlign> for lightvgl_sys::lv_align_t {
     }
 }
 
-/// Boolean for determining whether animations are enabled.
-pub enum AnimationState {
-    ON,
-    OFF,
-}
-
-impl From<AnimationState> for lightvgl_sys::lv_anim_enable_t {
-    fn from(anim: AnimationState) -> Self {
-        match anim {
-            AnimationState::ON => lightvgl_sys::lv_anim_enable_t_LV_ANIM_ON,
-            AnimationState::OFF => lightvgl_sys::lv_anim_enable_t_LV_ANIM_OFF,
-        }
-    }
-}
-
 #[repr(u32)]
 pub enum LabelLongMode {
-    Clip = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_CLIP,
-    Dot = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_DOT,
-    Scroll = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_SCROLL,
-    ScrollCircular = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_SCROLL_CIRCULAR,
-    Wrap = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_WRAP,
+    Clip = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_MODE_CLIP,
+    Dots = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_MODE_DOTS,
+    Scroll = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_MODE_SCROLL,
+    ScrollCircular = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_MODE_SCROLL_CIRCULAR,
+    Wrap = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_MODE_WRAP,
 }
 
-impl From<LabelLongMode> for u8 {
+impl From<LabelLongMode> for lightvgl_sys::lv_label_long_mode_t {
     fn from(value: LabelLongMode) -> Self {
-        unsafe { (value as u32).try_into().unwrap_unchecked() }
+        unsafe {
+            (value as lightvgl_sys::lv_label_long_mode_t)
+                .try_into()
+                .unwrap_unchecked()
+        }
     }
 }
