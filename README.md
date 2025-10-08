@@ -136,6 +136,13 @@ To increase upload speed set `baudrate = 460800` in `espflash.toml`
 Feel free to open issues for features you find important and missing. I am not completely satisfied with the API,
 so open to API improvement ideas as well.
 
+## Troubleshooting
+
+### #[ctor]/#[dtor] is not supported on the current target
+
+You are probably on RISC-V. Please help your architecture get upstreamed into [rust-ctor](https://github.com/mmastrac/rust-ctor).
+Until then set `default-features = false` and manually call `lv_init();` in the main function.
+
 ## Thanks
 
 This project heavily builds upon the work in the the original [lv_binding_rust](https://github.com/lvgl/lv_binding_rust) repo.

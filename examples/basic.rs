@@ -7,9 +7,8 @@ use lv_bevy_ecs::{
     error,
     events::{Event, lv_obj_add_event_cb},
     functions::{
-        lv_color_make, lv_init, lv_label_set_text, lv_log_init, lv_obj_set_align,
-        lv_obj_set_style_opa, lv_style_set_align, lv_style_set_bg_color, lv_style_set_opa,
-        lv_timer_handler,
+        lv_color_make, lv_label_set_text, lv_log_init, lv_obj_set_align, lv_obj_set_style_opa,
+        lv_style_set_align, lv_style_set_bg_color, lv_style_set_opa, lv_timer_handler,
     },
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
@@ -37,7 +36,6 @@ use lv_bevy_ecs::prelude::{
 struct DynamicButton;
 
 fn main() -> Result<(), LvError> {
-    lv_init();
     lv_log_init();
     // to use an other logging backend, simply initialize it instead of lv_log_init()
     // env_logger::init();
