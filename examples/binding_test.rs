@@ -7,10 +7,10 @@ use std::{
 
 use anyhow::Result;
 use bevy_ecs::{hierarchy::Children, query::With};
-use embedded_time::duration::Milliseconds;
 use lv_bevy_ecs::{
-    LvglWorld,
+    LvglSchedule, LvglWorld,
     animation::Animation,
+    clock::StdClock,
     display::{Display, DrawBuffer},
     events::{Event, lv_event_get_target, lv_obj_add_event_cb},
     functions::{
@@ -20,7 +20,7 @@ use lv_bevy_ecs::{
         lv_label_set_text, lv_log_init, lv_obj_add_flag, lv_obj_align, lv_obj_get_index,
         lv_obj_set_flex_flow, lv_obj_set_grid_cell, lv_obj_set_pos, lv_obj_set_style_bg_color,
         lv_obj_set_style_bg_opa, lv_obj_set_style_opa, lv_obj_set_style_text_color,
-        lv_obj_set_width, lv_style_set_text_font, lv_tick_inc, lv_timer_handler,
+        lv_obj_set_width, lv_style_set_text_font, lv_timer_handler,
     },
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
@@ -407,6 +407,8 @@ fn main() -> Result<()> {
 
     let mut is_pointer_down = false;
 
+    let mut schedule = LvglSchedule::new::<StdClock>();
+
     window.update(&sim_display);
 
     loop {
@@ -455,8 +457,7 @@ fn main() -> Result<()> {
             }
         }
 
-        // TODO actual timer
-        lv_tick_inc(Milliseconds::new(33));
+        schedule.run(&mut world);
 
         lv_timer_handler();
 

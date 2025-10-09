@@ -1,9 +1,7 @@
 use std::{process::exit, time::Duration};
 
-use embedded_time::{Clock, duration::Milliseconds};
-
 use lv_bevy_ecs::{
-    LvglWorld,
+    LvglSchedule, LvglWorld,
     animation::Animation,
     clock::StdClock,
     display::{Display, DrawBuffer},
@@ -11,7 +9,7 @@ use lv_bevy_ecs::{
     events::{Event, lv_obj_add_event_cb},
     functions::{
         lv_color_make, lv_label_set_text, lv_log_init, lv_obj_set_align, lv_obj_set_style_opa,
-        lv_style_set_align, lv_style_set_bg_color, lv_style_set_opa, lv_tick_inc, lv_timer_handler,
+        lv_style_set_align, lv_style_set_bg_color, lv_style_set_opa, lv_timer_handler,
     },
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
@@ -156,16 +154,11 @@ fn main() {
 
     let mut is_pointer_down = false;
 
-    let clock = StdClock::default();
-    let mut prev_time = clock.try_now().unwrap();
+    let mut schedule = LvglSchedule::new::<StdClock>();
 
     window.update(&sim_display);
 
     loop {
-        let current_time = clock.try_now().unwrap();
-        let diff = current_time.checked_duration_since(&prev_time).unwrap();
-        prev_time = current_time;
-
         let events = window.events().peekable();
 
         for event in events {
@@ -211,7 +204,7 @@ fn main() {
             }
         }
 
-        lv_tick_inc(Milliseconds::new(diff.integer()));
+        schedule.run(&mut world);
 
         lv_timer_handler();
 
