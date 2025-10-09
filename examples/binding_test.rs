@@ -7,6 +7,7 @@ use std::{
 
 use anyhow::Result;
 use bevy_ecs::{hierarchy::Children, query::With};
+use embedded_time::duration::Milliseconds;
 use lv_bevy_ecs::{
     LvglWorld,
     animation::Animation,
@@ -455,7 +456,7 @@ fn main() -> Result<()> {
         }
 
         // TODO actual timer
-        lv_tick_inc(Duration::from_millis(33));
+        lv_tick_inc(Milliseconds::new(33));
 
         lv_timer_handler();
 

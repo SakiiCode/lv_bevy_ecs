@@ -1,9 +1,8 @@
 //! Auto-generated safe bindings to LVGL functions
 
-use core::time::Duration;
-
 use crate::{error, logging::LvglLogger};
 use alloc::string::ToString;
+use embedded_time::{duration::Milliseconds, fixed_point::FixedPoint};
 
 pub fn lv_init() {
     unsafe {
@@ -11,9 +10,9 @@ pub fn lv_init() {
     }
 }
 
-pub fn lv_tick_inc(diff: Duration) {
+pub fn lv_tick_inc(diff: Milliseconds<u32>) {
     unsafe {
-        lightvgl_sys::lv_tick_inc(diff.as_millis() as u32);
+        lightvgl_sys::lv_tick_inc(diff.integer());
     }
 }
 

@@ -1,8 +1,11 @@
 use std::{process::exit, time::Duration};
 
+use embedded_time::{Clock, duration::Milliseconds};
+
 use lv_bevy_ecs::{
     LvglWorld,
     animation::Animation,
+    clock::StdClock,
     display::{Display, DrawBuffer},
     error,
     events::{Event, lv_obj_add_event_cb},
@@ -153,9 +156,16 @@ fn main() {
 
     let mut is_pointer_down = false;
 
+    let clock = StdClock::default();
+    let mut prev_time = clock.try_now().unwrap();
+
     window.update(&sim_display);
 
     loop {
+        let current_time = clock.try_now().unwrap();
+        let diff = current_time.checked_duration_since(&prev_time).unwrap();
+        prev_time = current_time;
+
         let events = window.events().peekable();
 
         for event in events {
@@ -201,8 +211,7 @@ fn main() {
             }
         }
 
-        // TODO actual timer
-        lv_tick_inc(Duration::from_millis(33));
+        lv_tick_inc(Milliseconds::new(diff.integer()));
 
         lv_timer_handler();
 

@@ -14,6 +14,7 @@ mod alloc;
 #[macro_use]
 pub mod widgets;
 pub mod animation;
+pub mod clock;
 pub mod display;
 pub mod events;
 pub mod functions;
