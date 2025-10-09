@@ -1,6 +1,7 @@
 use log::Level;
 
-use std::ffi::CString;
+use ::alloc::ffi::CString;
+use ::alloc::string::ToString;
 
 macro_rules! cstr {
     ($txt:expr) => {
@@ -13,7 +14,7 @@ macro_rules! func {
     () => {{
         fn f() {}
         fn type_name_of<T>(_: T) -> &'static str {
-            std::any::type_name::<T>()
+            core::any::type_name::<T>()
         }
         let name = type_name_of(f);
         name[..name.len() - 3].split("::").last().unwrap()

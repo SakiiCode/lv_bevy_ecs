@@ -5,9 +5,10 @@ use std::{
     time::Duration,
 };
 
+use anyhow::Result;
 use bevy_ecs::{hierarchy::Children, query::With};
 use lv_bevy_ecs::{
-    LvglSchedule, LvglWorld,
+    LvglWorld,
     animation::Animation,
     display::{Display, DrawBuffer},
     events::{Event, lv_event_get_target, lv_obj_add_event_cb},
@@ -18,12 +19,12 @@ use lv_bevy_ecs::{
         lv_label_set_text, lv_log_init, lv_obj_add_flag, lv_obj_align, lv_obj_get_index,
         lv_obj_set_flex_flow, lv_obj_set_grid_cell, lv_obj_set_pos, lv_obj_set_style_bg_color,
         lv_obj_set_style_bg_opa, lv_obj_set_style_opa, lv_obj_set_style_text_color,
-        lv_obj_set_width, lv_style_set_text_font, lv_timer_handler,
+        lv_obj_set_width, lv_style_set_text_font, lv_tick_inc, lv_timer_handler,
     },
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     subjects::{Subject, lv_subject_add_observer_obj, lv_subject_set_int},
-    support::{LvError, lv_pct},
+    support::lv_pct,
     widgets::{Buttonmatrix, Canvas, Chart, Dropdown, Image, Widget},
 };
 
@@ -67,7 +68,7 @@ macro_rules! lv_grid_fr {
 #[derive(Component)]
 struct DynamicLabel;
 
-fn main() -> Result<(), LvError> {
+fn main() -> Result<()> {
     lv_log_init();
     // to use an other logging backend, simply initialize it instead of lv_log_init()
     // env_logger::init();
@@ -167,7 +168,7 @@ fn main() -> Result<(), LvError> {
 
         let mut chart_type_subject = Subject::new_int(0);
 
-        let mut dropdown = Dropdown::create_widget()?;
+        let mut dropdown = Dropdown::create_widget();
         lv_dropdown_set_options(&mut dropdown, c"Lines\nBars");
 
         lv_obj_set_grid_cell(
@@ -186,7 +187,7 @@ fn main() -> Result<(), LvError> {
 
         world.spawn((Dropdown, dropdown));
 
-        let mut chart = Chart::create_widget()?;
+        let mut chart = Chart::create_widget();
         lv_obj_set_grid_cell(
             &mut chart,
             lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
@@ -216,7 +217,7 @@ fn main() -> Result<(), LvError> {
 
         world.spawn((Chart, chart));
 
-        let mut label = Label::create_widget()?;
+        let mut label = Label::create_widget();
 
         lv_obj_set_grid_cell(
             &mut label,
@@ -234,7 +235,7 @@ fn main() -> Result<(), LvError> {
         let mut label_entity = world.spawn((DynamicLabel, Label, label));
         label_entity.insert(style_big_font.clone());
 
-        let mut btnmatrix = Buttonmatrix::create_widget()?;
+        let mut btnmatrix = Buttonmatrix::create_widget();
         unsafe {
             lv_obj_set_grid_cell(
                 &mut btnmatrix,
@@ -279,7 +280,7 @@ fn main() -> Result<(), LvError> {
         let mut fourth = None;
 
         for i in 0..10u32 {
-            let btn_id = list_button_create(&mut world, cont_id)?;
+            let btn_id = list_button_create(&mut world, cont_id);
 
             if i == 0 {
                 let mut btn_entity = world.get_entity_mut(btn_id).unwrap();
@@ -340,7 +341,7 @@ fn main() -> Result<(), LvError> {
 
         let mut canvas_buf = [0u8; 400 * 100 * 2];
 
-        let mut canvas = Canvas::create_widget()?;
+        let mut canvas = Canvas::create_widget();
         lv_obj_set_grid_cell(
             &mut canvas,
             lv_grid_align_t_LV_GRID_ALIGN_START,
@@ -386,13 +387,13 @@ fn main() -> Result<(), LvError> {
                 .unwrap()
         };
 
-        let mut img = Image::create_widget()?;
+        let mut img = Image::create_widget();
         lv_image_set_src(&mut img, test_img_lvgl_logo_jpg);
         lv_obj_align(&mut img, lv_align_t_LV_ALIGN_BOTTOM_RIGHT, -20, -20);
         lv_obj_add_flag(&mut img, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
         world.spawn((Image, img));
 
-        let mut img = Image::create_widget()?;
+        let mut img = Image::create_widget();
         lv_image_set_src(&mut img, test_img_lvgl_logo_png);
         lv_obj_set_pos(&mut img, 500, 420);
         lv_obj_add_flag(&mut img, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
@@ -402,8 +403,6 @@ fn main() -> Result<(), LvError> {
     }
 
     info!("Create OK");
-    // Create a new Schedule, which defines an execution strategy for Systems
-    let mut schedule = LvglSchedule::new();
 
     let mut is_pointer_down = false;
 
@@ -455,8 +454,8 @@ fn main() -> Result<(), LvError> {
             }
         }
 
-        // Run the schedule once. If your app has a "loop", you would run this once per loop
-        schedule.run(&mut world);
+        // TODO actual timer
+        lv_tick_inc(Duration::from_millis(33));
 
         lv_timer_handler();
 
@@ -500,8 +499,8 @@ fn buttonmatrix_event_cb(world: &mut World, e: &mut lv_event_t) {
     }
 }
 
-fn list_button_create(world: &mut World, parent: Entity) -> Result<Entity, LvError> {
-    let mut btn = Button::create_widget()?;
+fn list_button_create(world: &mut World, parent: Entity) -> Entity {
+    let mut btn = Button::create_widget();
     //lv_obj_set_size(&mut btn, lv_pct(100), LV_SIZE_CONTENT as i32);
     lv_obj_set_width(&mut btn, lv_pct(100));
 
@@ -512,7 +511,7 @@ fn list_button_create(world: &mut World, parent: Entity) -> Result<Entity, LvErr
     let idx = lv_obj_get_index(world.get_entity(btn_id).unwrap().get::<Widget>().unwrap());
     info!("Spawning button {}", idx);
 
-    let mut label = Label::create_widget()?;
+    let mut label = Label::create_widget();
     let file_icon_str = CStr::from_bytes_with_nul(LV_SYMBOL_FILE).unwrap();
     let file_icon = file_icon_str.to_string_lossy();
 
@@ -526,7 +525,7 @@ fn list_button_create(world: &mut World, parent: Entity) -> Result<Entity, LvErr
     let label_id = world.spawn((Label, label)).id();
     world.get_entity_mut(btn_id).unwrap().add_child(label_id);
 
-    Ok(btn_id)
+    btn_id
 }
 
 fn draw_to_canvas(canvas: &mut Widget) {

@@ -1,5 +1,7 @@
 //! # Events
-use std::ffi::c_void;
+use core::ffi::c_void;
+
+use alloc::boxed::Box;
 
 use crate::widgets::Widget;
 

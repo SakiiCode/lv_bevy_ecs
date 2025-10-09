@@ -35,8 +35,9 @@
 //!         .unwrap();
 //! });
 //! ```
-use std::{ffi::c_void, marker::PhantomData, ptr::NonNull};
+use core::{ffi::c_void, marker::PhantomData, ptr::NonNull};
 
+use alloc::boxed::Box;
 use embedded_graphics::{
     Pixel,
     prelude::{PixelColor, Point, Size},
@@ -71,7 +72,7 @@ impl Display {
             lightvgl_sys::lv_display_set_buffers(
                 self.raw(),
                 buffer.raw.as_ptr() as *mut c_void,
-                std::ptr::null_mut(),
+                core::ptr::null_mut(),
                 N as u32,
                 lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL,
             );
@@ -141,7 +142,7 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
                 },
             };
 
-            let slice = std::slice::from_raw_parts(buf, (w * h) as usize);
+            let slice = core::slice::from_raw_parts(buf, (w * h) as usize);
 
             let mut update = DisplayRefresh {
                 rectangle,

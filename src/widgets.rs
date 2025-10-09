@@ -54,7 +54,7 @@
 //! let mut label_entity = button_entity.with_child((Label, label));
 //! ```
 
-use std::ptr::NonNull;
+use core::ptr::NonNull;
 
 use bevy_ecs::{
     component::Component, hierarchy::ChildOf, observer::Trigger, system::Query, world::OnInsert,
@@ -103,16 +103,16 @@ macro_rules! impl_widget {
 
         impl $t {
             #[allow(dead_code)]
-            pub fn create_widget() -> Result<crate::widgets::Widget, crate::support::LvError> {
+            pub fn create_widget() -> crate::widgets::Widget {
                 unsafe {
                     let default_screen = lightvgl_sys::lv_display_get_screen_active(
                         lightvgl_sys::lv_display_get_default(),
                     );
                     let ptr = $func(default_screen);
                     if let Some(raw) = core::ptr::NonNull::new(ptr) {
-                        Ok(crate::widgets::Widget::from_non_null(raw))
+                        crate::widgets::Widget::from_non_null(raw)
                     } else {
-                        Err(crate::support::LvError::InvalidReference)
+                        panic!("Could not create Widget");
                     }
                 }
             }

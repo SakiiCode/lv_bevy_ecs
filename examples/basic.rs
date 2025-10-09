@@ -1,18 +1,18 @@
 use std::{process::exit, time::Duration};
 
 use lv_bevy_ecs::{
-    LvglSchedule, LvglWorld,
+    LvglWorld,
     animation::Animation,
     display::{Display, DrawBuffer},
     error,
     events::{Event, lv_obj_add_event_cb},
     functions::{
         lv_color_make, lv_label_set_text, lv_log_init, lv_obj_set_align, lv_obj_set_style_opa,
-        lv_style_set_align, lv_style_set_bg_color, lv_style_set_opa, lv_timer_handler,
+        lv_style_set_align, lv_style_set_bg_color, lv_style_set_opa, lv_tick_inc, lv_timer_handler,
     },
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
-    support::{Align, LvError},
+    support::Align,
     widgets::Arc,
 };
 
@@ -35,7 +35,7 @@ use lv_bevy_ecs::prelude::{
 #[derive(Component)]
 struct DynamicButton;
 
-fn main() -> Result<(), LvError> {
+fn main() {
     lv_log_init();
     // to use an other logging backend, simply initialize it instead of lv_log_init()
     // env_logger::init();
@@ -87,8 +87,8 @@ fn main() -> Result<(), LvError> {
     info!("ECS OK");
 
     {
-        let button = Button::create_widget()?;
-        let mut label = Label::create_widget()?;
+        let button = Button::create_widget();
+        let mut label = Label::create_widget();
         lv_label_set_text(&mut label, c"SPAWN");
         //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
         let label_entity = world.spawn((Label, label)).id();
@@ -119,8 +119,8 @@ fn main() -> Result<(), LvError> {
                     }*/
                 }
                 None => {
-                    let mut dynamic_button = Button::create_widget().unwrap();
-                    let mut label = Label::create_widget().unwrap();
+                    let mut dynamic_button = Button::create_widget();
+                    let mut label = Label::create_widget();
                     lv_obj_set_align(&mut dynamic_button, Align::TopRight.into());
                     lv_label_set_text(&mut label, c"This is dynamic");
                     world
@@ -143,15 +143,13 @@ fn main() -> Result<(), LvError> {
         //button_entity.remove::<Style>();
         // button_entity.insert(style);
 
-        let mut arc = Arc::create_widget()?;
+        let mut arc = Arc::create_widget();
         lv_obj_set_align(&mut arc, Align::BottomMid.into());
 
         world.spawn((Arc, arc));
     }
 
     info!("Create OK");
-    // Create a new Schedule, which defines an execution strategy for Systems
-    let mut schedule = LvglSchedule::new();
 
     let mut is_pointer_down = false;
 
@@ -203,8 +201,8 @@ fn main() -> Result<(), LvError> {
             }
         }
 
-        // Run the schedule once. If your app has a "loop", you would run this once per loop
-        schedule.run(&mut world);
+        // TODO actual timer
+        lv_tick_inc(Duration::from_millis(33));
 
         lv_timer_handler();
 

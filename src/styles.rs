@@ -32,7 +32,7 @@ pub struct Style {
 impl Default for Style {
     fn default() -> Self {
         let raw = unsafe {
-            let mut style = std::mem::MaybeUninit::<lightvgl_sys::lv_style_t>::uninit();
+            let mut style = core::mem::MaybeUninit::<lightvgl_sys::lv_style_t>::uninit();
             lightvgl_sys::lv_style_init(style.as_mut_ptr());
             style.assume_init()
         };
@@ -50,7 +50,7 @@ impl Style {
 
     pub fn new(selector: lv_style_selector_t) -> Self {
         let raw = unsafe {
-            let mut style = std::mem::MaybeUninit::<lightvgl_sys::lv_style_t>::uninit();
+            let mut style = core::mem::MaybeUninit::<lightvgl_sys::lv_style_t>::uninit();
             lightvgl_sys::lv_style_init(style.as_mut_ptr());
             style.assume_init()
         };

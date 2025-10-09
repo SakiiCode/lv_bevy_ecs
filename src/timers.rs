@@ -21,8 +21,9 @@
 //! })
 //! ```
 
-use std::{ffi::c_void, ptr::NonNull, time::Duration};
+use core::{ffi::c_void, ptr::NonNull, time::Duration};
 
+use alloc::boxed::Box;
 use bevy_ecs::{
     component::Component,
     schedule::{IntoScheduleConfigs, Schedule},
@@ -30,8 +31,6 @@ use bevy_ecs::{
     world::World,
 };
 use lightvgl_sys::lv_timer_t;
-
-use crate::support::LvError;
 
 #[allow(dead_code)]
 #[derive(Component)]
@@ -52,7 +51,7 @@ unsafe impl Send for Timer {}
 unsafe impl Sync for Timer {}
 
 impl Timer {
-    pub fn new(world: &mut World, period: Duration) -> Result<Self, LvError> {
+    pub fn new(world: &mut World, period: Duration) -> Self {
         let mut schedule = Schedule::default();
         unsafe {
             let timer = lightvgl_sys::lv_timer_create(
@@ -61,9 +60,9 @@ impl Timer {
                 Box::into_raw(Box::new((&mut schedule, world))) as *mut _,
             );
             if let Some(ptr) = NonNull::new(timer) {
-                Ok(Self { raw: ptr, schedule })
+                Self { raw: ptr, schedule }
             } else {
-                Err(LvError::InvalidReference)
+                panic!("Could not create Timer");
             }
         }
     }

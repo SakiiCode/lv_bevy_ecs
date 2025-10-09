@@ -14,8 +14,9 @@
 //! let mut button_entity = world.spawn((Button, button, anim));
 //! ```
 
-use std::{ffi::c_void, ptr::NonNull, time::Duration};
+use core::{ffi::c_void, ptr::NonNull, time::Duration};
 
+use alloc::boxed::Box;
 use bevy_ecs::{
     component::{Component, HookContext},
     world::DeferredWorld,
@@ -35,7 +36,7 @@ impl Animation {
         F: FnMut(&mut Widget, i32),
     {
         let mut raw = unsafe {
-            let mut anim = std::mem::MaybeUninit::<lightvgl_sys::lv_anim_t>::uninit();
+            let mut anim = core::mem::MaybeUninit::<lightvgl_sys::lv_anim_t>::uninit();
             lightvgl_sys::lv_anim_init(anim.as_mut_ptr());
             anim.assume_init()
         };
@@ -89,7 +90,7 @@ where
             let callback = &mut *(anim.as_ref().user_data as *mut F);
             let mut obj_nondrop = Widget::from_raw(obj).unwrap();
             callback(&mut obj_nondrop, val);
-            std::mem::forget(obj_nondrop)
+            core::mem::forget(obj_nondrop)
         }
     }
 }
