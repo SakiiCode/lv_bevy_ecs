@@ -435,9 +435,9 @@ impl Rusty for LvType {
         } else if self.is_mut_str() {
             quote!(&mut std::ffi::CString)
         } else if self.is_const_native_object() {
-            quote!(&crate::widgets::Widget)
+            quote!(&mut crate::widgets::Wdg)
         } else if self.is_mut_native_object() {
-            quote!(&mut crate::widgets::Widget)
+            quote!(&mut crate::widgets::Wdg)
         } else if self.is_const_style() {
             quote!(&mut crate::styles::Style) // TODO make this const
         } else if self.is_mut_style() {
@@ -663,7 +663,7 @@ mod test {
 
         let code = arc_set_bg_end_angle.code(&arc_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_arc_set_bg_end_angle(obj: &mut crate::widgets::Widget, end: u16) -> () {
+            pub fn lv_arc_set_bg_end_angle(obj: &mut crate::widgets::Wdg, end: u16) -> () {
                 unsafe {
                     lightvgl_sys::lv_arc_set_bg_end_angle(obj.raw(), end);
                 }
@@ -694,7 +694,7 @@ mod test {
         let code = label_set_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
 
-            pub fn lv_label_set_text(label: &mut crate::widgets::Widget, text: &std::ffi::CStr) -> () {
+            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &std::ffi::CStr) -> () {
                 unsafe {
                     lightvgl_sys::lv_label_set_text(
                         label.raw(),
@@ -726,7 +726,7 @@ mod test {
         let code = dropdown_get_selected_str.code(&parent_widget).unwrap();
         let expected_code = quote! {
 
-            pub fn lv_dropdown_get_selected_str(obj: &crate::widgets::Widget, buf: &mut std::ffi::CString, buf_size:u32) -> () {
+            pub fn lv_dropdown_get_selected_str(obj: &mut crate::widgets::Wdg, buf: &mut std::ffi::CString, buf_size:u32) -> () {
                 unsafe {
                     let buf_raw = buf.clone().into_raw();
                     lightvgl_sys::lv_dropdown_get_selected_str(
@@ -763,7 +763,7 @@ mod test {
 
         let code = label_set_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_label_set_text(label: &mut crate::widgets::Widget, text: &std::ffi::CStr) -> () {
+            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &std::ffi::CStr) -> () {
                 unsafe {
                     lightvgl_sys::lv_label_set_text(
                         label.raw(),
@@ -796,7 +796,7 @@ mod test {
 
         let code = arc_rotate_obj_to_angle.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_arc_rotate_obj_to_angle(obj: &crate::widgets::Widget, obj_to_rotate: &mut crate::widgets::Widget, r_offset: lv_coord_t) -> () {
+            pub fn lv_arc_rotate_obj_to_angle(obj: &mut crate::widgets::Wdg, obj_to_rotate: &mut crate::widgets::Wdg, r_offset: lv_coord_t) -> () {
                 unsafe {
                     lightvgl_sys::lv_arc_rotate_obj_to_angle(
                         obj.raw(),
@@ -827,7 +827,7 @@ mod test {
 
         let code = label_get_recolor.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_label_get_recolor(label: &mut crate::widgets::Widget) -> bool {
+            pub fn lv_label_get_recolor(label: &mut crate::widgets::Wdg) -> bool {
                 unsafe {
                     lightvgl_sys::lv_label_get_recolor(
                         label.raw()
@@ -856,7 +856,7 @@ mod test {
 
         let code = label_get_text_selection_start.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_label_get_text_selection_start(label: &mut crate::widgets::Widget) -> u32 {
+            pub fn lv_label_get_text_selection_start(label: &mut crate::widgets::Wdg) -> u32 {
                 unsafe {
                     lightvgl_sys::lv_label_get_text_selection_start(
                         label.raw()

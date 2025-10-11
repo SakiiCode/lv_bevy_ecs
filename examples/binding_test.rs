@@ -509,7 +509,13 @@ fn list_button_create(world: &mut World, parent: Entity) -> Result<Entity, LvErr
     let mut parent = world.get_entity_mut(parent).unwrap();
     parent.add_child(btn_id);
 
-    let idx = lv_obj_get_index(world.get_entity(btn_id).unwrap().get::<Widget>().unwrap());
+    let idx = lv_obj_get_index(
+        &mut world
+            .get_entity_mut(btn_id)
+            .unwrap()
+            .get_mut::<Widget>()
+            .unwrap(),
+    );
     info!("Spawning button {}", idx);
 
     let mut label = Label::create_widget()?;

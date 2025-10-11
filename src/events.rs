@@ -1,7 +1,7 @@
 //! # Events
 use std::ffi::c_void;
 
-use crate::widgets::Widget;
+use crate::widgets::{Wdg, Widget};
 
 /// Events are triggered in LVGL when something happens which might be interesting to
 /// the user, e.g. if an object:
@@ -163,16 +163,16 @@ pub fn lv_event_get_target(event: &mut lightvgl_sys::lv_event_t) -> *const c_voi
     unsafe { lightvgl_sys::lv_event_get_target(event) }
 }
 
-pub fn lv_event_get_target_obj(event: &mut lightvgl_sys::lv_event_t) -> Widget {
+pub fn lv_event_get_target_obj(event: &mut lightvgl_sys::lv_event_t) -> Option<Wdg> {
     unsafe {
         let target = lightvgl_sys::lv_event_get_target_obj(event);
-        Widget::from_raw(target).unwrap()
+        Wdg::from_ptr(target)
     }
 }
 
-pub fn lv_event_get_current_target_obj(event: &mut lightvgl_sys::lv_event_t) -> Widget {
+pub fn lv_event_get_current_target_obj(event: &mut lightvgl_sys::lv_event_t) -> Option<Wdg> {
     unsafe {
         let target = lightvgl_sys::lv_event_get_current_target_obj(event);
-        Widget::from_raw(target).unwrap()
+        Wdg::from_ptr(target)
     }
 }

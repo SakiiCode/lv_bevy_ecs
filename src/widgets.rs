@@ -54,12 +54,15 @@
 //! let mut label_entity = button_entity.with_child((Label, label));
 //! ```
 
-use std::ptr::NonNull;
+use std::{
+    ops::{Deref, DerefMut},
+    ptr::NonNull,
+};
 
 use bevy_ecs::{
     component::Component, hierarchy::ChildOf, lifecycle::Insert, observer::On, system::Query,
 };
-use lightvgl_sys::lv_obj_delete;
+use lightvgl_sys::{lv_obj_delete, lv_obj_t};
 
 use crate::trace;
 
@@ -81,6 +84,14 @@ impl Widget {
 
     pub fn from_non_null(ptr: NonNull<lightvgl_sys::lv_obj_t>) -> Self {
         Self { raw: ptr }
+    }
+
+    pub fn as_wdg(&self) -> &Wdg {
+        Wdg::from_non_null(&self.raw)
+    }
+
+    pub fn as_mut_wdg(&mut self) -> &mut Wdg {
+        Wdg::from_non_null_mut(&mut self.raw)
     }
 }
 
@@ -133,6 +144,54 @@ pub fn on_insert_parent(
         lightvgl_sys::lv_obj_set_parent(child_ptr, parent_ptr);
     }
     trace!("On Insert Parent");
+}
+
+/// Represents a borrowed Widget
+#[repr(transparent)]
+pub struct Wdg {
+    raw: NonNull<lv_obj_t>,
+}
+
+impl Wdg {
+    pub fn from_ptr(ptr: *mut lv_obj_t) -> Option<Self> {
+        Some(Self {
+            raw: NonNull::new(ptr)?,
+        })
+    }
+
+    /*pub fn from_ref<'a>(mut r#ref: &'a mut lv_obj_t) -> &'a mut Self {
+        // this works
+        /*Some(Self {
+            raw: NonNull::new(r#ref as *mut lv_obj_t)?,
+        })*/
+        // this does not
+        //unsafe { (&mut r#ref as *mut _ as *mut Self).as_mut().unwrap() }
+    }*/
+
+    pub fn from_non_null<'a>(ptr: &'a NonNull<lv_obj_t>) -> &'a Self {
+        unsafe { &*(ptr as *const _ as *const Self) }
+    }
+
+    pub fn from_non_null_mut<'a>(ptr: &'a mut NonNull<lv_obj_t>) -> &'a mut Self {
+        unsafe { &mut *(ptr as *mut _ as *mut Self) }
+    }
+
+    pub fn raw(&mut self) -> *mut lv_obj_t {
+        self.raw.as_ptr()
+    }
+}
+
+impl Deref for Widget {
+    type Target = Wdg;
+    fn deref(&self) -> &Self::Target {
+        Wdg::from_non_null(&self.raw)
+    }
+}
+
+impl DerefMut for Widget {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        Wdg::from_non_null_mut(&mut self.raw)
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/widgets.rs"));
