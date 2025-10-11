@@ -14,6 +14,7 @@ license = "MIT"
 [lib]
 name = "lv_bevy_ecs"
 path = "src/lib.rs"
+doctest = false
 
 [dependencies]
 bevy_ecs = { version = "0.17.0", default-features = false }
