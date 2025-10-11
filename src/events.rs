@@ -1,7 +1,7 @@
 //! # Events
 use std::ffi::c_void;
 
-use crate::widgets::{Wdg, Widget};
+use crate::widgets::Wdg;
 
 /// Events are triggered in LVGL when something happens which might be interesting to
 /// the user, e.g. if an object:
@@ -134,12 +134,12 @@ impl From<Event> for lightvgl_sys::lv_event_code_t {
     }
 }
 
-pub fn lv_obj_add_event_cb<'a, F>(widget: &'a Widget, filter: Event, callback: F)
+pub fn lv_obj_add_event_cb<'a, F>(widget: &'a mut Wdg, filter: Event, callback: F)
 where
     F: FnMut(lightvgl_sys::lv_event_t) + 'a,
 {
     unsafe {
-        let obj = widget.raw();
+        let obj = widget.raw_mut();
         lightvgl_sys::lv_obj_add_event_cb(
             obj,
             Some(event_callback::<F>),

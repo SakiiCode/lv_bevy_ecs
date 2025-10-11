@@ -41,7 +41,11 @@ impl Default for Style {
 }
 
 impl Style {
-    pub fn raw(&mut self) -> &mut lightvgl_sys::lv_style_t {
+    pub fn raw(&self) -> &lightvgl_sys::lv_style_t {
+        &self.raw
+    }
+
+    pub fn raw_mut(&mut self) -> &mut lightvgl_sys::lv_style_t {
         &mut self.raw
     }
 
@@ -69,7 +73,7 @@ fn add_style(mut world: DeferredWorld, ctx: HookContext) {
     let widget = world
         .get_mut::<Widget>(ctx.entity)
         .expect("Style components must be added to Widget entities")
-        .raw();
+        .raw_mut();
     let mut style = world.get_mut::<Style>(ctx.entity).unwrap();
     unsafe {
         lightvgl_sys::lv_obj_add_style(widget, &mut style.raw, style.selector);
@@ -82,7 +86,7 @@ fn remove_style(mut world: DeferredWorld, ctx: HookContext) {
     let widget = world
         .get_mut::<Widget>(ctx.entity)
         .expect("Style components must be added to Widget entities")
-        .raw();
+        .raw_mut();
     let mut style = world.get_mut::<Style>(ctx.entity).unwrap();
     unsafe {
         lightvgl_sys::lv_obj_remove_style(widget, &mut style.raw, style.selector);

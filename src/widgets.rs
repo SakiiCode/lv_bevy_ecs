@@ -60,7 +60,11 @@ use std::{
 };
 
 use bevy_ecs::{
-    component::Component, hierarchy::ChildOf, lifecycle::Insert, observer::On, system::Query,
+    component::Component,
+    hierarchy::ChildOf,
+    lifecycle::Insert,
+    observer::On,
+    system::{ParamSet, Query},
 };
 use lightvgl_sys::{lv_obj_delete, lv_obj_t};
 
@@ -72,7 +76,11 @@ pub struct Widget {
 }
 
 impl Widget {
-    pub fn raw(&self) -> *mut lightvgl_sys::lv_obj_t {
+    pub fn raw(&self) -> *const lightvgl_sys::lv_obj_t {
+        self.raw.as_ptr()
+    }
+
+    pub fn raw_mut(&mut self) -> *mut lightvgl_sys::lv_obj_t {
         self.raw.as_ptr()
     }
 
@@ -133,13 +141,15 @@ macro_rules! impl_widget {
 
 pub fn on_insert_parent(
     trigger: On<Insert, ChildOf>,
-    widgets: Query<&Widget>,
-    children: Query<(&Widget, &ChildOf)>,
+    mut set: ParamSet<(
+        /* widgets */ Query<&mut Widget>,
+        /* children */ Query<(&mut Widget, &ChildOf)>,
+    )>,
 ) {
     let event = trigger.event();
-    let parent_widget = children.get(event.entity).unwrap();
-    let parent_ptr = widgets.get(parent_widget.1.0).unwrap().raw();
-    let child_ptr = children.get(event.entity).unwrap().0.raw();
+    let parent_widget = set.p1().get_mut(event.entity).unwrap().1.0;
+    let parent_ptr = set.p0().get_mut(parent_widget).unwrap().raw_mut();
+    let child_ptr = set.p1().get_mut(event.entity).unwrap().0.raw_mut();
     unsafe {
         lightvgl_sys::lv_obj_set_parent(child_ptr, parent_ptr);
     }
@@ -147,7 +157,6 @@ pub fn on_insert_parent(
 }
 
 /// Represents a borrowed Widget
-#[repr(transparent)]
 pub struct Wdg {
     raw: NonNull<lv_obj_t>,
 }
@@ -176,7 +185,11 @@ impl Wdg {
         unsafe { &mut *(ptr as *mut _ as *mut Self) }
     }
 
-    pub fn raw(&mut self) -> *mut lv_obj_t {
+    pub fn raw(&self) -> *const lv_obj_t {
+        self.raw.as_ptr()
+    }
+
+    pub fn raw_mut(&mut self) -> *mut lv_obj_t {
         self.raw.as_ptr()
     }
 }

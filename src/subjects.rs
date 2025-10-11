@@ -79,58 +79,66 @@ impl Subject {
         }
     }
 
-    pub fn raw(&mut self) -> &mut lv_subject_t {
+    pub fn raw_mut(&mut self) -> &mut lv_subject_t {
         &mut self.raw
+    }
+
+    pub fn raw(&self) -> &lv_subject_t {
+        &self.raw
     }
 }
 
 pub fn lv_subject_set_int(subject: &mut Subject, value: i32) {
     unsafe {
-        lightvgl_sys::lv_subject_set_int(subject.raw(), value);
+        lightvgl_sys::lv_subject_set_int(subject.raw_mut(), value);
     }
 }
 
 pub fn lv_subject_set_string(subject: &mut Subject, value: *mut c_void) {
     unsafe {
-        lightvgl_sys::lv_subject_set_pointer(subject.raw(), value);
+        lightvgl_sys::lv_subject_set_pointer(subject.raw_mut(), value);
     }
 }
 
 pub fn lv_subject_set_color(subject: &mut Subject, value: lv_color_t) {
     unsafe {
-        lightvgl_sys::lv_subject_set_color(subject.raw(), value);
+        lightvgl_sys::lv_subject_set_color(subject.raw_mut(), value);
     }
 }
 
 pub fn lv_subject_get_int(subject: &mut Subject) -> i32 {
-    unsafe { lightvgl_sys::lv_subject_get_int(subject.raw()) }
+    unsafe { lightvgl_sys::lv_subject_get_int(subject.raw_mut()) }
 }
 
 pub fn lv_subject_get_ptr(subject: &mut Subject) -> *const c_void {
-    unsafe { lightvgl_sys::lv_subject_get_pointer(subject.raw()) }
+    unsafe { lightvgl_sys::lv_subject_get_pointer(subject.raw_mut()) }
 }
 
 pub fn lv_subject_get_color(subject: &mut Subject) -> lv_color_t {
-    unsafe { lightvgl_sys::lv_subject_get_color(subject.raw()) }
+    unsafe { lightvgl_sys::lv_subject_get_color(subject.raw_mut()) }
 }
 
 pub fn lv_subject_get_string(subject: &mut Subject) -> &CStr {
-    unsafe { CStr::from_ptr(lightvgl_sys::lv_subject_get_string(subject.raw())) }
+    unsafe { CStr::from_ptr(lightvgl_sys::lv_subject_get_string(subject.raw_mut())) }
 }
 
 pub fn lv_subject_get_previous_color(subject: &mut Subject) -> lv_color_t {
-    unsafe { lightvgl_sys::lv_subject_get_previous_color(subject.raw()) }
+    unsafe { lightvgl_sys::lv_subject_get_previous_color(subject.raw_mut()) }
 }
 
 pub fn lv_subject_get_previous_int(subject: &mut Subject) -> i32 {
-    unsafe { lightvgl_sys::lv_subject_get_previous_int(subject.raw()) }
+    unsafe { lightvgl_sys::lv_subject_get_previous_int(subject.raw_mut()) }
 }
 
 pub fn lv_subject_get_previous_string(subject: &mut Subject) -> &CStr {
-    unsafe { CStr::from_ptr(lightvgl_sys::lv_subject_get_previous_string(subject.raw())) }
+    unsafe {
+        CStr::from_ptr(lightvgl_sys::lv_subject_get_previous_string(
+            subject.raw_mut(),
+        ))
+    }
 }
 pub fn lv_subject_get_previous_pointer(subject: &mut Subject) -> *const c_void {
-    unsafe { lightvgl_sys::lv_subject_get_previous_pointer(subject.raw()) }
+    unsafe { lightvgl_sys::lv_subject_get_previous_pointer(subject.raw_mut()) }
 }
 
 pub fn lv_subject_add_observer_obj<'a, F>(
@@ -145,7 +153,7 @@ pub fn lv_subject_add_observer_obj<'a, F>(
         lightvgl_sys::lv_subject_add_observer_obj(
             &mut subject.raw,
             Some(subject_callback::<F>),
-            object.raw(),
+            object.raw_mut(),
             Box::into_raw(Box::new(callback)) as *mut c_void,
         );
     }

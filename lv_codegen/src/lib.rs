@@ -203,7 +203,7 @@ impl Rusty for LvFunc {
         let ffi_args = self.args.iter().fold(quote!(), |args_accumulator, arg| {
             let next_arg = if arg.typ.is_mut_native_object() {
                 let var = arg.get_value_usage();
-                quote! {#var.raw()}
+                quote! {#var.raw_mut()}
             } else if arg.typ.is_const_native_object() {
                 let var = arg.get_value_usage();
                 quote! {#var.raw()}
@@ -337,9 +337,13 @@ impl LvArg {
             quote! {
                 #ident_raw
             }
-        } else if self.typ.is_const_style() || self.typ.is_mut_style() {
+        } else if self.typ.is_const_style() {
             quote! {
                 #ident.raw()
+            }
+        } else if self.typ.is_mut_style() {
+            quote! {
+                #ident.raw_mut()
             }
         } else {
             quote! {
@@ -435,7 +439,7 @@ impl Rusty for LvType {
         } else if self.is_mut_str() {
             quote!(&mut std::ffi::CString)
         } else if self.is_const_native_object() {
-            quote!(&mut crate::widgets::Wdg)
+            quote!(&crate::widgets::Wdg)
         } else if self.is_mut_native_object() {
             quote!(&mut crate::widgets::Wdg)
         } else if self.is_const_style() {
@@ -665,7 +669,7 @@ mod test {
         let expected_code = quote! {
             pub fn lv_arc_set_bg_end_angle(obj: &mut crate::widgets::Wdg, end: u16) -> () {
                 unsafe {
-                    lightvgl_sys::lv_arc_set_bg_end_angle(obj.raw(), end);
+                    lightvgl_sys::lv_arc_set_bg_end_angle(obj.raw_mut(), end);
                 }
             }
         };
@@ -697,7 +701,7 @@ mod test {
             pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &std::ffi::CStr) -> () {
                 unsafe {
                     lightvgl_sys::lv_label_set_text(
-                        label.raw(),
+                        label.raw_mut(),
                         text.as_ptr()
                     );
                 }
@@ -726,7 +730,7 @@ mod test {
         let code = dropdown_get_selected_str.code(&parent_widget).unwrap();
         let expected_code = quote! {
 
-            pub fn lv_dropdown_get_selected_str(obj: &mut crate::widgets::Wdg, buf: &mut std::ffi::CString, buf_size:u32) -> () {
+            pub fn lv_dropdown_get_selected_str(obj: &crate::widgets::Wdg, buf: &mut std::ffi::CString, buf_size:u32) -> () {
                 unsafe {
                     let buf_raw = buf.clone().into_raw();
                     lightvgl_sys::lv_dropdown_get_selected_str(
@@ -766,7 +770,7 @@ mod test {
             pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &std::ffi::CStr) -> () {
                 unsafe {
                     lightvgl_sys::lv_label_set_text(
-                        label.raw(),
+                        label.raw_mut(),
                         text.as_ptr()
                     );
                 }
@@ -799,8 +803,8 @@ mod test {
             pub fn lv_arc_rotate_obj_to_angle(obj: &mut crate::widgets::Wdg, obj_to_rotate: &mut crate::widgets::Wdg, r_offset: lv_coord_t) -> () {
                 unsafe {
                     lightvgl_sys::lv_arc_rotate_obj_to_angle(
-                        obj.raw(),
-                        obj_to_rotate.raw(),
+                        obj.raw_mut(),
+                        obj_to_rotate.raw_mut(),
                         r_offset
                     );
                 }
@@ -830,7 +834,7 @@ mod test {
             pub fn lv_label_get_recolor(label: &mut crate::widgets::Wdg) -> bool {
                 unsafe {
                     lightvgl_sys::lv_label_get_recolor(
-                        label.raw()
+                        label.raw_mut()
                     )
                 }
             }
@@ -859,7 +863,7 @@ mod test {
             pub fn lv_label_get_text_selection_start(label: &mut crate::widgets::Wdg) -> u32 {
                 unsafe {
                     lightvgl_sys::lv_label_get_text_selection_start(
-                        label.raw()
+                        label.raw_mut()
                     )
                 }
             }

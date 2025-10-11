@@ -181,7 +181,7 @@ fn main() -> Result<(), LvError> {
         );
 
         unsafe {
-            lv_dropdown_bind_value(dropdown.raw(), chart_type_subject.raw());
+            lv_dropdown_bind_value(dropdown.raw_mut(), chart_type_subject.raw_mut());
         }
 
         world.spawn((Dropdown, dropdown));
@@ -199,7 +199,7 @@ fn main() -> Result<(), LvError> {
 
         unsafe {
             let series =
-                lv_chart_add_series(chart.raw(), c3, lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X);
+                lv_chart_add_series(chart.raw_mut(), c3, lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X);
             let mut chart_y_array = [10, 25, 50, 40, 30, 35, 60, 65, 70, 75];
 
             lv_chart_set_series_ext_y_array(
@@ -246,11 +246,11 @@ fn main() -> Result<(), LvError> {
                 1,
             );
 
-            lightvgl_sys::lv_buttonmatrix_set_map(btnmatrix.raw(), &btnmatrix_options[0]);
+            lightvgl_sys::lv_buttonmatrix_set_map(btnmatrix.raw_mut(), &btnmatrix_options[0]);
             lv_buttonmatrix_set_ctrl_map(&mut btnmatrix, &btnmatrix_ctrl[0]);
 
             lv_buttonmatrix_set_selected_button(&mut btnmatrix, 1);
-            lv_obj_add_event_cb(&btnmatrix, Event::ValueChanged, |mut event| {
+            lv_obj_add_event_cb(&mut btnmatrix, Event::ValueChanged, |mut event| {
                 buttonmatrix_event_cb(&mut world, &mut event);
             });
         }
@@ -538,7 +538,7 @@ fn list_button_create(world: &mut World, parent: Entity) -> Result<Entity, LvErr
 fn draw_to_canvas(canvas: &mut Widget) {
     let mut layer = unsafe {
         let mut layer = std::mem::MaybeUninit::<lv_layer_t>::uninit();
-        lightvgl_sys::lv_canvas_init_layer(canvas.raw(), layer.as_mut_ptr());
+        lightvgl_sys::lv_canvas_init_layer(canvas.raw_mut(), layer.as_mut_ptr());
 
         layer.assume_init()
     };
@@ -585,11 +585,17 @@ fn draw_to_canvas(canvas: &mut Widget) {
         lightvgl_sys::lv_point_precise_set(&mut line_draw_dsc.p2, 350, 55);
         lightvgl_sys::lv_draw_line(&mut layer, &line_draw_dsc);
 
-        lightvgl_sys::lv_canvas_finish_layer(canvas.raw(), &mut layer);
+        lightvgl_sys::lv_canvas_finish_layer(canvas.raw_mut(), &mut layer);
 
         let c = lv_color_make(255, 0, 0);
         for i in 0..50 {
-            lightvgl_sys::lv_canvas_set_px(canvas.raw(), 100 + i * 2, 10, c, LV_OPA_COVER as u8);
+            lightvgl_sys::lv_canvas_set_px(
+                canvas.raw_mut(),
+                100 + i * 2,
+                10,
+                c,
+                LV_OPA_COVER as u8,
+            );
         }
     }
 }

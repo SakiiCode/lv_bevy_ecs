@@ -87,7 +87,7 @@ fn main() -> Result<(), LvError> {
     info!("ECS OK");
 
     {
-        let button = Button::create_widget()?;
+        let mut button = Button::create_widget()?;
         let mut label = Label::create_widget()?;
         lv_label_set_text(&mut label, c"SPAWN");
         //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
@@ -102,7 +102,7 @@ fn main() -> Result<(), LvError> {
             },
         );
 
-        lv_obj_add_event_cb(&button, Event::Clicked, |_| {
+        lv_obj_add_event_cb(&mut button, Event::Clicked, |_| {
             match world
                 .query_filtered::<Entity, With<DynamicButton>>()
                 .single(&world)
