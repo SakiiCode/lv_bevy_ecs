@@ -11,7 +11,7 @@ type CGResult<T> = Result<T, Box<dyn Error>>;
 
 const LIB_PREFIX: &str = "lv_";
 
-const FUNCTION_BLACKLIST: [&'static str; 8] = [
+const FUNCTION_BLACKLIST: [&'static str; 11] = [
     "lv_obj_null_on_delete",
     "lv_obj_add_style",
     "lv_obj_replace_style",
@@ -20,6 +20,9 @@ const FUNCTION_BLACKLIST: [&'static str; 8] = [
     "lv_obj_refresh_style",
     "lv_style_init",
     "lv_obj_set_parent",
+    "lv_event_get_target",
+    "lv_event_get_target_obj",
+    "lv_event_get_current_target_obj",
 ];
 
 #[derive(Debug, Copy, Clone)]
