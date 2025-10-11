@@ -13,10 +13,7 @@
 //! button_entity.insert(style);
 //! ```
 
-use bevy_ecs::{
-    component::{Component, HookContext},
-    world::DeferredWorld,
-};
+use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};
 use lightvgl_sys::{LV_PART_MAIN, lv_style_selector_t};
 
 use crate::{trace, widgets::Widget};

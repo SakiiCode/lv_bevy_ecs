@@ -16,10 +16,7 @@
 
 use std::{ffi::c_void, ptr::NonNull, time::Duration};
 
-use bevy_ecs::{
-    component::{Component, HookContext},
-    world::DeferredWorld,
-};
+use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};
 
 use crate::{trace, widgets::Widget};
 

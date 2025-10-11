@@ -57,7 +57,7 @@
 use std::ptr::NonNull;
 
 use bevy_ecs::{
-    component::Component, hierarchy::ChildOf, observer::Trigger, system::Query, world::OnInsert,
+    component::Component, hierarchy::ChildOf, lifecycle::Insert, observer::On, system::Query,
 };
 use lightvgl_sys::lv_obj_delete;
 
@@ -121,13 +121,14 @@ macro_rules! impl_widget {
 }
 
 pub fn on_insert_parent(
-    trigger: Trigger<OnInsert, ChildOf>,
+    trigger: On<Insert, ChildOf>,
     widgets: Query<&Widget>,
     children: Query<(&Widget, &ChildOf)>,
 ) {
-    let parent_widget = children.get(trigger.target()).unwrap();
+    let event = trigger.event();
+    let parent_widget = children.get(event.entity).unwrap();
     let parent_ptr = widgets.get(parent_widget.1.0).unwrap().raw();
-    let child_ptr = children.get(trigger.target()).unwrap().0.raw();
+    let child_ptr = children.get(event.entity).unwrap().0.raw();
     unsafe {
         lightvgl_sys::lv_obj_set_parent(child_ptr, parent_ptr);
     }
