@@ -3,17 +3,17 @@ use std::{process::exit, time::Duration};
 use lv_bevy_ecs::{
     LvglSchedule, LvglWorld,
     animation::Animation,
+    bevy::{component::Component, entity::Entity, query::With},
     display::{Display, DrawBuffer},
     error,
     events::{Event, lv_obj_add_event_cb},
-    functions::{
-        lv_color_make, lv_label_set_text, lv_log_init, lv_obj_set_align, lv_obj_set_style_opa,
-        lv_style_set_align, lv_style_set_bg_color, lv_style_set_opa, lv_timer_handler,
-    },
+    functions::*,
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
+    styles::Style,
     support::{Align, LvError},
-    widgets::Arc,
+    sys::{LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN},
+    widgets::{Arc, Button, Label},
 };
 
 use embedded_graphics::{
@@ -23,13 +23,6 @@ use embedded_graphics::{
 };
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
-};
-use lv_bevy_ecs::styles::Style;
-use lv_bevy_ecs::widgets::{Button, Label};
-
-use lv_bevy_ecs::prelude::{
-    LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN, component::Component, entity::Entity,
-    query::With,
 };
 
 #[derive(Component)]

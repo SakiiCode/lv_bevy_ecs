@@ -5,26 +5,36 @@ use std::{
     time::Duration,
 };
 
-use bevy_ecs::{hierarchy::Children, query::With};
 use lv_bevy_ecs::{
     LvglSchedule, LvglWorld,
     animation::Animation,
+    bevy::{component::Component, entity::Entity, hierarchy::Children, query::With, world::World},
     display::{Display, DrawBuffer},
     events::{Event, lv_event_get_target, lv_obj_add_event_cb},
-    functions::{
-        lv_buttonmatrix_set_ctrl_map, lv_buttonmatrix_set_selected_button, lv_canvas_fill_bg,
-        lv_canvas_set_buffer, lv_chart_set_series_ext_y_array, lv_color_make,
-        lv_dropdown_set_options, lv_image_set_rotation, lv_image_set_scale_x, lv_image_set_src,
-        lv_label_set_text, lv_log_init, lv_obj_add_flag, lv_obj_align, lv_obj_get_index,
-        lv_obj_set_flex_flow, lv_obj_set_grid_cell, lv_obj_set_pos, lv_obj_set_style_bg_color,
-        lv_obj_set_style_bg_opa, lv_obj_set_style_opa, lv_obj_set_style_text_color,
-        lv_obj_set_width, lv_style_set_text_font, lv_timer_handler,
-    },
+    functions::*,
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
+    styles::Style,
     subjects::{Subject, lv_subject_add_observer_obj, lv_subject_set_int},
     support::{LvError, lv_pct},
-    widgets::{Buttonmatrix, Canvas, Chart, Dropdown, Image, Widget},
+    sys::{
+        LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST, LV_OPA_50, LV_OPA_60, LV_OPA_70, LV_OPA_COVER,
+        LV_PART_ITEMS, LV_STATE_CHECKED, LV_SYMBOL_FILE, lv_align_t_LV_ALIGN_BOTTOM_RIGHT,
+        lv_area_t, lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
+        lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED, lv_buttonmatrix_get_button_text,
+        lv_buttonmatrix_get_selected_button, lv_chart_add_series,
+        lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X, lv_chart_set_type,
+        lv_chart_type_t_LV_CHART_TYPE_BAR, lv_chart_type_t_LV_CHART_TYPE_LINE,
+        lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_color_hex3, lv_color_mix, lv_color_t,
+        lv_draw_buf_align, lv_draw_image_dsc_t, lv_draw_line_dsc_t, lv_dropdown_bind_value,
+        lv_event_t, lv_flex_flow_t_LV_FLEX_FLOW_COLUMN, lv_font_montserrat_24,
+        lv_grid_align_t_LV_GRID_ALIGN_CENTER, lv_grid_align_t_LV_GRID_ALIGN_START,
+        lv_grid_align_t_LV_GRID_ALIGN_STRETCH, lv_layer_t, lv_obj_create,
+        lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT, lv_obj_t,
+        lv_observer_get_target, lv_observer_t, lv_palette_darken, lv_palette_t_LV_PALETTE_BLUE,
+        lv_screen_active, lv_subject_get_int, lv_subject_t,
+    },
+    widgets::{Button, Buttonmatrix, Canvas, Chart, Dropdown, Image, Label, Widget},
 };
 
 use embedded_graphics::{
@@ -34,28 +44,6 @@ use embedded_graphics::{
 };
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
-};
-use lv_bevy_ecs::styles::Style;
-use lv_bevy_ecs::widgets::{Button, Label};
-
-use lightvgl_sys::{
-    LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST, LV_OPA_50, LV_OPA_60, LV_OPA_70, LV_OPA_COVER,
-    LV_PART_ITEMS, LV_STATE_CHECKED, LV_SYMBOL_FILE, lv_align_t_LV_ALIGN_BOTTOM_RIGHT, lv_area_t,
-    lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
-    lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED, lv_buttonmatrix_get_button_text,
-    lv_buttonmatrix_get_selected_button, lv_chart_add_series,
-    lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X, lv_chart_set_type, lv_chart_type_t_LV_CHART_TYPE_BAR,
-    lv_chart_type_t_LV_CHART_TYPE_LINE, lv_color_hex3, lv_color_mix, lv_color_t, lv_draw_buf_align,
-    lv_draw_image_dsc_t, lv_draw_line_dsc_t, lv_dropdown_bind_value, lv_event_t,
-    lv_flex_flow_t_LV_FLEX_FLOW_COLUMN, lv_font_montserrat_24,
-    lv_grid_align_t_LV_GRID_ALIGN_CENTER, lv_grid_align_t_LV_GRID_ALIGN_START,
-    lv_grid_align_t_LV_GRID_ALIGN_STRETCH, lv_layer_t, lv_obj_create,
-    lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT,
-    lv_observer_get_target, lv_observer_t, lv_palette_darken, lv_palette_t_LV_PALETTE_BLUE,
-    lv_screen_active, lv_subject_get_int, lv_subject_t,
-};
-use lv_bevy_ecs::prelude::{
-    component::Component, entity::Entity, lv_color_format_t_LV_COLOR_FORMAT_RGB565, world::World,
 };
 
 macro_rules! lv_grid_fr {
@@ -468,21 +456,19 @@ fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject
     info!("chart_type_observer_cb");
     unsafe {
         let v = lv_subject_get_int(subject);
-        let chart = lv_observer_get_target(observer);
-        lv_chart_set_type(
-            chart as *mut lightvgl_sys::lv_obj_t,
-            if v == 0 {
-                lv_chart_type_t_LV_CHART_TYPE_LINE
-            } else {
-                lv_chart_type_t_LV_CHART_TYPE_BAR
-            },
-        );
+        let chart = lv_observer_get_target(observer) as *mut lv_obj_t;
+        let type_ = if v == 0 {
+            lv_chart_type_t_LV_CHART_TYPE_LINE
+        } else {
+            lv_chart_type_t_LV_CHART_TYPE_BAR
+        };
+        lv_chart_set_type(chart, type_);
     }
 }
 
 fn buttonmatrix_event_cb(world: &mut World, e: &mut lv_event_t) {
     unsafe {
-        let buttonmatrix = lv_event_get_target(e) as *const lightvgl_sys::lv_obj_t;
+        let buttonmatrix = lv_event_get_target(e) as *const lv_obj_t;
 
         let idx = lv_buttonmatrix_get_selected_button(buttonmatrix);
         let text = lv_buttonmatrix_get_button_text(buttonmatrix, idx);

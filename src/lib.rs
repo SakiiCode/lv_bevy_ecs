@@ -15,6 +15,10 @@ mod alloc;
 #[macro_use]
 pub mod widgets;
 pub mod animation;
+pub mod bevy {
+    //! Re-exported modules from bevy_ecs
+    pub use bevy_ecs::*;
+}
 pub mod display;
 pub mod events;
 pub mod functions;
@@ -23,13 +27,11 @@ pub mod logging;
 pub mod styles;
 pub mod subjects;
 pub mod support;
-pub mod timers;
-
-pub mod prelude {
-    //! Re-exported modules from bevy_ecs and lightvgl_sys
-    pub use bevy_ecs::*;
+pub mod sys {
+    //! Re-exported modules from lightvgl_sys
     pub use lightvgl_sys::*;
 }
+pub mod timers;
 
 #[cfg(feature = "ctor")]
 #[ctor::ctor]
