@@ -37,14 +37,17 @@ lazy_static! {
 }
 ```
 
-5. Last thing is a Schedule instance with `LvglSchedule::new()`. Then call it in every loop cycle
+5. Last thing is to calculate frametime and call LVGL functions it in every loop cycle:
 
 ```rust
-let schedule = LvglSchedule::new();
+let mut prev_time = Instant::now();
 // ...
 loop {
+    let current_time = Instant::now();
+    let diff = current_time.duration_since(prev_time);
+    prev_time = current_time;
     // ...
-    schedule.run(&mut world);
+    lv_tick_inc(diff);
     lv_timer_handler();
 }
 
@@ -77,6 +80,10 @@ BINDGEN_EXTRA_CLANG_ARGS="--sysroot ..."
 `LIBCLANG_PATH` can be found in ~/export-esp.sh
 
 `BINDGEN_EXTRA_CLANG_ARGS` sysroot can be found with `xtensa-esp32-elf-ld --print-sysroot`
+
+### Example project
+
+There is an example project targeting the Cheap Yellow Display (ESP32) with `std` enabled: [lvgl-bevy-demo](https://github.com/SakiiCode/lvgl-bevy-demo)
 
 ### LVGL Global Allocator
 

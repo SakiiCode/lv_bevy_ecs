@@ -2,11 +2,11 @@ use std::{
     ffi::{CStr, CString, c_void},
     process::exit,
     thread::sleep,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use lv_bevy_ecs::{
-    LvglSchedule, LvglWorld,
+    LvglWorld,
     animation::Animation,
     bevy::{component::Component, entity::Entity, hierarchy::Children, query::With, world::World},
     display::{Display, DrawBuffer},
@@ -390,14 +390,18 @@ fn main() -> Result<(), LvError> {
     }
 
     info!("Create OK");
-    // Create a new Schedule, which defines an execution strategy for Systems
-    let mut schedule = LvglSchedule::new();
 
     let mut is_pointer_down = false;
+
+    let mut prev_time = Instant::now();
 
     window.update(&sim_display);
 
     loop {
+        let current_time = Instant::now();
+        let diff = current_time.duration_since(prev_time);
+        prev_time = current_time;
+
         let events = window.events().peekable();
 
         for event in events {
@@ -443,8 +447,7 @@ fn main() -> Result<(), LvError> {
             }
         }
 
-        // Run the schedule once. If your app has a "loop", you would run this once per loop
-        schedule.run(&mut world);
+        lv_tick_inc(diff);
 
         lv_timer_handler();
 
