@@ -40,7 +40,5 @@ lightvgl-sys = { version = "~9.3.0", default-features = false, features = [
 [features]
 default = ["ctor"]
 
-lvgl-alloc = []
-
 # Automatically call lv_init() at startup
 ctor = ["dep:ctor"]

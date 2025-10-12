@@ -4,9 +4,6 @@ use bevy_ecs::world::World;
 
 use crate::widgets::on_insert_parent;
 
-#[cfg(feature = "lvgl-alloc")]
-mod alloc;
-
 #[macro_use]
 pub mod widgets;
 pub mod animation;

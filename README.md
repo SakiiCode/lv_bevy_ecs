@@ -85,11 +85,6 @@ BINDGEN_EXTRA_CLANG_ARGS="--sysroot ..."
 
 There is an example project targeting the Cheap Yellow Display (ESP32) with `std` enabled: [lvgl-bevy-demo](https://github.com/SakiiCode/lvgl-bevy-demo)
 
-### LVGL Global Allocator
-
-A [global allocator](https://doc.rust-lang.org/std/alloc/trait.GlobalAlloc.html) for Rust leveraging the [LVGL memory allocator](https://github.com/lvgl/lvgl/blob/master/src/misc/lv_mem.h) is provided, but not enabled by default.
-Can be enabled by the feature lvgl-alloc. This will make all dynamic memory to be allocated by LVGL internal memory manager.
-
 ### Partitions
 
 It can happen that the project does not fit in the default main partition. To fix that you need to generate a partitions.csv with
