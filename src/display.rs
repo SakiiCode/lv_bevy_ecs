@@ -1,30 +1,21 @@
 //! # Display
 //!
 //! The `embedded-graphics` crate is used to drive the screens. Examples use `embedded-graphics-simulator` to try them on PC.
+//!
 //! ## Simulator
-//! ```rust
+//! ```
+//! use embedded_graphics::pixelcolor::Rgb565;
+//! use embedded_graphics::prelude::*;
+//! use embedded_graphics_simulator::*;
+//! use lv_bevy_ecs::display::{DrawBuffer, Display};
+//! use lv_bevy_ecs::support::LvglColorFormat;
+//! use lv_bevy_ecs::sys::*;
+//!
 //! const HOR_RES: u32 = 800;
 //! const VER_RES: u32 = 480;
 //! const LINE_HEIGHT: u32 = 10;
-//! let mut sim_display: SimulatorDisplay<Rgb565> =
-//!        SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
-
-//! ```
-//! ## ESP32
-//! ```rust
-//! let mut delay = Delay::default();
-//! let mut tft_display = Builder::new(ST7789, di)
-//!     .color_order(mipidsi::options::ColorOrder::Rgb)
-//!     .orientation(
-//!         mipidsi::options::Orientation::default().rotate(mipidsi::options::Rotation::Deg270),
-//!     )
-//!     .reset_pin(gpio::PinDriver::output(pins.gpio4)?)
-//!     .init(&mut delay)
-//!     .expect("Cannot initialize display");
-//! ```
 //!
-//! ## Display refresh callback
-//! ```rust
+//! let mut sim_display: SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
 //! let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 //!
 //! let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(HOR_RES, LINE_HEIGHT);
@@ -34,7 +25,47 @@
 //!         .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
 //!         .unwrap();
 //! });
+//!
+//! unsafe {
+//!     let default_display = lv_display_get_default();
+//!     assert_eq!(lv_display_get_horizontal_resolution(default_display), HOR_RES as i32);
+//!     assert_eq!(lv_display_get_vertical_resolution(default_display), VER_RES as i32);
+//!     assert_eq!(lv_display_get_color_format(default_display), Rgb565::as_lv_color_format_t());
+//! }
+
 //! ```
+//!
+//! ## ESP32
+//! ```ignore
+//! use embedded_graphics::pixelcolor::Rgb565;
+//! use embedded_graphics::prelude::*;
+//! use embedded_graphics_simulator::*;
+//! use lv_bevy_ecs::display::{DrawBuffer, Display};
+//!
+//! const HOR_RES: u32 = 800;
+//! const VER_RES: u32 = 480;
+//! const LINE_HEIGHT: u32 = 10;
+//!
+//! let mut delay = Delay::default();
+//! let mut tft_display = Builder::new(ST7789, di)
+//!     .color_order(mipidsi::options::ColorOrder::Rgb)
+//!     .orientation(
+//!         mipidsi::options::Orientation::default().rotate(mipidsi::options::Rotation::Deg270),
+//!     )
+//!     .reset_pin(gpio::PinDriver::output(pins.gpio4)?)
+//!     .init(&mut delay)
+//!     .expect("Cannot initialize display");
+//! let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
+//!
+//! let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(HOR_RES, LINE_HEIGHT);
+//! display.register(buffer, |refresh| {
+//!     // alternative (slower): tft_display.draw_iter(refresh.as_pixels()).unwrap();
+//!     tft_display
+//!         .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
+//!         .unwrap();
+//! });
+//! ```
+
 use std::{ffi::c_void, marker::PhantomData, ptr::NonNull};
 
 use embedded_graphics::{
@@ -207,4 +238,41 @@ impl<const N: usize, C: LvglColorFormat> DrawBuffer<N, C> {
     pub fn raw(&self) -> *mut lv_draw_buf_t {
         self.raw.as_ptr()
     }
+}
+
+/// Using a macro because #\[cfg(doctest)\] does not work properly
+///
+/// https://github.com/rust-lang/rust/issues/67295
+///
+/// Intended for doctest use only!
+#[macro_export]
+macro_rules! setup_test_display {
+    () => {
+        use embedded_graphics::draw_target::DrawTarget;
+        use embedded_graphics::pixelcolor::Rgb565;
+        use embedded_graphics::prelude::{Point, Size};
+        use embedded_graphics_simulator::SimulatorDisplay;
+        use lv_bevy_ecs::display::{Display, DrawBuffer};
+
+        const HOR_RES: u32 = 320;
+        const VER_RES: u32 = 240;
+        const LINE_HEIGHT: u32 = 16;
+
+        let mut sim_display: SimulatorDisplay<Rgb565> =
+            SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
+
+        let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
+
+        let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(
+            HOR_RES,
+            LINE_HEIGHT,
+        );
+
+        display.register(buffer, |refresh| {
+            //sim_display.draw_iter(refresh.as_pixels()).unwrap();
+            sim_display
+                .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
+                .unwrap();
+        });
+    };
 }

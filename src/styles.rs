@@ -4,13 +4,25 @@
 //! Right now a Style can be only applied to a single widget.
 //!
 //! ```rust
-//! let mut button = Button::create_widget()?;
+//! use lv_bevy_ecs::functions::*;
+//! use lv_bevy_ecs::styles::Style;
+//! use lv_bevy_ecs::sys::{LV_OPA_50, LV_PART_MAIN};
+//! use lv_bevy_ecs::widgets::*;
+//!
+//! lv_bevy_ecs::setup_test_display!();
+//!
+//! let mut world = lv_bevy_ecs::LvglWorld::new();
+//!
+//! let mut button = Button::create_widget().unwrap();
 //! let mut button_entity = world.spawn((Button, button));
 //!
 //! let mut style = Style::default();
-//! lv_style_set_opa(&mut style, LV_OPA_50 as u8);
+//! let opacity = LV_OPA_50 as u8;
+//! lv_style_set_opa(&mut style, opacity);
 //!
 //! button_entity.insert(style);
+//! let widget = button_entity.get_mut::<Widget>().unwrap();
+//! assert_eq!(lv_obj_get_style_opa_recursive(&*widget, LV_PART_MAIN), opacity - 1);
 //! ```
 
 use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};

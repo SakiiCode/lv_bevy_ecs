@@ -1,7 +1,7 @@
 //! # Timers
 //!
 //! Timers are components, can be used as a standalone entity or attached to another entity
-//! ```rust
+//! ```ignore
 //! let timer = Timer::new(
 //!     move |_timer| {
 //!         // ...
@@ -15,7 +15,7 @@
 //! ## Async calls
 //!
 //! Closure will be executed on the next `lv_timer_handler()`. It needs `'static` lifetime.
-//! ```rust
+//! ```ignore
 //! lv_async_call(||{
 //!     // ...
 //! })

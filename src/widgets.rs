@@ -1,6 +1,6 @@
 //! # Widgets
 //!
-//! ```rust
+//! ```ignore
 //! let mut label: Widget = Label::create_widget()?;
 //! lv_label_set_text(&mut label, c"Example label");
 //! world.spawn((Label, label));
@@ -12,19 +12,19 @@
 //! Most of the LVGL functions have been kept with original names and they will use this `Widget` as their first parameter.
 //!
 //! If you need to know the type of the Widget later on, pass the marker struct next to it when spawning the entity.
-//! This is not mandatory but useful for queries. If marker structs are omitted, the storage will be slightly better optimized.
+//! This is not mandatory but useful for queries. If marker structs are omitted, the storage will be slightly better optimized in memory.
 //!
 //! ## Modifying Widgets
 //!
 //! To access widgets after moving them to the World with the `spawn()` function, you have to store the created Entity ID or use queries.
 //!
-//! ```rust
+//! ```ignore
 //! let mut label_widget = Label::create_widget();
 //! let label_entity = world.spawn((Label, label_widget)).id();
 //! let mut label_widget = world.get_mut::<Widget>(label_entity).unwrap();
 //! ```
 //!
-//! ```rust
+//! ```ignore
 //! let mut labels = world.query_filtered::<&mut Widget, With<Label>>();
 //! for label in labels.iter_mut(){
 //!   //...
@@ -32,13 +32,13 @@
 //! ```
 //!
 //! In case of a unique entity:
-//! ```rust
+//! ```ignore
 //! let mut label = world.query_filtered::<&mut Widget, With<Label>>().single_mut().unwrap();
 //! ```
 //!
 //! You are free to define any kind of custom component:
 //!
-//! ```rust
+//! ```ignore
 //! #[derive(Component)]
 //! struct DynamicLabel;
 //! // ...
@@ -49,7 +49,7 @@
 //!
 //! ## Child widgets
 //! To add a widget as a child, set it as child entity
-//! ```rust
+//! ```ignore
 //! let mut button_entity = world.spawn((Button, button));
 //! let mut label_entity = button_entity.with_child((Label, label));
 //! ```

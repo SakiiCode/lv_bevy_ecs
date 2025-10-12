@@ -2,7 +2,18 @@
 //!
 //! Animations are components that need to be added to entities
 //!
-//! ```rust
+//! ```
+//! use std::time::Duration;
+//! use lv_bevy_ecs::widgets::Button;
+//! use lv_bevy_ecs::animation::Animation;
+//! use lv_bevy_ecs::sys::{LV_OPA_0, LV_OPA_100, LV_PART_MAIN, lv_anim_count_running};
+//! use lv_bevy_ecs::functions::*;
+//!
+//! lv_bevy_ecs::setup_test_display!();
+//!
+//! let mut world = lv_bevy_ecs::LvglWorld::new();
+//! let button = Button::create_widget().unwrap();
+//!
 //! let anim = Animation::new(
 //!     Duration::from_secs(5),
 //!     LV_OPA_0 as i32,
@@ -12,6 +23,9 @@
 //!     },
 //! );
 //! let mut button_entity = world.spawn((Button, button, anim));
+//! unsafe {
+//!     assert_eq!(lv_anim_count_running(), 1);
+//! }
 //! ```
 
 use std::{ffi::c_void, ptr::NonNull, time::Duration};

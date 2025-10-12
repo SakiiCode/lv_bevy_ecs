@@ -16,7 +16,9 @@ It is highly recommended to read [Chapter 14 of the Unofficial Bevy Cheat Book](
 
 1.  Create a project with `cargo new` or `esp-generate`, then
 
+```sh
         cargo add lv_bevy_ecs
+```
 
 2.  This package depends on [lightvgl-sys](https://github.com/SakiiCode/lightvgl-sys) to generate the raw unsafe bindings.
     It needs an environment variable called `DEP_LV_CONFIG_PATH` that specifies the path to the folder containing `lv_conf.h` file.
@@ -31,15 +33,15 @@ DEP_LV_CONFIG_PATH = { relative = true, value = "." }
 3. You have to obtain a World instance with `LvglWorld::new();`.
    This is a global variable, it can be stored in lazy_static! or passed around in an Arc<Mutex<>> if needed elsewhere than in main().
 
-```rust
+```rust,ignore
 lazy_static! {
     static ref WORLD: Mutex<World> = Mutex::new(LvglWorld::new());
 }
 ```
 
-5. Last thing is to calculate frametime and call LVGL functions it in every loop cycle:
+4. Last thing is to calculate frametime and call LVGL functions it in every loop cycle:
 
-```rust
+```rust,ignore
 let mut prev_time = Instant::now();
 // ...
 loop {
@@ -71,7 +73,7 @@ This package has been tested with ESP32 only.
 
 You need three more env variables in config.toml and the PATH applied from ~/export-esp.sh
 
-```
+```bash
 LIBCLANG_PATH="..."
 CROSS_COMPILE="xtensa-esp32-elf"
 BINDGEN_EXTRA_CLANG_ARGS="--sysroot ..."
@@ -142,7 +144,7 @@ so open to API improvement ideas as well.
 
 ## Troubleshooting
 
-### #[ctor]/#[dtor] is not supported on the current target
+### #\[ctor\]/#\[dtor\] is not supported on the current target
 
 You are probably on RISC-V. Please help your architecture get upstreamed into [rust-ctor](https://github.com/mmastrac/rust-ctor).
 Until then set `default-features = false` and manually call `lv_init();` in the main function.
