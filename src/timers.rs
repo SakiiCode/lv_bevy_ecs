@@ -1,22 +1,27 @@
 //! # Timers
 //!
 //! Timers are components, can be used as a standalone entity or attached to another entity
-//! ```ignore
-//! let timer = Timer::new(
-//!     move |_timer| {
-//!         // ...
-//!     },
-//!     Duration::from_millis(5000),
-//! )?;
+//! ```
+//! let mut world = lv_bevy_ecs::LvglWorld::new();
+//! let mut timer = lv_bevy_ecs::timers::Timer::new(
+//!     &mut world,
+//!     std::time::Duration::from_millis(5000),
+//! ).unwrap();
+//! timer.add_systems(||{
+//!     // ...
+//! });
 //! world.spawn(timer);
+//! unsafe {
+//!     assert_ne!(lv_bevy_ecs::sys::lv_timer_get_next(core::ptr::null_mut()), core::ptr::null_mut());
+//! }
 //! ```
 //! To delete a timer, despawn the entity or remove the component and it will be automatically dropped.
 //!
 //! ## Async calls
 //!
 //! Closure will be executed on the next `lv_timer_handler()`. It needs `'static` lifetime.
-//! ```ignore
-//! lv_async_call(||{
+//! ```
+//! lv_bevy_ecs::timers::lv_async_call(||{
 //!     // ...
 //! })
 //! ```
