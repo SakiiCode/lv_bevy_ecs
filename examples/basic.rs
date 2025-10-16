@@ -3,6 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use lightvgl_sys::lv_part_t_LV_PART_MAIN;
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, query::With},
@@ -13,8 +14,7 @@ use lv_bevy_ecs::{
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
-    support::{Align, LvError},
-    sys::{LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN},
+    support::{Align, LvError, OpacityLevel},
     widgets::{Arc, Button, Label, LvglWorld},
 };
 
@@ -90,10 +90,10 @@ fn main() -> Result<(), LvError> {
 
         let anim = Animation::new(
             Duration::from_secs(5),
-            LV_OPA_0 as i32,
-            LV_OPA_100 as i32,
+            OpacityLevel::Transparent as i32,
+            OpacityLevel::Cover as i32,
             |obj, val| {
-                lv_obj_set_style_opa(obj, val as u8, LV_PART_MAIN);
+                lv_obj_set_style_opa(obj, val as u8, lv_part_t_LV_PART_MAIN);
             },
         );
 
@@ -130,7 +130,7 @@ fn main() -> Result<(), LvError> {
         button_entity.add_child(label_entity);
 
         let mut style = Style::default();
-        lv_style_set_opa(&mut style, LV_OPA_50 as u8);
+        lv_style_set_opa(&mut style, OpacityLevel::Percent50 as u8);
         lv_style_set_align(&mut style, Align::TopLeft.into());
         lv_style_set_bg_color(&mut style, lv_color_make(255, 0, 0));
 

@@ -225,26 +225,26 @@ impl Rusty for LvFunc {
             }
         });
 
-        // NOTE: When the function returns something we can 'avoid' placing an Ok() at the end.
-        let explicit_ok = if return_type.is_empty() {
-            quote!(Ok(()))
+        let return_assignment;
+        let return_expr;
+        let optional_semicolon;
+        if args_postprocessing.is_empty() {
+            return_assignment = quote!();
+            return_expr = quote!();
+            optional_semicolon = quote!();
         } else {
-            quote!()
-        };
+            return_assignment = quote!(let rust_result = );
+            return_expr = quote!(rust_result);
+            optional_semicolon = quote!(;);
+        }
 
-        // Append a semicolon at the end of the unsafe code only if there's no return value.
-        // Otherwise we should remove it
-        let optional_semicolon = match self.ret {
-            None => quote!(;),
-            _ => quote!(),
-        };
         Ok(quote! {
             pub fn #func_name(#args_decl) -> #return_type {
                 unsafe {
                     #args_preprocessing
-                    lightvgl_sys::#func_name(#ffi_args)#optional_semicolon
+                    #return_assignment lightvgl_sys::#func_name(#ffi_args)#optional_semicolon
                     #args_postprocessing
-                    #explicit_ok
+                    #return_expr
                 }
             }
         })
@@ -672,7 +672,7 @@ mod test {
         let expected_code = quote! {
             pub fn lv_arc_set_bg_end_angle(obj: &mut crate::widgets::Wdg, end: u16) -> () {
                 unsafe {
-                    lightvgl_sys::lv_arc_set_bg_end_angle(obj.raw_mut(), end);
+                    lightvgl_sys::lv_arc_set_bg_end_angle(obj.raw_mut(), end)
                 }
             }
         };
@@ -706,7 +706,7 @@ mod test {
                     lightvgl_sys::lv_label_set_text(
                         label.raw_mut(),
                         text.as_ptr()
-                    );
+                    )
                 }
             }
 
@@ -718,8 +718,13 @@ mod test {
     #[test]
     fn generate_method_wrapper_for_mut_str_types_as_argument() {
         let bindgen_code = quote! {
-            extern "C" {
-                pub fn lv_dropdown_get_selected_str(obj: *const lv_obj_t, buf: *mut ::core::ffi::c_char, buf_size: u32);
+            unsafe extern "C" {
+                pub fn lv_roller_get_option_str(
+                    obj: *const lv_obj_t,
+                    option: u32,
+                    buf: *mut ::core::ffi::c_char,
+                    buf_size: u32,
+                ) -> lv_result_t;
             }
         };
         let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
@@ -733,15 +738,17 @@ mod test {
         let code = dropdown_get_selected_str.code(&parent_widget).unwrap();
         let expected_code = quote! {
 
-            pub fn lv_dropdown_get_selected_str(obj: &crate::widgets::Wdg, buf: &mut std::ffi::CString, buf_size:u32) -> () {
+            pub fn lv_roller_get_option_str(
+                obj: &crate::widgets::Wdg,
+                option: u32,
+                buf: &mut std::ffi::CString,
+                buf_size: u32
+            ) -> lv_result_t {
                 unsafe {
                     let buf_raw = buf.clone().into_raw();
-                    lightvgl_sys::lv_dropdown_get_selected_str(
-                        obj.raw(),
-                        buf_raw,
-                        buf_size
-                    );
+                    let rust_result = lightvgl_sys::lv_roller_get_option_str(obj.raw(), option, buf_raw, buf_size);
                     *buf = std::ffi::CString::from_raw(buf_raw);
+                    rust_result
                 }
             }
 
@@ -775,7 +782,7 @@ mod test {
                     lightvgl_sys::lv_label_set_text(
                         label.raw_mut(),
                         text.as_ptr()
-                    );
+                    )
                 }
             }
         };
@@ -803,13 +810,13 @@ mod test {
 
         let code = arc_rotate_obj_to_angle.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_arc_rotate_obj_to_angle(obj: &mut crate::widgets::Wdg, obj_to_rotate: &mut crate::widgets::Wdg, r_offset: lv_coord_t) -> () {
+            pub fn lv_arc_rotate_obj_to_angle(obj: &crate::widgets::Wdg, obj_to_rotate: &mut crate::widgets::Wdg, r_offset: lv_coord_t) -> () {
                 unsafe {
                     lightvgl_sys::lv_arc_rotate_obj_to_angle(
-                        obj.raw_mut(),
+                        obj.raw(),
                         obj_to_rotate.raw_mut(),
                         r_offset
-                    );
+                    )
                 }
             }
         };
@@ -836,9 +843,7 @@ mod test {
         let expected_code = quote! {
             pub fn lv_label_get_recolor(label: &mut crate::widgets::Wdg) -> bool {
                 unsafe {
-                    lightvgl_sys::lv_label_get_recolor(
-                        label.raw_mut()
-                    )
+                    lightvgl_sys::lv_label_get_recolor(label.raw_mut())
                 }
             }
         };
@@ -865,9 +870,7 @@ mod test {
         let expected_code = quote! {
             pub fn lv_label_get_text_selection_start(label: &mut crate::widgets::Wdg) -> u32 {
                 unsafe {
-                    lightvgl_sys::lv_label_get_text_selection_start(
-                        label.raw_mut()
-                    )
+                    lightvgl_sys::lv_label_get_text_selection_start(label.raw_mut())
                 }
             }
         };
