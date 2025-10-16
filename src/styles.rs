@@ -26,7 +26,7 @@
 //! ```
 
 use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};
-use lightvgl_sys::{LV_PART_MAIN, lv_style_selector_t};
+use lightvgl_sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t};
 
 use crate::{trace, widgets::Widget};
 
@@ -47,7 +47,7 @@ impl Default for Style {
         };
         Self {
             raw,
-            selector: LV_PART_MAIN,
+            selector: lv_part_t_LV_PART_MAIN,
         }
     }
 }

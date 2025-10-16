@@ -1,6 +1,6 @@
 [package]
 name = "lv_bevy_ecs"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2024"
 description = "Safe Rust bindings to the LVGL graphics library using Bevy's ECS framework"
 readme = "README.md"
@@ -19,7 +19,7 @@ path = "src/lib.rs"
 bevy_ecs = { version = "0.17.0", default-features = false }
 ctor = { version = "0.6.0", optional = true }
 embedded-graphics = { version = "0.8.0" }
-lightvgl-sys = { version = "~9.3.0", default-features = false, features = [
+lightvgl-sys = { version = "~9.4.0", default-features = false, features = [
   "library",
 ] }
 log = { version = "0.4" }
@@ -32,7 +32,7 @@ embedded-graphics-simulator = "0.7.0"
 lv_codegen = { path = "lv_codegen", version = "0.2.0" }
 proc-macro2 = "1.0.95"
 quote = "1.0.40"
-lightvgl-sys = { version = "~9.3.0", default-features = false, features = [
+lightvgl-sys = { version = "~9.4.0", default-features = false, features = [
   "raw-bindings",
 ] }
 

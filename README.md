@@ -133,6 +133,7 @@ To increase upload speed set `baudrate = 460800` in `espflash.toml`
 
 | lv_bevy_ecs | bevy_ecs | lightvgl-sys | LVGL  |
 | ----------- | -------- | ------------ | ----- |
+| 0.5         | 0.17.2   | 9.4.0        | 9.4.0 |
 | 0.4         | 0.17.2   | 9.3.0        | 9.3.0 |
 | 0.3         | 0.16.0   | 9.3.0        | 9.3.0 |
 | 0.2         | 0.16.0   | 9.2.0        | 9.2.2 |

@@ -184,3 +184,24 @@ impl From<LabelLongMode> for lightvgl_sys::lv_label_long_mode_t {
         }
     }
 }
+
+#[repr(u32)]
+pub enum OpacityLevel {
+    Transparent = lightvgl_sys::_lv_opacity_level_t_LV_OPA_TRANSP,
+    Percent10 = lightvgl_sys::_lv_opacity_level_t_LV_OPA_10,
+    Percent20 = lightvgl_sys::_lv_opacity_level_t_LV_OPA_20,
+    Percent30 = lightvgl_sys::_lv_opacity_level_t_LV_OPA_30,
+    Percent40 = lightvgl_sys::_lv_opacity_level_t_LV_OPA_40,
+    Percent50 = lightvgl_sys::_lv_opacity_level_t_LV_OPA_50,
+    Percent60 = lightvgl_sys::_lv_opacity_level_t_LV_OPA_60,
+    Percent70 = lightvgl_sys::_lv_opacity_level_t_LV_OPA_70,
+    Percent80 = lightvgl_sys::_lv_opacity_level_t_LV_OPA_80,
+    Percent90 = lightvgl_sys::_lv_opacity_level_t_LV_OPA_90,
+    Cover = lightvgl_sys::_lv_opacity_level_t_LV_OPA_COVER,
+}
+
+impl From<OpacityLevel> for lightvgl_sys::_lv_opacity_level_t {
+    fn from(value: OpacityLevel) -> Self {
+        value as lightvgl_sys::_lv_opacity_level_t
+    }
+}

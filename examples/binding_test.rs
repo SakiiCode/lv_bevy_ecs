@@ -5,6 +5,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use lightvgl_sys::{lv_part_t_LV_PART_ITEMS, lv_state_t_LV_STATE_CHECKED};
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, hierarchy::Children, query::With, world::World},
@@ -15,10 +16,9 @@ use lv_bevy_ecs::{
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     subjects::{Subject, lv_subject_add_observer_obj, lv_subject_set_int},
-    support::{LvError, lv_pct},
+    support::{LvError, OpacityLevel, lv_pct},
     sys::{
-        LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST, LV_OPA_50, LV_OPA_60, LV_OPA_70, LV_OPA_COVER,
-        LV_PART_ITEMS, LV_STATE_CHECKED, LV_SYMBOL_FILE, lv_align_t_LV_ALIGN_BOTTOM_RIGHT,
+        LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST, LV_SYMBOL_FILE, lv_align_t_LV_ALIGN_BOTTOM_RIGHT,
         lv_area_t, lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
         lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED, lv_buttonmatrix_get_button_text,
         lv_buttonmatrix_get_selected_button, lv_chart_add_series,
@@ -124,7 +124,7 @@ fn main() -> Result<(), LvError> {
     {
         let c1: lv_color_t = lv_color_make(255, 0, 0);
         let c2: lv_color_t = unsafe { lv_palette_darken(lv_palette_t_LV_PALETTE_BLUE, 2) };
-        let c3: lv_color_t = unsafe { lv_color_mix(c1, c2, LV_OPA_60 as u8) };
+        let c3: lv_color_t = unsafe { lv_color_mix(c1, c2, OpacityLevel::Percent60 as u8) };
 
         let mut style_big_font = Style::default();
         unsafe {
@@ -215,7 +215,7 @@ fn main() -> Result<(), LvError> {
             1,
         );
 
-        lv_obj_set_style_bg_opa(&mut label, LV_OPA_70 as u8, 0);
+        lv_obj_set_style_bg_opa(&mut label, OpacityLevel::Percent70 as u8, 0);
         lv_obj_set_style_bg_color(&mut label, c1, 0);
         lv_obj_set_style_text_color(&mut label, c2, 0);
         let mut label_entity = world.spawn((DynamicLabel, Label, label));
@@ -242,7 +242,8 @@ fn main() -> Result<(), LvError> {
             });
         }
         let mut btnmatrix_entity = world.spawn((Buttonmatrix, btnmatrix));
-        let mut style_big_font_2 = Style::new(LV_PART_ITEMS | LV_STATE_CHECKED);
+        let mut style_big_font_2 =
+            Style::new(lv_part_t_LV_PART_ITEMS | lv_state_t_LV_STATE_CHECKED);
         unsafe {
             lv_style_set_text_font(&mut style_big_font_2, &lv_font_montserrat_24);
         }
@@ -273,8 +274,8 @@ fn main() -> Result<(), LvError> {
 
                 let a = Animation::new(
                     Duration::from_millis(300),
-                    LV_OPA_COVER as i32,
-                    LV_OPA_50 as i32,
+                    OpacityLevel::Cover as i32,
+                    OpacityLevel::Percent50 as i32,
                     |widget, value| {
                         lv_obj_set_style_opa(widget, value as u8, 0);
                     },
@@ -310,8 +311,8 @@ fn main() -> Result<(), LvError> {
                 fourth = Some(btn_id);
                 let a = Animation::new(
                     Duration::from_millis(300),
-                    LV_OPA_COVER as i32,
-                    LV_OPA_50 as i32,
+                    OpacityLevel::Cover as i32,
+                    OpacityLevel::Percent50 as i32,
                     |widget, value| {
                         lv_obj_set_style_opa(widget, value as u8, 0);
                     },
@@ -353,7 +354,7 @@ fn main() -> Result<(), LvError> {
             );
         }
 
-        lv_canvas_fill_bg(&mut canvas, c2, LV_OPA_COVER as u8);
+        lv_canvas_fill_bg(&mut canvas, c2, OpacityLevel::Cover as u8);
 
         draw_to_canvas(&mut canvas);
 
@@ -559,7 +560,7 @@ fn draw_to_canvas(canvas: &mut Widget) {
 
         /*Reuse the draw descriptor*/
         lightvgl_sys::lv_area_move(&mut coords, 40, 40);
-        image_draw_dsc.opa = LV_OPA_50 as u8;
+        image_draw_dsc.opa = OpacityLevel::Percent50 as u8;
         lightvgl_sys::lv_draw_image(&mut layer, &image_draw_dsc, &coords);
 
         let mut line_draw_dsc = std::mem::MaybeUninit::<lv_draw_line_dsc_t>::uninit();
@@ -582,7 +583,7 @@ fn draw_to_canvas(canvas: &mut Widget) {
                 100 + i * 2,
                 10,
                 c,
-                LV_OPA_COVER as u8,
+                OpacityLevel::Cover as u8,
             );
         }
     }
