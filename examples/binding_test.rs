@@ -155,7 +155,7 @@ fn main() -> Result<(), LvError> {
 
         let mut chart_type_subject = Subject::new_int(0);
 
-        let mut dropdown = Dropdown::create_widget()?;
+        let mut dropdown = Dropdown::create_widget();
         lv_dropdown_set_options(&mut dropdown, c"Lines\nBars");
 
         lv_obj_set_grid_cell(
@@ -174,7 +174,7 @@ fn main() -> Result<(), LvError> {
 
         world.spawn((Dropdown, dropdown));
 
-        let mut chart = Chart::create_widget()?;
+        let mut chart = Chart::create_widget();
         lv_obj_set_grid_cell(
             &mut chart,
             lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
@@ -204,7 +204,7 @@ fn main() -> Result<(), LvError> {
 
         world.spawn((Chart, chart));
 
-        let mut label = Label::create_widget()?;
+        let mut label = Label::create_widget();
 
         lv_obj_set_grid_cell(
             &mut label,
@@ -222,7 +222,7 @@ fn main() -> Result<(), LvError> {
         let mut label_entity = world.spawn((DynamicLabel, Label, label));
         label_entity.insert(style_big_font.clone());
 
-        let mut btnmatrix = Buttonmatrix::create_widget()?;
+        let mut btnmatrix = Buttonmatrix::create_widget();
         unsafe {
             lv_obj_set_grid_cell(
                 &mut btnmatrix,
@@ -250,7 +250,7 @@ fn main() -> Result<(), LvError> {
 
         btnmatrix_entity.insert(style_big_font_2);
 
-        let mut cont = unsafe { Widget::from_raw(lv_obj_create(lv_screen_active())).unwrap() };
+        let mut cont = unsafe { Widget::from_ptr(lv_obj_create(lv_screen_active())).unwrap() };
         lv_obj_set_grid_cell(
             &mut cont,
             lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
@@ -328,7 +328,7 @@ fn main() -> Result<(), LvError> {
 
         let mut canvas_buf = [0u8; 400 * 100 * 2];
 
-        let mut canvas = Canvas::create_widget()?;
+        let mut canvas = Canvas::create_widget();
         lv_obj_set_grid_cell(
             &mut canvas,
             lv_grid_align_t_LV_GRID_ALIGN_START,
@@ -374,13 +374,13 @@ fn main() -> Result<(), LvError> {
                 .unwrap()
         };
 
-        let mut img = Image::create_widget()?;
+        let mut img = Image::create_widget();
         lv_image_set_src(&mut img, test_img_lvgl_logo_jpg);
         lv_obj_align(&mut img, lv_align_t_LV_ALIGN_BOTTOM_RIGHT, -20, -20);
         lv_obj_add_flag(&mut img, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
         world.spawn((Image, img));
 
-        let mut img = Image::create_widget()?;
+        let mut img = Image::create_widget();
         lv_image_set_src(&mut img, test_img_lvgl_logo_png);
         lv_obj_set_pos(&mut img, 500, 420);
         lv_obj_add_flag(&mut img, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
@@ -490,7 +490,7 @@ fn buttonmatrix_event_cb(world: &mut World, e: &mut lv_event_t) {
 }
 
 fn list_button_create(world: &mut World, parent: Entity) -> Result<Entity, LvError> {
-    let mut btn = Button::create_widget()?;
+    let mut btn = Button::create_widget();
     //lv_obj_set_size(&mut btn, lv_pct(100), LV_SIZE_CONTENT as i32);
     lv_obj_set_width(&mut btn, lv_pct(100));
 
@@ -507,7 +507,7 @@ fn list_button_create(world: &mut World, parent: Entity) -> Result<Entity, LvErr
     );
     info!("Spawning button {}", idx);
 
-    let mut label = Label::create_widget()?;
+    let mut label = Label::create_widget();
     let file_icon_str = CStr::from_bytes_with_nul(LV_SYMBOL_FILE).unwrap();
     let file_icon = file_icon_str.to_string_lossy();
 

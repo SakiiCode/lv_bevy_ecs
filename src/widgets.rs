@@ -84,7 +84,7 @@ impl Widget {
         self.raw.as_ptr()
     }
 
-    pub fn from_raw(ptr: *mut lightvgl_sys::lv_obj_t) -> Option<Self> {
+    pub fn from_ptr(ptr: *mut lightvgl_sys::lv_obj_t) -> Option<Self> {
         Some(Self {
             raw: NonNull::new(ptr)?,
         })
@@ -122,17 +122,19 @@ macro_rules! impl_widget {
 
         impl $t {
             #[allow(dead_code)]
-            pub fn create_widget() -> Result<crate::widgets::Widget, crate::support::LvError> {
+            /// Creates a widget or panics if LVGL returned a null pointer.
+            pub fn create_widget() -> crate::widgets::Widget {
+                Self::try_create_widget().expect("Could not create widget")
+            }
+
+            /// Creates a widget or returns None if LVGL returned a null pointer.
+            pub fn try_create_widget() -> Option<crate::widgets::Widget> {
                 unsafe {
                     let default_screen = lightvgl_sys::lv_display_get_screen_active(
                         lightvgl_sys::lv_display_get_default(),
                     );
                     let ptr = $func(default_screen);
-                    if let Some(raw) = core::ptr::NonNull::new(ptr) {
-                        Ok(crate::widgets::Widget::from_non_null(raw))
-                    } else {
-                        Err(crate::support::LvError::InvalidReference)
-                    }
+                    crate::widgets::Widget::from_ptr(ptr)
                 }
             }
         }

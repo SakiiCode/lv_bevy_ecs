@@ -83,8 +83,8 @@ fn main() -> Result<(), LvError> {
     info!("ECS OK");
 
     {
-        let mut button = Button::create_widget()?;
-        let mut label = Label::create_widget()?;
+        let mut button = Button::create_widget();
+        let mut label = Label::create_widget();
         lv_label_set_text(&mut label, c"SPAWN");
         //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
         let label_entity = world.spawn((Label, label)).id();
@@ -115,8 +115,8 @@ fn main() -> Result<(), LvError> {
                     }*/
                 }
                 None => {
-                    let mut dynamic_button = Button::create_widget().unwrap();
-                    let mut label = Label::create_widget().unwrap();
+                    let mut dynamic_button = Button::create_widget();
+                    let mut label = Label::create_widget();
                     lv_obj_set_align(&mut dynamic_button, Align::TopRight.into());
                     lv_label_set_text(&mut label, c"This is dynamic");
                     world
@@ -139,7 +139,7 @@ fn main() -> Result<(), LvError> {
         //button_entity.remove::<Style>();
         // button_entity.insert(style);
 
-        let mut arc = Arc::create_widget()?;
+        let mut arc = Arc::create_widget();
         lv_obj_set_align(&mut arc, Align::BottomMid.into());
 
         world.spawn((Arc, arc));

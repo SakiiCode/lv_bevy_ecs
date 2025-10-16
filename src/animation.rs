@@ -98,7 +98,7 @@ where
         let obj = obj as *mut lightvgl_sys::lv_obj_t;
         if !anim.as_ref().user_data.is_null() {
             let callback = &mut *(anim.as_ref().user_data as *mut F);
-            let mut obj_nondrop = Widget::from_raw(obj).unwrap();
+            let mut obj_nondrop = Widget::from_ptr(obj).unwrap();
             callback(&mut obj_nondrop, val);
             std::mem::forget(obj_nondrop)
         }
