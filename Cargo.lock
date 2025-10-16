@@ -648,7 +648,7 @@ dependencies = [
 
 [[package]]
 name = "lv_codegen"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "Inflector",
  "itertools 0.14.0",
