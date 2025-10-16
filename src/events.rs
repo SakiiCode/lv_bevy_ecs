@@ -134,7 +134,7 @@ impl From<Event> for lightvgl_sys::lv_event_code_t {
     }
 }
 
-pub fn lv_obj_add_event_cb<'a, F>(widget: &'a mut Wdg, filter: Event, callback: F)
+pub(crate) fn lv_obj_add_event_cb<'a, F>(widget: &'a mut Wdg, filter: Event, callback: F)
 where
     F: FnMut(lightvgl_sys::lv_event_t) + 'a,
 {

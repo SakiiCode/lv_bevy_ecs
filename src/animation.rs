@@ -74,7 +74,7 @@ impl Animation {
 unsafe impl Send for Animation {}
 unsafe impl Sync for Animation {}
 
-pub fn add_animation(mut world: DeferredWorld, ctx: HookContext) {
+fn add_animation(mut world: DeferredWorld, ctx: HookContext) {
     let obj = world
         .get_mut::<Widget>(ctx.entity)
         .expect("Animation components must be added entities having a Widget component")

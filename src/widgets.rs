@@ -65,10 +65,21 @@ use bevy_ecs::{
     lifecycle::Insert,
     observer::On,
     system::{ParamSet, Query},
+    world::World,
 };
 use lightvgl_sys::{lv_obj_delete, lv_obj_t};
 
 use crate::trace;
+
+pub struct LvglWorld;
+
+impl LvglWorld {
+    pub fn new() -> World {
+        let mut world = World::new();
+        world.add_observer(on_insert_parent);
+        world
+    }
+}
 
 #[derive(Component)]
 pub struct Widget {
@@ -141,7 +152,7 @@ macro_rules! impl_widget {
     };
 }
 
-pub fn on_insert_parent(
+fn on_insert_parent(
     trigger: On<Insert, ChildOf>,
     mut set: ParamSet<(
         /* widgets */ Query<&mut Widget>,

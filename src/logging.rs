@@ -20,7 +20,14 @@ macro_rules! func {
     }};
 }
 
-pub fn to_lv_log_level(level: Level) -> lightvgl_sys::lv_log_level_t {
+pub(crate) fn lv_log_init() {
+    match log::set_logger(&LvglLogger) {
+        Ok(_) => log::set_max_level(log::LevelFilter::Trace),
+        Err(err) => println!("Could not initialize logging: {}", err.to_string()),
+    }
+}
+
+pub fn as_lv_log_level(level: Level) -> lightvgl_sys::lv_log_level_t {
     (match level {
         Level::Trace => lightvgl_sys::LV_LOG_LEVEL_TRACE,
         Level::Debug => lightvgl_sys::LV_LOG_LEVEL_TRACE,
@@ -30,7 +37,7 @@ pub fn to_lv_log_level(level: Level) -> lightvgl_sys::lv_log_level_t {
     }) as lightvgl_sys::lv_log_level_t
 }
 
-pub fn lv_log_add(
+pub(crate) fn lv_log_add(
     level: Level,
     file: &core::ffi::CStr,
     line: u32,
@@ -39,7 +46,7 @@ pub fn lv_log_add(
 ) {
     unsafe {
         lightvgl_sys::lv_log_add(
-            to_lv_log_level(level),
+            as_lv_log_level(level),
             file.as_ptr(),
             line as i32,
             func.as_ptr(),

@@ -1,9 +1,5 @@
 #![doc = include_str!("../README.md")]
 
-use bevy_ecs::world::World;
-
-use crate::widgets::on_insert_parent;
-
 #[macro_use]
 pub mod widgets;
 pub mod animation;
@@ -29,14 +25,4 @@ pub mod timers;
 #[ctor::ctor]
 fn init() {
     crate::functions::lv_init();
-}
-
-pub struct LvglWorld;
-
-impl LvglWorld {
-    pub fn new() -> World {
-        let mut world = World::new();
-        world.add_observer(on_insert_parent);
-        world
-    }
 }

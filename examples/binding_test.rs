@@ -6,11 +6,10 @@ use std::{
 };
 
 use lv_bevy_ecs::{
-    LvglWorld,
     animation::Animation,
     bevy::{component::Component, entity::Entity, hierarchy::Children, query::With, world::World},
     display::{Display, DrawBuffer},
-    events::{Event, lv_event_get_target, lv_obj_add_event_cb},
+    events::{Event, lv_event_get_target},
     functions::*,
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
@@ -34,7 +33,7 @@ use lv_bevy_ecs::{
         lv_observer_get_target, lv_observer_t, lv_palette_darken, lv_palette_t_LV_PALETTE_BLUE,
         lv_screen_active, lv_subject_get_int, lv_subject_t,
     },
-    widgets::{Button, Buttonmatrix, Canvas, Chart, Dropdown, Image, Label, Widget},
+    widgets::{Button, Buttonmatrix, Canvas, Chart, Dropdown, Image, Label, LvglWorld, Widget},
 };
 
 use embedded_graphics::{

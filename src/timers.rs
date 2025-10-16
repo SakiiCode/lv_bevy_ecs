@@ -85,7 +85,7 @@ unsafe extern "C" fn timer_trampoline(timer: *mut lv_timer_t) {
     }
 }
 
-pub fn lv_async_call<F>(callback: F)
+pub(crate) fn lv_async_call<F>(callback: F)
 where
     F: FnMut() + 'static,
 {

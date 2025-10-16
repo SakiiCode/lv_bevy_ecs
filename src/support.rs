@@ -60,6 +60,10 @@ impl Error for LvError {
     }
 }
 
+pub(crate) fn lv_color_make(r: u8, g: u8, b: u8) -> lightvgl_sys::lv_color_t {
+    unsafe { lightvgl_sys::lv_color_make(r, g, b) }
+}
+
 pub trait LvglColorFormat {
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t;
 }

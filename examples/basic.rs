@@ -4,19 +4,18 @@ use std::{
 };
 
 use lv_bevy_ecs::{
-    LvglWorld,
     animation::Animation,
     bevy::{component::Component, entity::Entity, query::With},
     display::{Display, DrawBuffer},
     error,
-    events::{Event, lv_obj_add_event_cb},
+    events::Event,
     functions::*,
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     support::{Align, LvError},
     sys::{LV_OPA_0, LV_OPA_50, LV_OPA_100, LV_PART_MAIN},
-    widgets::{Arc, Button, Label},
+    widgets::{Arc, Button, Label, LvglWorld},
 };
 
 use embedded_graphics::{
