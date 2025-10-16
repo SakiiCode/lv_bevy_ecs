@@ -4,15 +4,15 @@
 //!
 //! ```
 //! use std::time::Duration;
-//! use lv_bevy_ecs::widgets::Button;
+//! use lv_bevy_ecs::widgets::{Button, LvglWorld};
 //! use lv_bevy_ecs::animation::Animation;
 //! use lv_bevy_ecs::sys::{LV_OPA_0, LV_OPA_100, LV_PART_MAIN, lv_anim_count_running};
 //! use lv_bevy_ecs::functions::*;
 //!
 //! lv_bevy_ecs::setup_test_display!();
 //!
-//! let mut world = lv_bevy_ecs::LvglWorld::new();
-//! let button = Button::create_widget().unwrap();
+//! let mut world = LvglWorld::new();
+//! let button = Button::create_widget();
 //!
 //! let anim = Animation::new(
 //!     Duration::from_secs(5),

@@ -1,7 +1,7 @@
 //! # Widgets
 //!
 //! ```ignore
-//! let mut label: Widget = Label::create_widget()?;
+//! let mut label: Widget = Label::create_widget();
 //! lv_label_set_text(&mut label, c"Example label");
 //! world.spawn((Label, label));
 //! ```

@@ -11,9 +11,9 @@
 //!
 //! lv_bevy_ecs::setup_test_display!();
 //!
-//! let mut world = lv_bevy_ecs::LvglWorld::new();
+//! let mut world = LvglWorld::new();
 //!
-//! let mut button = Button::create_widget().unwrap();
+//! let mut button = Button::create_widget();
 //! let mut button_entity = world.spawn((Button, button));
 //!
 //! let mut style = Style::default();

@@ -2,7 +2,7 @@
 //!
 //! Timers are components, can be used as a standalone entity or attached to another entity
 //! ```
-//! let mut world = lv_bevy_ecs::LvglWorld::new();
+//! let mut world = lv_bevy_ecs::widgets::LvglWorld::new();
 //! let mut timer = lv_bevy_ecs::timers::Timer::new(
 //!     &mut world,
 //!     std::time::Duration::from_millis(5000),
@@ -21,7 +21,7 @@
 //!
 //! Closure will be executed on the next `lv_timer_handler()`. It needs `'static` lifetime.
 //! ```
-//! lv_bevy_ecs::timers::lv_async_call(||{
+//! lv_bevy_ecs::functions::lv_async_call(||{
 //!     // ...
 //! })
 //! ```
