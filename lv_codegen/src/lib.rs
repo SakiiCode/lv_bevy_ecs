@@ -803,10 +803,10 @@ mod test {
 
         let code = arc_rotate_obj_to_angle.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_arc_rotate_obj_to_angle(obj: &mut crate::widgets::Wdg, obj_to_rotate: &mut crate::widgets::Wdg, r_offset: lv_coord_t) -> () {
+            pub fn lv_arc_rotate_obj_to_angle(obj: &crate::widgets::Wdg, obj_to_rotate: &mut crate::widgets::Wdg, r_offset: lv_coord_t) -> () {
                 unsafe {
                     lightvgl_sys::lv_arc_rotate_obj_to_angle(
-                        obj.raw_mut(),
+                        obj.raw(),
                         obj_to_rotate.raw_mut(),
                         r_offset
                     );
