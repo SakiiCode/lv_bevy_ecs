@@ -25,7 +25,7 @@ lightvgl-sys = { version = "~9.4.0", default-features = false, features = [
 log = { version = "0.4" }
 
 [dev-dependencies]
-embedded-graphics-simulator = "0.7.0"
+embedded-graphics-simulator = "0.8.0"
 
 
 [build-dependencies]
