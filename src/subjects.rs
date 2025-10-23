@@ -37,7 +37,7 @@ use std::{
 };
 
 use bevy_ecs::component::Component;
-use lightvgl_sys::{lv_color_t, lv_subject_t};
+use lightvgl_sys::lv_subject_t;
 
 use crate::{trace, widgets::Widget};
 
@@ -105,60 +105,7 @@ impl Subject {
     }
 }
 
-pub fn lv_subject_set_int(subject: &mut Subject, value: i32) {
-    unsafe {
-        lightvgl_sys::lv_subject_set_int(subject.raw_mut(), value);
-    }
-}
-
-pub fn lv_subject_set_string(subject: &mut Subject, value: *mut c_void) {
-    unsafe {
-        lightvgl_sys::lv_subject_set_pointer(subject.raw_mut(), value);
-    }
-}
-
-pub fn lv_subject_set_color(subject: &mut Subject, value: lv_color_t) {
-    unsafe {
-        lightvgl_sys::lv_subject_set_color(subject.raw_mut(), value);
-    }
-}
-
-pub fn lv_subject_get_int(subject: &mut Subject) -> i32 {
-    unsafe { lightvgl_sys::lv_subject_get_int(subject.raw_mut()) }
-}
-
-pub fn lv_subject_get_ptr(subject: &mut Subject) -> *const c_void {
-    unsafe { lightvgl_sys::lv_subject_get_pointer(subject.raw_mut()) }
-}
-
-pub fn lv_subject_get_color(subject: &mut Subject) -> lv_color_t {
-    unsafe { lightvgl_sys::lv_subject_get_color(subject.raw_mut()) }
-}
-
-pub fn lv_subject_get_string(subject: &mut Subject) -> &CStr {
-    unsafe { CStr::from_ptr(lightvgl_sys::lv_subject_get_string(subject.raw_mut())) }
-}
-
-pub fn lv_subject_get_previous_color(subject: &mut Subject) -> lv_color_t {
-    unsafe { lightvgl_sys::lv_subject_get_previous_color(subject.raw_mut()) }
-}
-
-pub fn lv_subject_get_previous_int(subject: &mut Subject) -> i32 {
-    unsafe { lightvgl_sys::lv_subject_get_previous_int(subject.raw_mut()) }
-}
-
-pub fn lv_subject_get_previous_string(subject: &mut Subject) -> &CStr {
-    unsafe {
-        CStr::from_ptr(lightvgl_sys::lv_subject_get_previous_string(
-            subject.raw_mut(),
-        ))
-    }
-}
-pub fn lv_subject_get_previous_pointer(subject: &mut Subject) -> *const c_void {
-    unsafe { lightvgl_sys::lv_subject_get_previous_pointer(subject.raw_mut()) }
-}
-
-pub fn lv_subject_add_observer_obj<'a, F>(
+pub(crate) fn lv_subject_add_observer_obj<'a, F>(
     subject: &'a mut Subject,
     object: &mut Widget,
     callback: F,
@@ -176,7 +123,7 @@ pub fn lv_subject_add_observer_obj<'a, F>(
     }
 }
 
-pub(crate) unsafe extern "C" fn subject_callback<F>(
+unsafe extern "C" fn subject_callback<F>(
     observer: *mut lightvgl_sys::lv_observer_t,
     subject: *mut lightvgl_sys::lv_subject_t,
 ) where

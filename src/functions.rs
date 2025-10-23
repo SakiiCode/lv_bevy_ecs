@@ -1,10 +1,17 @@
 //! Auto-generated safe bindings to LVGL functions
 
-use std::time::Duration;
+use std::{
+    ffi::{CStr, c_void},
+    time::Duration,
+};
 
 use log::Level;
 
-use crate::{events::Event, widgets::Wdg};
+use crate::{
+    events::Event,
+    subjects::Subject,
+    widgets::{Wdg, Widget},
+};
 
 pub fn lv_init() {
     unsafe {
@@ -53,6 +60,84 @@ where
     F: FnMut() + 'static
 {
     crate::timers::lv_async_call(callback)
+}
+
+#[rustfmt::skip]
+pub fn lv_subject_set_int(subject: &mut Subject, value: i32) {
+    unsafe { lightvgl_sys::lv_subject_set_int(subject.raw_mut(), value) }
+}
+
+#[rustfmt::skip]
+pub fn lv_subject_set_string(subject: &mut Subject, value: *mut c_void) {
+    unsafe { lightvgl_sys::lv_subject_set_pointer(subject.raw_mut(), value) }
+}
+
+#[rustfmt::skip]
+pub fn lv_subject_set_color(subject: &mut Subject, value: lv_color_t) {
+    unsafe { lightvgl_sys::lv_subject_set_color(subject.raw_mut(), value) }
+}
+
+pub fn lv_subject_get_int(subject: &mut Subject) -> i32 {
+    unsafe { lightvgl_sys::lv_subject_get_int(subject.raw_mut()) }
+}
+
+pub fn lv_subject_get_ptr(subject: &mut Subject) -> *const c_void {
+    unsafe { lightvgl_sys::lv_subject_get_pointer(subject.raw_mut()) }
+}
+
+pub fn lv_subject_get_color(subject: &mut Subject) -> lv_color_t {
+    unsafe { lightvgl_sys::lv_subject_get_color(subject.raw_mut()) }
+}
+
+pub fn lv_subject_get_string(subject: &mut Subject) -> &CStr {
+    unsafe { CStr::from_ptr(lightvgl_sys::lv_subject_get_string(subject.raw_mut())) }
+}
+
+pub fn lv_subject_get_previous_color(subject: &mut Subject) -> lv_color_t {
+    unsafe { lightvgl_sys::lv_subject_get_previous_color(subject.raw_mut()) }
+}
+
+pub fn lv_subject_get_previous_int(subject: &mut Subject) -> i32 {
+    unsafe { lightvgl_sys::lv_subject_get_previous_int(subject.raw_mut()) }
+}
+
+pub fn lv_subject_get_previous_string(subject: &mut Subject) -> &CStr {
+    unsafe {
+        CStr::from_ptr(lightvgl_sys::lv_subject_get_previous_string(
+            subject.raw_mut(),
+        ))
+    }
+}
+pub fn lv_subject_get_previous_pointer(subject: &mut Subject) -> *const c_void {
+    unsafe { lightvgl_sys::lv_subject_get_previous_pointer(subject.raw_mut()) }
+}
+
+pub fn lv_subject_add_observer_obj<'a, F>(
+    subject: &'a mut Subject,
+    object: &mut Widget,
+    callback: F,
+) where
+    F: FnMut(*mut lightvgl_sys::lv_observer_t, *mut lightvgl_sys::lv_subject_t) + 'a,
+{
+    crate::subjects::lv_subject_add_observer_obj(subject, object, callback)
+}
+
+pub fn lv_event_get_target(event: &mut lightvgl_sys::lv_event_t) -> *const c_void {
+    unsafe { lightvgl_sys::lv_event_get_target(event) }
+}
+
+pub fn lv_event_get_target_obj(event: &mut lightvgl_sys::lv_event_t) -> Option<Wdg> {
+    unsafe {
+        let target = lightvgl_sys::lv_event_get_target_obj(event);
+        Wdg::from_ptr(target)
+    }
+}
+
+pub fn lv_event_get_current_target_obj(event: &mut lightvgl_sys::lv_event_t) -> Option<Wdg> {
+    unsafe {
+        let target = lightvgl_sys::lv_event_get_current_target_obj(event);
+        Wdg::from_ptr(target)
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
