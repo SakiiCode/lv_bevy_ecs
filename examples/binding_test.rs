@@ -5,7 +5,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use lightvgl_sys::{lv_part_t_LV_PART_ITEMS, lv_state_t_LV_STATE_CHECKED};
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, hierarchy::Children, query::With, world::World},
@@ -31,7 +30,8 @@ use lv_bevy_ecs::{
         lv_grid_align_t_LV_GRID_ALIGN_STRETCH, lv_layer_t, lv_obj_create,
         lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT, lv_obj_t,
         lv_observer_get_target, lv_observer_t, lv_palette_darken, lv_palette_t_LV_PALETTE_BLUE,
-        lv_screen_active, lv_subject_get_int, lv_subject_t,
+        lv_part_t_LV_PART_ITEMS, lv_screen_active, lv_state_t_LV_STATE_CHECKED, lv_subject_get_int,
+        lv_subject_t,
     },
     widgets::{Button, Buttonmatrix, Canvas, Chart, Dropdown, Image, Label, LvglWorld, Widget},
 };

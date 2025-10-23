@@ -3,7 +3,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use lightvgl_sys::lv_part_t_LV_PART_MAIN;
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, query::With},
@@ -15,6 +14,7 @@ use lv_bevy_ecs::{
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     support::{Align, LvError, OpacityLevel},
+    sys::lv_part_t_LV_PART_MAIN,
     widgets::{Arc, Button, Label, LvglWorld},
 };
 

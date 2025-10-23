@@ -39,7 +39,7 @@ lazy_static! {
 }
 ```
 
-4. Last thing is to calculate frametime and call LVGL functions it in every loop cycle:
+4. Last thing is to calculate frametime and call these LVGL functions in every loop cycle:
 
 ```rust,ignore
 let mut prev_time = Instant::now();
