@@ -176,285 +176,285 @@ fn main() -> Result<(), LvError> {
 }
 
 fn create_ui(world: &mut World) {
-        let c1: lv_color_t = lv_color_make(255, 0, 0);
-        let c2: lv_color_t = unsafe { lv_palette_darken(lv_palette_t_LV_PALETTE_BLUE, 2) };
-        let c3: lv_color_t = unsafe { lv_color_mix(c1, c2, OpacityLevel::Percent60 as u8) };
+    let c1: lv_color_t = lv_color_make(255, 0, 0);
+    let c2: lv_color_t = unsafe { lv_palette_darken(lv_palette_t_LV_PALETTE_BLUE, 2) };
+    let c3: lv_color_t = unsafe { lv_color_mix(c1, c2, OpacityLevel::Percent60 as u8) };
 
-        let mut style_big_font = Style::default();
-        unsafe {
-            lv_style_set_text_font(&mut style_big_font, &lv_font_montserrat_24);
-        }
+    let mut style_big_font = Style::default();
+    unsafe {
+        lv_style_set_text_font(&mut style_big_font, &lv_font_montserrat_24);
+    }
 
-        let mut grid_cols = [
-            300 as i32,
-            lv_grid_fr!(3) as i32,
-            lv_grid_fr!(2) as i32,
-            LV_GRID_TEMPLATE_LAST as i32,
-        ];
-        let mut grid_rows = [
-            100 as i32,
-            lv_grid_fr!(1) as i32,
-            LV_GRID_CONTENT as i32,
-            LV_GRID_TEMPLATE_LAST as i32,
-        ];
+    let mut grid_cols = [
+        300 as i32,
+        lv_grid_fr!(3) as i32,
+        lv_grid_fr!(2) as i32,
+        LV_GRID_TEMPLATE_LAST as i32,
+    ];
+    let mut grid_rows = [
+        100 as i32,
+        lv_grid_fr!(1) as i32,
+        LV_GRID_CONTENT as i32,
+        LV_GRID_TEMPLATE_LAST as i32,
+    ];
 
-        unsafe {
-            lightvgl_sys::lv_obj_set_grid_dsc_array(
-                lv_screen_active(),
-                grid_cols.as_mut_ptr(),
-                grid_rows.as_mut_ptr(),
-            );
-        }
-
-        let mut chart_type_subject = Subject::new_int(0);
-
-        let mut dropdown = Dropdown::create_widget();
-        lv_dropdown_set_options(&mut dropdown, c"Lines\nBars");
-
-        lv_obj_set_grid_cell(
-            &mut dropdown,
-            lv_grid_align_t_LV_GRID_ALIGN_CENTER,
-            0,
-            1,
-            lv_grid_align_t_LV_GRID_ALIGN_CENTER,
-            0,
-            1,
+    unsafe {
+        lightvgl_sys::lv_obj_set_grid_dsc_array(
+            lv_screen_active(),
+            grid_cols.as_mut_ptr(),
+            grid_rows.as_mut_ptr(),
         );
+    }
 
-        unsafe {
-            lv_dropdown_bind_value(dropdown.raw_mut(), chart_type_subject.raw_mut());
-        }
+    let mut chart_type_subject = Subject::new_int(0);
 
-        world.spawn((Dropdown, dropdown));
+    let mut dropdown = Dropdown::create_widget();
+    lv_dropdown_set_options(&mut dropdown, c"Lines\nBars");
 
-        let mut chart = Chart::create_widget();
-        lv_obj_set_grid_cell(
+    lv_obj_set_grid_cell(
+        &mut dropdown,
+        lv_grid_align_t_LV_GRID_ALIGN_CENTER,
+        0,
+        1,
+        lv_grid_align_t_LV_GRID_ALIGN_CENTER,
+        0,
+        1,
+    );
+
+    unsafe {
+        lv_dropdown_bind_value(dropdown.raw_mut(), chart_type_subject.raw_mut());
+    }
+
+    world.spawn((Dropdown, dropdown));
+
+    let mut chart = Chart::create_widget();
+    lv_obj_set_grid_cell(
+        &mut chart,
+        lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
+        0,
+        1,
+        lv_grid_align_t_LV_GRID_ALIGN_CENTER,
+        1,
+        1,
+    );
+
+    unsafe {
+        let series =
+            lv_chart_add_series(chart.raw_mut(), c3, lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X);
+        let mut chart_y_array = [10, 25, 50, 40, 30, 35, 60, 65, 70, 75];
+
+        lv_chart_set_series_ext_y_array(
             &mut chart,
-            lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
-            0,
-            1,
-            lv_grid_align_t_LV_GRID_ALIGN_CENTER,
-            1,
-            1,
+            series.as_mut().unwrap(),
+            &mut chart_y_array[0],
         );
+    }
 
-        unsafe {
-            let series =
-                lv_chart_add_series(chart.raw_mut(), c3, lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X);
-            let mut chart_y_array = [10, 25, 50, 40, 30, 35, 60, 65, 70, 75];
+    lv_subject_add_observer_obj(&mut chart_type_subject, &mut chart, chart_type_observer_cb);
+    lv_subject_set_int(&mut chart_type_subject, 1);
 
-            lv_chart_set_series_ext_y_array(
-                &mut chart,
-                series.as_mut().unwrap(),
-                &mut chart_y_array[0],
-            );
-        }
+    world.spawn(chart_type_subject);
 
-        lv_subject_add_observer_obj(&mut chart_type_subject, &mut chart, chart_type_observer_cb);
-        lv_subject_set_int(&mut chart_type_subject, 1);
+    world.spawn((Chart, chart));
 
-        world.spawn(chart_type_subject);
+    let mut label = Label::create_widget();
 
-        world.spawn((Chart, chart));
+    lv_obj_set_grid_cell(
+        &mut label,
+        lv_grid_align_t_LV_GRID_ALIGN_START,
+        1,
+        1,
+        lv_grid_align_t_LV_GRID_ALIGN_CENTER,
+        0,
+        1,
+    );
 
-        let mut label = Label::create_widget();
+    lv_obj_set_style_bg_opa(&mut label, OpacityLevel::Percent70 as u8, 0);
+    lv_obj_set_style_bg_color(&mut label, c1, 0);
+    lv_obj_set_style_text_color(&mut label, c2, 0);
+    let mut label_entity = world.spawn((DynamicLabel, Label, label));
+    label_entity.insert(style_big_font.clone());
 
+    let btnmatrix_options = Box::new([
+        c"First".as_ptr(),
+        c"Second".as_ptr(),
+        c"\n".as_ptr(),
+        c"Third".as_ptr(),
+        c"".as_ptr(),
+    ]);
+
+    let btnmatrix_ctrl = Box::new([
+        lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED,
+        2 | lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
+        1,
+    ]);
+
+    let mut btnmatrix = Buttonmatrix::create_widget();
+    unsafe {
         lv_obj_set_grid_cell(
-            &mut label,
-            lv_grid_align_t_LV_GRID_ALIGN_START,
+            &mut btnmatrix,
+            lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
             1,
             1,
-            lv_grid_align_t_LV_GRID_ALIGN_CENTER,
-            0,
+            lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
+            1,
             1,
         );
 
-        lv_obj_set_style_bg_opa(&mut label, OpacityLevel::Percent70 as u8, 0);
-        lv_obj_set_style_bg_color(&mut label, c1, 0);
-        lv_obj_set_style_text_color(&mut label, c2, 0);
-        let mut label_entity = world.spawn((DynamicLabel, Label, label));
-        label_entity.insert(style_big_font.clone());
-
-        let btnmatrix_options = Box::new([
-            c"First".as_ptr(),
-            c"Second".as_ptr(),
-            c"\n".as_ptr(),
-            c"Third".as_ptr(),
-            c"".as_ptr(),
-        ]);
-
-        let btnmatrix_ctrl = Box::new([
-            lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED,
-            2 | lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
-            1,
-        ]);
-
-        let mut btnmatrix = Buttonmatrix::create_widget();
-        unsafe {
-            lv_obj_set_grid_cell(
-                &mut btnmatrix,
-                lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
-                1,
-                1,
-                lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
-                1,
-                1,
-            );
-
-            #[rustfmt::skip]
+        #[rustfmt::skip]
             lightvgl_sys::lv_buttonmatrix_set_map(btnmatrix.raw_mut(),&Box::leak(btnmatrix_options)[0]);
-            lv_buttonmatrix_set_ctrl_map(&mut btnmatrix, &Box::leak(btnmatrix_ctrl)[0]);
+        lv_buttonmatrix_set_ctrl_map(&mut btnmatrix, &Box::leak(btnmatrix_ctrl)[0]);
 
-            lv_buttonmatrix_set_selected_button(&mut btnmatrix, 1);
-            lv_obj_add_event_cb(&mut btnmatrix, Event::ValueChanged, |mut event| {
-                buttonmatrix_event_cb(world, &mut event);
-            });
-        }
-        let mut btnmatrix_entity = world.spawn((Buttonmatrix, btnmatrix));
-        let mut style_big_font_2 = Style::new(lv_part_t_LV_PART_ITEMS | lv_state_t_LV_STATE_CHECKED);
-        unsafe {
-            lv_style_set_text_font(&mut style_big_font_2, &lv_font_montserrat_24);
-        }
+        lv_buttonmatrix_set_selected_button(&mut btnmatrix, 1);
+        lv_obj_add_event_cb(&mut btnmatrix, Event::ValueChanged, |mut event| {
+            buttonmatrix_event_cb(world, &mut event);
+        });
+    }
+    let mut btnmatrix_entity = world.spawn((Buttonmatrix, btnmatrix));
+    let mut style_big_font_2 = Style::new(lv_part_t_LV_PART_ITEMS | lv_state_t_LV_STATE_CHECKED);
+    unsafe {
+        lv_style_set_text_font(&mut style_big_font_2, &lv_font_montserrat_24);
+    }
 
-        btnmatrix_entity.insert(style_big_font_2);
+    btnmatrix_entity.insert(style_big_font_2);
 
-        let mut cont = unsafe { Widget::from_ptr(lv_obj_create(lv_screen_active())).unwrap() };
-        lv_obj_set_grid_cell(
-            &mut cont,
-            lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
-            2,
-            1,
-            lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
-            0,
-            2,
-        );
-        lv_obj_set_flex_flow(&mut cont, lv_flex_flow_t_LV_FLEX_FLOW_COLUMN);
-        let cont_entity = world.spawn(cont);
-        let cont_id = cont_entity.id();
+    let mut cont = unsafe { Widget::from_ptr(lv_obj_create(lv_screen_active())).unwrap() };
+    lv_obj_set_grid_cell(
+        &mut cont,
+        lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
+        2,
+        1,
+        lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
+        0,
+        2,
+    );
+    lv_obj_set_flex_flow(&mut cont, lv_flex_flow_t_LV_FLEX_FLOW_COLUMN);
+    let cont_entity = world.spawn(cont);
+    let cont_id = cont_entity.id();
 
-        let mut fourth = None;
+    let mut fourth = None;
 
-        for i in 0..10u32 {
-            let btn_id = list_button_create(world, cont_id).unwrap();
+    for i in 0..10u32 {
+        let btn_id = list_button_create(world, cont_id).unwrap();
 
-            if i == 0 {
-                let mut btn_entity = world.get_entity_mut(btn_id).unwrap();
+        if i == 0 {
+            let mut btn_entity = world.get_entity_mut(btn_id).unwrap();
 
-                let a = Animation::new(
-                    Duration::from_millis(300),
-                    OpacityLevel::Cover as i32,
-                    OpacityLevel::Percent50 as i32,
-                    |widget, value| {
-                        lv_obj_set_style_opa(widget, value as u8, 0);
-                    },
-                );
-                btn_entity.insert(a);
-            }
-
-            if i == 1 {
-                let mut btn_entity = world.get_entity_mut(btn_id).unwrap();
-
-                let mut btn = btn_entity.get_mut::<Widget>().unwrap();
-                lv_obj_add_flag(&mut btn, lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN);
-            }
-
-            if i == 2 {
-                let label_id;
-                {
-                    let btn_entity = world.get_entity_mut(btn_id).unwrap();
-                    let children = btn_entity.get::<Children>().unwrap();
-                    label_id = children.first().unwrap().to_owned();
-                }
-                let mut btn_label_entity = world.get_entity_mut(label_id).unwrap();
-                let mut btn_label = btn_label_entity.get_mut::<Widget>().unwrap();
-
-                lv_label_set_text(&mut btn_label, c"A multi-line text with a ° symbol");
-
-                lv_obj_set_width(&mut btn_label, lv_pct(100));
-            }
-
-            if i == 3 {
-                let mut btn_entity = world.get_entity_mut(btn_id).unwrap();
-
-                fourth = Some(btn_id);
-                let a = Animation::new(
-                    Duration::from_millis(300),
-                    OpacityLevel::Cover as i32,
-                    OpacityLevel::Percent50 as i32,
-                    |widget, value| {
-                        lv_obj_set_style_opa(widget, value as u8, 0);
-                    },
-                );
-                btn_entity.insert(a);
-            }
-        }
-
-        sleep(Duration::from_millis(300));
-        if let Some(fourth) = fourth {
-            world.despawn(fourth);
-        }
-
-        let mut canvas_buf = [0u8; 400 * 100 * 4];
-
-        let mut canvas = Canvas::create_widget();
-        lv_obj_set_grid_cell(
-            &mut canvas,
-            lv_grid_align_t_LV_GRID_ALIGN_START,
-            0,
-            2,
-            lv_grid_align_t_LV_GRID_ALIGN_START,
-            2,
-            1,
-        );
-
-        unsafe {
-            lv_canvas_set_buffer(
-                &mut canvas,
-                lv_draw_buf_align(
-                    (canvas_buf.as_mut_ptr() as *mut c_void).as_mut().unwrap(),
-                    lv_color_format_t_LV_COLOR_FORMAT_RGB565,
-                )
-                .as_mut()
-                .unwrap(),
-                400,
-                100,
-                lv_color_format_t_LV_COLOR_FORMAT_RGB565,
+            let a = Animation::new(
+                Duration::from_millis(300),
+                OpacityLevel::Cover as i32,
+                OpacityLevel::Percent50 as i32,
+                |widget, value| {
+                    lv_obj_set_style_opa(widget, value as u8, 0);
+                },
             );
+            btn_entity.insert(a);
         }
 
-        lv_canvas_fill_bg(&mut canvas, c2, OpacityLevel::Cover as u8);
+        if i == 1 {
+            let mut btn_entity = world.get_entity_mut(btn_id).unwrap();
 
-        draw_to_canvas(&mut canvas);
+            let mut btn = btn_entity.get_mut::<Widget>().unwrap();
+            lv_obj_add_flag(&mut btn, lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN);
+        }
 
-        world.spawn((Canvas, canvas));
+        if i == 2 {
+            let label_id;
+            {
+                let btn_entity = world.get_entity_mut(btn_id).unwrap();
+                let children = btn_entity.get::<Children>().unwrap();
+                label_id = children.first().unwrap().to_owned();
+            }
+            let mut btn_label_entity = world.get_entity_mut(label_id).unwrap();
+            let mut btn_label = btn_label_entity.get_mut::<Widget>().unwrap();
 
-        let test_img_lvgl_logo_png_path = c"A:examples/assets/test_img_lvgl_logo.png".as_ptr();
-        let test_img_lvgl_logo_png = unsafe {
-            (test_img_lvgl_logo_png_path as *mut c_void)
-                .as_mut()
-                .unwrap()
-        };
+            lv_label_set_text(&mut btn_label, c"A multi-line text with a ° symbol");
 
-        let test_img_lvgl_logo_jpg_path = c"A:examples/assets/test_img_lvgl_logo.jpg".as_ptr();
-        let test_img_lvgl_logo_jpg = unsafe {
-            (test_img_lvgl_logo_jpg_path as *mut c_void)
-                .as_mut()
-                .unwrap()
-        };
+            lv_obj_set_width(&mut btn_label, lv_pct(100));
+        }
 
-        let mut img = Image::create_widget();
-        lv_image_set_src(&mut img, test_img_lvgl_logo_jpg);
-        lv_obj_align(&mut img, lv_align_t_LV_ALIGN_BOTTOM_RIGHT, -20, -20);
-        lv_obj_add_flag(&mut img, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
-        world.spawn((Image, img));
+        if i == 3 {
+            let mut btn_entity = world.get_entity_mut(btn_id).unwrap();
 
-        let mut img = Image::create_widget();
-        lv_image_set_src(&mut img, test_img_lvgl_logo_png);
-        lv_obj_set_pos(&mut img, 500, 420);
-        lv_obj_add_flag(&mut img, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
-        lv_image_set_rotation(&mut img, 200);
-        lv_image_set_scale_x(&mut img, 400);
-        world.spawn((Image, img));
+            fourth = Some(btn_id);
+            let a = Animation::new(
+                Duration::from_millis(300),
+                OpacityLevel::Cover as i32,
+                OpacityLevel::Percent50 as i32,
+                |widget, value| {
+                    lv_obj_set_style_opa(widget, value as u8, 0);
+                },
+            );
+            btn_entity.insert(a);
+        }
+    }
+
+    sleep(Duration::from_millis(300));
+    if let Some(fourth) = fourth {
+        world.despawn(fourth);
+    }
+
+    let mut canvas_buf = [0u8; 400 * 100 * 4];
+
+    let mut canvas = Canvas::create_widget();
+    lv_obj_set_grid_cell(
+        &mut canvas,
+        lv_grid_align_t_LV_GRID_ALIGN_START,
+        0,
+        2,
+        lv_grid_align_t_LV_GRID_ALIGN_START,
+        2,
+        1,
+    );
+
+    unsafe {
+        lv_canvas_set_buffer(
+            &mut canvas,
+            lv_draw_buf_align(
+                (canvas_buf.as_mut_ptr() as *mut c_void).as_mut().unwrap(),
+                lv_color_format_t_LV_COLOR_FORMAT_RGB565,
+            )
+            .as_mut()
+            .unwrap(),
+            400,
+            100,
+            lv_color_format_t_LV_COLOR_FORMAT_RGB565,
+        );
+    }
+
+    lv_canvas_fill_bg(&mut canvas, c2, OpacityLevel::Cover as u8);
+
+    draw_to_canvas(&mut canvas);
+
+    world.spawn((Canvas, canvas));
+
+    let test_img_lvgl_logo_png_path = c"A:examples/assets/test_img_lvgl_logo.png".as_ptr();
+    let test_img_lvgl_logo_png = unsafe {
+        (test_img_lvgl_logo_png_path as *mut c_void)
+            .as_mut()
+            .unwrap()
+    };
+
+    let test_img_lvgl_logo_jpg_path = c"A:examples/assets/test_img_lvgl_logo.jpg".as_ptr();
+    let test_img_lvgl_logo_jpg = unsafe {
+        (test_img_lvgl_logo_jpg_path as *mut c_void)
+            .as_mut()
+            .unwrap()
+    };
+
+    let mut img = Image::create_widget();
+    lv_image_set_src(&mut img, test_img_lvgl_logo_jpg);
+    lv_obj_align(&mut img, lv_align_t_LV_ALIGN_BOTTOM_RIGHT, -20, -20);
+    lv_obj_add_flag(&mut img, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
+    world.spawn((Image, img));
+
+    let mut img = Image::create_widget();
+    lv_image_set_src(&mut img, test_img_lvgl_logo_png);
+    lv_obj_set_pos(&mut img, 500, 420);
+    lv_obj_add_flag(&mut img, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
+    lv_image_set_rotation(&mut img, 200);
+    lv_image_set_scale_x(&mut img, 400);
+    world.spawn((Image, img));
 }
 
 fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject_t) {
