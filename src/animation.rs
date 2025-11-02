@@ -30,6 +30,7 @@
 
 use std::{ffi::c_void, ptr::NonNull, time::Duration};
 
+use crate::info;
 use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};
 
 use crate::{trace, widgets::Widget};
@@ -74,6 +75,12 @@ impl Animation {
 unsafe impl Send for Animation {}
 unsafe impl Sync for Animation {}
 
+impl Drop for Animation {
+    fn drop(&mut self) {
+        info!("Dropping Animation");
+    }
+}
+
 fn add_animation(mut world: DeferredWorld, ctx: HookContext) {
     let obj = world
         .get_mut::<Widget>(ctx.entity)
@@ -83,7 +90,7 @@ fn add_animation(mut world: DeferredWorld, ctx: HookContext) {
     let mut anim = world.get_mut::<Animation>(ctx.entity).unwrap();
     anim.raw.as_mut().unwrap().var = obj as *mut _;
     anim.start();
-    trace!("Added animation");
+    info!("Added Animation");
 }
 
 unsafe extern "C" fn animator_trampoline<F>(obj: *mut c_void, val: i32)

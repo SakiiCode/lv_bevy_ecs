@@ -28,7 +28,7 @@
 use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};
 use lightvgl_sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t};
 
-use crate::{trace, widgets::Widget};
+use crate::{info, widgets::Widget};
 
 #[derive(Component, Clone)]
 #[component(on_insert=add_style)]
@@ -73,7 +73,7 @@ impl Style {
 
 impl Drop for Style {
     fn drop(&mut self) {
-        trace!("Dropping style");
+        info!("Dropping Style");
     }
 }
 
@@ -90,7 +90,7 @@ fn add_style(mut world: DeferredWorld, ctx: HookContext) {
     unsafe {
         lightvgl_sys::lv_obj_add_style(widget, &mut style.raw, style.selector);
     }
-    trace!("Added style");
+    info!("Added Style");
 }
 
 fn remove_style(mut world: DeferredWorld, ctx: HookContext) {
@@ -103,5 +103,5 @@ fn remove_style(mut world: DeferredWorld, ctx: HookContext) {
     unsafe {
         lightvgl_sys::lv_obj_remove_style(widget, &mut style.raw, style.selector);
     }
-    trace!("Removed style");
+    info!("Removed Style");
 }

@@ -36,7 +36,7 @@ use bevy_ecs::{
 };
 use lightvgl_sys::lv_timer_t;
 
-use crate::support::LvError;
+use crate::{info, support::LvError};
 
 #[allow(dead_code)]
 #[derive(Component)]
@@ -48,6 +48,7 @@ pub struct Timer {
 impl Drop for Timer {
     fn drop(&mut self) {
         unsafe {
+            info!("Dropping Timer");
             lightvgl_sys::lv_timer_delete(self.raw.as_ptr());
         }
     }

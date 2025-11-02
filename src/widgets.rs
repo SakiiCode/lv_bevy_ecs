@@ -59,6 +59,7 @@ use std::{
     ptr::NonNull,
 };
 
+use crate::info;
 use bevy_ecs::{
     component::Component,
     hierarchy::ChildOf,
@@ -68,8 +69,6 @@ use bevy_ecs::{
     world::World,
 };
 use lightvgl_sys::{lv_obj_delete, lv_obj_t};
-
-use crate::trace;
 
 pub struct LvglWorld;
 
@@ -120,7 +119,7 @@ unsafe impl Sync for Widget {}
 impl Drop for Widget {
     fn drop(&mut self) {
         unsafe {
-            trace!("Dropping Obj");
+            info!("Dropping Obj");
             lv_obj_delete(self.raw.as_ptr());
         }
     }
@@ -166,7 +165,7 @@ fn on_insert_parent(
     unsafe {
         lightvgl_sys::lv_obj_set_parent(child_ptr, parent_ptr);
     }
-    trace!("On Insert Parent");
+    info!("On Insert Parent");
 }
 
 /// Represents a borrowed Widget

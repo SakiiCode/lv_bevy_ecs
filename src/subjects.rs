@@ -39,7 +39,7 @@ use std::{
 use bevy_ecs::component::Component;
 use lightvgl_sys::lv_subject_t;
 
-use crate::{trace, widgets::Widget};
+use crate::{info, widgets::Widget};
 
 #[derive(Component)]
 pub struct Subject {
@@ -49,6 +49,7 @@ pub struct Subject {
 impl Drop for Subject {
     fn drop(&mut self) {
         unsafe {
+            info!("Dropping Subject");
             lightvgl_sys::lv_subject_deinit(&mut self.raw);
         }
     }
@@ -112,7 +113,6 @@ pub(crate) fn lv_subject_add_observer_obj<'a, F>(
 ) where
     F: FnMut(*mut lightvgl_sys::lv_observer_t, *mut lightvgl_sys::lv_subject_t) + 'a,
 {
-    trace!("lv_subject_add_observer_obj");
     unsafe {
         lightvgl_sys::lv_subject_add_observer_obj(
             &mut subject.raw,
@@ -121,6 +121,7 @@ pub(crate) fn lv_subject_add_observer_obj<'a, F>(
             Box::into_raw(Box::new(callback)) as *mut c_void,
         );
     }
+    info!("Added Observer");
 }
 
 unsafe extern "C" fn subject_callback<F>(

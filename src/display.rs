@@ -108,6 +108,7 @@ impl Display {
             );
             register_display(self.raw.as_ptr(), callback);
         }
+        info!("Display Registered");
     }
 
     pub fn raw(&self) -> *mut lv_display_t {
@@ -137,7 +138,6 @@ where
 {
     unsafe {
         lightvgl_sys::lv_display_set_flush_cb(display, Some(disp_flush_trampoline::<F, N, C>));
-        info!("Callback OK");
         lightvgl_sys::lv_display_set_user_data(
             display,
             Box::into_raw(Box::new(callback)) as *mut _ as *mut c_void,
