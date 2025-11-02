@@ -175,7 +175,15 @@ pub struct Wdg {
 }
 
 impl Wdg {
-    pub fn from_ptr(ptr: *mut lv_obj_t) -> Option<Self> {
+    /// Convert LVGL Obj pointer to Wdg or panic if null pointer was given
+    pub fn from_ptr(ptr: *mut lv_obj_t) -> Self {
+        Self {
+            raw: NonNull::new(ptr).unwrap(),
+        }
+    }
+
+    /// Convert LVGL Obj pointer to Some(Wdg) or None if null pointer was given
+    pub fn try_from_ptr(ptr: *mut lv_obj_t) -> Option<Self> {
         Some(Self {
             raw: NonNull::new(ptr)?,
         })

@@ -386,7 +386,7 @@ fn create_ui(world: &mut World) {
         }
     }
 
-    sleep(Duration::from_millis(3000));
+    sleep(Duration::from_millis(300));
     if let Some(fourth) = fourth {
         world.despawn(fourth);
     }
@@ -475,7 +475,7 @@ fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject
 fn buttonmatrix_event_cb(world: &mut World, e: &mut lv_event_t) {
     unsafe {
         // lv_event_get_user_data must not be used! (user data is reserved for the callback function)
-        let buttonmatrix = Wdg::from_ptr(lv_event_get_target(e) as *mut lv_obj_t).unwrap();
+        let buttonmatrix = Wdg::from_ptr(lv_event_get_target(e) as *mut lv_obj_t);
         let idx = lv_buttonmatrix_get_selected_button(&buttonmatrix);
         let text = CStr::from_ptr(lv_buttonmatrix_get_button_text(buttonmatrix.raw(), idx));
         let mut label = world

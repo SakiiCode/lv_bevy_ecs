@@ -127,14 +127,14 @@ pub fn lv_event_get_target(event: &mut lightvgl_sys::lv_event_t) -> *const c_voi
 pub fn lv_event_get_target_obj(event: &mut lightvgl_sys::lv_event_t) -> Option<Wdg> {
     unsafe {
         let target = lightvgl_sys::lv_event_get_target_obj(event);
-        Wdg::from_ptr(target)
+        Wdg::try_from_ptr(target)
     }
 }
 
 pub fn lv_event_get_current_target_obj(event: &mut lightvgl_sys::lv_event_t) -> Option<Wdg> {
     unsafe {
         let target = lightvgl_sys::lv_event_get_current_target_obj(event);
-        Wdg::from_ptr(target)
+        Wdg::try_from_ptr(target)
     }
 }
 
