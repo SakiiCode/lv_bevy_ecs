@@ -5,9 +5,11 @@ use std::{
     time::{Duration, Instant},
 };
 
+use anyhow::Result;
+use bevy_ecs::query::With;
 use lv_bevy_ecs::{
     animation::Animation,
-    bevy::{component::Component, entity::Entity, hierarchy::Children, query::With, world::World},
+    bevy::{component::Component, entity::Entity, hierarchy::Children, world::World},
     display::{Display, DrawBuffer},
     events::Event,
     functions::*,
@@ -15,25 +17,27 @@ use lv_bevy_ecs::{
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     subjects::Subject,
-    support::{LvError, OpacityLevel, lv_pct},
+    support::{OpacityLevel, lv_pct},
     sys::{
-        LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST, LV_SYMBOL_FILE, lv_align_t_LV_ALIGN_BOTTOM_RIGHT,
-        lv_area_t, lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
+        LV_ANIM_REPEAT_INFINITE, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST, LV_SYMBOL_FILE,
+        lv_align_t_LV_ALIGN_BOTTOM_RIGHT, lv_anim_path_ease_out, lv_anim_set_path_cb,
+        lv_anim_set_repeat_count, lv_area_t, lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
         lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED, lv_buttonmatrix_get_button_text,
-        lv_buttonmatrix_get_selected_button, lv_chart_add_series,
-        lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X, lv_chart_set_type,
-        lv_chart_type_t_LV_CHART_TYPE_BAR, lv_chart_type_t_LV_CHART_TYPE_LINE,
-        lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_color_hex3, lv_color_mix, lv_color_t,
-        lv_draw_buf_align, lv_draw_image_dsc_t, lv_draw_line_dsc_t, lv_dropdown_bind_value,
-        lv_event_t, lv_flex_flow_t_LV_FLEX_FLOW_COLUMN, lv_font_montserrat_24,
-        lv_grid_align_t_LV_GRID_ALIGN_CENTER, lv_grid_align_t_LV_GRID_ALIGN_START,
-        lv_grid_align_t_LV_GRID_ALIGN_STRETCH, lv_layer_t, lv_obj_create,
-        lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT, lv_obj_t,
-        lv_observer_get_target, lv_observer_t, lv_palette_darken, lv_palette_t_LV_PALETTE_BLUE,
-        lv_part_t_LV_PART_ITEMS, lv_screen_active, lv_state_t_LV_STATE_CHECKED, lv_subject_get_int,
-        lv_subject_t,
+        lv_buttonmatrix_set_map, lv_chart_add_series, lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X,
+        lv_chart_set_type, lv_chart_type_t_LV_CHART_TYPE_BAR, lv_chart_type_t_LV_CHART_TYPE_LINE,
+        lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_color_hex, lv_color_hex3, lv_color_mix,
+        lv_color_t, lv_draw_buf_align, lv_draw_image_dsc_t, lv_draw_line_dsc_t,
+        lv_dropdown_bind_value, lv_event_t, lv_flex_flow_t_LV_FLEX_FLOW_COLUMN,
+        lv_font_montserrat_24, lv_grid_align_t_LV_GRID_ALIGN_CENTER,
+        lv_grid_align_t_LV_GRID_ALIGN_START, lv_grid_align_t_LV_GRID_ALIGN_STRETCH, lv_layer_t,
+        lv_obj_create, lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT,
+        lv_obj_set_grid_dsc_array, lv_obj_t, lv_observer_get_target, lv_observer_t,
+        lv_palette_darken, lv_palette_t_LV_PALETTE_BLUE, lv_part_t_LV_PART_ITEMS, lv_screen_active,
+        lv_state_t_LV_STATE_CHECKED, lv_subject_get_int, lv_subject_t,
     },
-    widgets::{Button, Buttonmatrix, Canvas, Chart, Dropdown, Image, Label, LvglWorld, Widget},
+    widgets::{
+        Button, Buttonmatrix, Canvas, Chart, Dropdown, Image, Label, LvglWorld, Wdg, Widget,
+    },
 };
 
 use embedded_graphics::{
@@ -54,7 +58,7 @@ macro_rules! lv_grid_fr {
 #[derive(Component)]
 struct DynamicLabel;
 
-fn main() -> Result<(), LvError> {
+fn main() -> Result<()> {
     lv_log_init();
     // to use an other logging backend, simply initialize it instead of lv_log_init()
     // env_logger::init();
@@ -68,14 +72,11 @@ fn main() -> Result<(), LvError> {
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
     let mut window = Window::new("Bindings Test Example", &output_settings);
-    info!("SIMULATOR OK");
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 
     let buffer =
         DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(HOR_RES, LINE_HEIGHT);
-
-    info!("Display OK");
 
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
@@ -86,8 +87,6 @@ fn main() -> Result<(), LvError> {
             )
             .unwrap();
     });
-
-    info!("Display Driver OK");
 
     // Define the initial state of your input
     //let mut latest_touch_status = PointerInputData::Touch(Point::new(0, 0)).released().once();
@@ -101,15 +100,9 @@ fn main() -> Result<(), LvError> {
     // Register a new input device that's capable of reading the current state of the input
     let _touch_screen = InputDevice::<Pointer>::create(|| latest_touch_status);
 
-    info!("Input OK");
-
     let mut world = LvglWorld::new();
 
-    info!("ECS OK");
-
     create_ui(&mut world);
-
-    info!("Create OK");
 
     let mut is_pointer_down = false;
 
@@ -131,7 +124,6 @@ fn main() -> Result<(), LvError> {
                     mouse_btn: _,
                     point,
                 } => {
-                    info!("Clicked on: {:?}", point);
                     //latest_touch_status = PointerInputData::Touch(point).pressed().once();
                     latest_touch_status = InputEvent {
                         status: BufferStatus::Once,
@@ -176,7 +168,7 @@ fn main() -> Result<(), LvError> {
 }
 
 fn create_ui(world: &mut World) {
-    let c1: lv_color_t = lv_color_make(255, 0, 0);
+    let c1: lv_color_t = unsafe { lv_color_hex(0xff0000) };
     let c2: lv_color_t = unsafe { lv_palette_darken(lv_palette_t_LV_PALETTE_BLUE, 2) };
     let c3: lv_color_t = unsafe { lv_color_mix(c1, c2, OpacityLevel::Percent60 as u8) };
 
@@ -199,7 +191,7 @@ fn create_ui(world: &mut World) {
     ];
 
     unsafe {
-        lightvgl_sys::lv_obj_set_grid_dsc_array(
+        lv_obj_set_grid_dsc_array(
             lv_screen_active(),
             grid_cols.as_mut_ptr(),
             grid_rows.as_mut_ptr(),
@@ -275,6 +267,7 @@ fn create_ui(world: &mut World) {
     let mut label_entity = world.spawn((DynamicLabel, Label, label));
     label_entity.insert(style_big_font.clone());
 
+    // *const i8 is not Sync so static cannot be used
     let btnmatrix_options = Box::new([
         c"First".as_ptr(),
         c"Second".as_ptr(),
@@ -290,27 +283,29 @@ fn create_ui(world: &mut World) {
     ]);
 
     let mut btnmatrix = Buttonmatrix::create_widget();
+    lv_obj_set_grid_cell(
+        &mut btnmatrix,
+        lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
+        1,
+        1,
+        lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
+        1,
+        1,
+    );
+
     unsafe {
-        lv_obj_set_grid_cell(
-            &mut btnmatrix,
-            lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
-            1,
-            1,
-            lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
-            1,
-            1,
-        );
-
-        #[rustfmt::skip]
-            lightvgl_sys::lv_buttonmatrix_set_map(btnmatrix.raw_mut(),&Box::leak(btnmatrix_options)[0]);
-        lv_buttonmatrix_set_ctrl_map(&mut btnmatrix, &Box::leak(btnmatrix_ctrl)[0]);
-
-        lv_buttonmatrix_set_selected_button(&mut btnmatrix, 1);
-        lv_obj_add_event_cb(&mut btnmatrix, Event::ValueChanged, |mut event| {
-            buttonmatrix_event_cb(world, &mut event);
-        });
+        lv_buttonmatrix_set_map(btnmatrix.raw_mut(), &Box::leak(btnmatrix_options)[0]);
     }
+
+    lv_buttonmatrix_set_ctrl_map(&mut btnmatrix, &Box::leak(btnmatrix_ctrl)[0]);
+
+    lv_buttonmatrix_set_selected_button(&mut btnmatrix, 1);
+    lv_obj_add_event_cb(&mut btnmatrix, Event::ValueChanged, |mut event| {
+        buttonmatrix_event_cb(world, &mut event);
+    });
+
     let mut btnmatrix_entity = world.spawn((Buttonmatrix, btnmatrix));
+
     let mut style_big_font_2 = Style::new(lv_part_t_LV_PART_ITEMS | lv_state_t_LV_STATE_CHECKED);
     unsafe {
         lv_style_set_text_font(&mut style_big_font_2, &lv_font_montserrat_24);
@@ -335,12 +330,12 @@ fn create_ui(world: &mut World) {
     let mut fourth = None;
 
     for i in 0..10u32 {
-        let btn_id = list_button_create(world, cont_id).unwrap();
+        let btn_id = list_button_create(world, cont_id);
 
         if i == 0 {
             let mut btn_entity = world.get_entity_mut(btn_id).unwrap();
 
-            let a = Animation::new(
+            let mut a = Animation::new(
                 Duration::from_millis(300),
                 OpacityLevel::Cover as i32,
                 OpacityLevel::Percent50 as i32,
@@ -348,6 +343,9 @@ fn create_ui(world: &mut World) {
                     lv_obj_set_style_opa(widget, value as u8, 0);
                 },
             );
+            unsafe {
+                lv_anim_set_path_cb(a.raw_mut(), Some(lv_anim_path_ease_out));
+            }
             btn_entity.insert(a);
         }
 
@@ -359,37 +357,36 @@ fn create_ui(world: &mut World) {
         }
 
         if i == 2 {
-            let label_id;
-            {
+            let label_id = {
                 let btn_entity = world.get_entity_mut(btn_id).unwrap();
                 let children = btn_entity.get::<Children>().unwrap();
-                label_id = children.first().unwrap().to_owned();
-            }
+                children.first().unwrap().to_owned()
+            };
             let mut btn_label_entity = world.get_entity_mut(label_id).unwrap();
             let mut btn_label = btn_label_entity.get_mut::<Widget>().unwrap();
 
             lv_label_set_text(&mut btn_label, c"A multi-line text with a ° symbol");
-
             lv_obj_set_width(&mut btn_label, lv_pct(100));
         }
 
         if i == 3 {
             let mut btn_entity = world.get_entity_mut(btn_id).unwrap();
-
             fourth = Some(btn_id);
-            let a = Animation::new(
+
+            let mut a = Animation::new(
                 Duration::from_millis(300),
                 OpacityLevel::Cover as i32,
                 OpacityLevel::Percent50 as i32,
-                |widget, value| {
-                    lv_obj_set_style_opa(widget, value as u8, 0);
-                },
+                opa_anim_cb,
             );
+            unsafe {
+                lv_anim_set_repeat_count(a.raw_mut(), LV_ANIM_REPEAT_INFINITE);
+            }
             btn_entity.insert(a);
         }
     }
 
-    sleep(Duration::from_millis(300));
+    sleep(Duration::from_millis(3000));
     if let Some(fourth) = fourth {
         world.despawn(fourth);
     }
@@ -457,6 +454,10 @@ fn create_ui(world: &mut World) {
     world.spawn((Image, img));
 }
 
+fn opa_anim_cb(widget: &mut Wdg, value: i32) {
+    lv_obj_set_style_opa(widget, value as u8, 0);
+}
+
 fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject_t) {
     info!("chart_type_observer_cb");
     unsafe {
@@ -473,40 +474,30 @@ fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject
 
 fn buttonmatrix_event_cb(world: &mut World, e: &mut lv_event_t) {
     unsafe {
-        let buttonmatrix = lv_event_get_target(e) as *const lv_obj_t;
-
-        let idx = lv_buttonmatrix_get_selected_button(buttonmatrix);
-        let text = lv_buttonmatrix_get_button_text(buttonmatrix, idx);
-        let text_owned = CStr::from_ptr(text).to_string_lossy().into_owned();
-        let text_cstring = CString::new(text_owned).unwrap();
-        //lightvgl_sys::lv_label_set_text(label, text_cstring.as_ptr());
-        for mut label in world
+        // lv_event_get_user_data must not be used! (user data is reserved for the callback function)
+        let buttonmatrix = Wdg::from_ptr(lv_event_get_target(e) as *mut lv_obj_t).unwrap();
+        let idx = lv_buttonmatrix_get_selected_button(&buttonmatrix);
+        let text = CStr::from_ptr(lv_buttonmatrix_get_button_text(buttonmatrix.raw(), idx));
+        let mut label = world
             .query_filtered::<&mut Widget, With<DynamicLabel>>()
-            .iter_mut(world)
-        {
-            lv_label_set_text(&mut label, text_cstring.as_c_str());
-        }
+            .single_mut(world)
+            .unwrap();
 
-        //std::mem::forget(text_cstring);
+        lv_label_set_text(&mut label, text);
     }
 }
 
-fn list_button_create(world: &mut World, parent: Entity) -> Result<Entity, LvError> {
+fn list_button_create(world: &mut World, parent: Entity) -> Entity {
     let mut btn = Button::create_widget();
-    //lv_obj_set_size(&mut btn, lv_pct(100), LV_SIZE_CONTENT as i32);
     lv_obj_set_width(&mut btn, lv_pct(100));
+    //lv_obj_set_size(&mut btn, lv_pct(100), LV_SIZE_CONTENT as i32);
 
     let btn_id = world.spawn((Button, btn)).id();
-    let mut parent = world.get_entity_mut(parent).unwrap();
+    let mut parent = world.entity_mut(parent);
     parent.add_child(btn_id);
 
-    let idx = lv_obj_get_index(
-        &mut world
-            .get_entity_mut(btn_id)
-            .unwrap()
-            .get_mut::<Widget>()
-            .unwrap(),
-    );
+    let idx = lv_obj_get_index(&mut world.get_mut::<Widget>(btn_id).unwrap());
+
     info!("Spawning button {}", idx);
 
     let mut label = Label::create_widget();
@@ -523,7 +514,7 @@ fn list_button_create(world: &mut World, parent: Entity) -> Result<Entity, LvErr
     let label_id = world.spawn((Label, label)).id();
     world.get_entity_mut(btn_id).unwrap().add_child(label_id);
 
-    Ok(btn_id)
+    btn_id
 }
 
 fn draw_to_canvas(canvas: &mut Widget) {
