@@ -242,7 +242,7 @@ impl<const N: usize, C: LvglColorFormat> DrawBuffer<N, C> {
 
 /// Using a macro because #\[cfg(doctest)\] does not work properly
 ///
-/// https://github.com/rust-lang/rust/issues/67295
+/// <https://github.com/rust-lang/rust/issues/67295>
 ///
 /// Intended for doctest use only!
 #[macro_export]
