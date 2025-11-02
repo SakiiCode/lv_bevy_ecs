@@ -107,21 +107,75 @@ fn main() -> Result<(), LvError> {
 
     info!("ECS OK");
 
-    let btnmatrix_options = [
-        c"First".as_ptr(),
-        c"Second".as_ptr(),
-        c"\n".as_ptr(),
-        c"Third".as_ptr(),
-        c"".as_ptr(),
-    ];
+    create_ui(&mut world);
 
-    let btnmatrix_ctrl = [
-        lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED,
-        2 | lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
-        1,
-    ];
+    info!("Create OK");
 
-    {
+    let mut is_pointer_down = false;
+
+    let mut prev_time = Instant::now();
+
+    window.update(&sim_display);
+
+    loop {
+        let current_time = Instant::now();
+        let diff = current_time.duration_since(prev_time);
+        prev_time = current_time;
+
+        let events = window.events().peekable();
+
+        for event in events {
+            #[allow(unused_assignments)]
+            match event {
+                SimulatorEvent::MouseButtonDown {
+                    mouse_btn: _,
+                    point,
+                } => {
+                    info!("Clicked on: {:?}", point);
+                    //latest_touch_status = PointerInputData::Touch(point).pressed().once();
+                    latest_touch_status = InputEvent {
+                        status: BufferStatus::Once,
+                        state: InputState::Pressed,
+                        data: point,
+                    };
+                    is_pointer_down = true;
+                }
+                SimulatorEvent::MouseButtonUp {
+                    mouse_btn: _,
+                    point,
+                } => {
+                    //latest_touch_status = PointerInputData::Touch(point).released().once();
+                    latest_touch_status = InputEvent {
+                        status: BufferStatus::Once,
+                        state: InputState::Released,
+                        data: point,
+                    };
+                    is_pointer_down = false;
+                }
+                SimulatorEvent::MouseMove { point } => {
+                    if is_pointer_down {
+                        //latest_touch_status = PointerInputData::Touch(point).pressed().once();
+                        latest_touch_status = InputEvent {
+                            status: BufferStatus::Once,
+                            state: InputState::Pressed,
+                            data: point,
+                        };
+                    }
+                }
+                SimulatorEvent::Quit => exit(0),
+                _ => {}
+            }
+        }
+
+        lv_tick_inc(diff);
+
+        lv_timer_handler();
+
+        window.update(&sim_display);
+    }
+}
+
+fn create_ui(world: &mut World) {
         let c1: lv_color_t = lv_color_make(255, 0, 0);
         let c2: lv_color_t = unsafe { lv_palette_darken(lv_palette_t_LV_PALETTE_BLUE, 2) };
         let c3: lv_color_t = unsafe { lv_color_mix(c1, c2, OpacityLevel::Percent60 as u8) };
@@ -221,6 +275,20 @@ fn main() -> Result<(), LvError> {
         let mut label_entity = world.spawn((DynamicLabel, Label, label));
         label_entity.insert(style_big_font.clone());
 
+        let btnmatrix_options = Box::new([
+            c"First".as_ptr(),
+            c"Second".as_ptr(),
+            c"\n".as_ptr(),
+            c"Third".as_ptr(),
+            c"".as_ptr(),
+        ]);
+
+        let btnmatrix_ctrl = Box::new([
+            lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED,
+            2 | lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
+            1,
+        ]);
+
         let mut btnmatrix = Buttonmatrix::create_widget();
         unsafe {
             lv_obj_set_grid_cell(
@@ -233,17 +301,17 @@ fn main() -> Result<(), LvError> {
                 1,
             );
 
-            lightvgl_sys::lv_buttonmatrix_set_map(btnmatrix.raw_mut(), &btnmatrix_options[0]);
-            lv_buttonmatrix_set_ctrl_map(&mut btnmatrix, &btnmatrix_ctrl[0]);
+            #[rustfmt::skip]
+            lightvgl_sys::lv_buttonmatrix_set_map(btnmatrix.raw_mut(),&Box::leak(btnmatrix_options)[0]);
+            lv_buttonmatrix_set_ctrl_map(&mut btnmatrix, &Box::leak(btnmatrix_ctrl)[0]);
 
             lv_buttonmatrix_set_selected_button(&mut btnmatrix, 1);
             lv_obj_add_event_cb(&mut btnmatrix, Event::ValueChanged, |mut event| {
-                buttonmatrix_event_cb(&mut world, &mut event);
+                buttonmatrix_event_cb(world, &mut event);
             });
         }
         let mut btnmatrix_entity = world.spawn((Buttonmatrix, btnmatrix));
-        let mut style_big_font_2 =
-            Style::new(lv_part_t_LV_PART_ITEMS | lv_state_t_LV_STATE_CHECKED);
+        let mut style_big_font_2 = Style::new(lv_part_t_LV_PART_ITEMS | lv_state_t_LV_STATE_CHECKED);
         unsafe {
             lv_style_set_text_font(&mut style_big_font_2, &lv_font_montserrat_24);
         }
@@ -267,7 +335,7 @@ fn main() -> Result<(), LvError> {
         let mut fourth = None;
 
         for i in 0..10u32 {
-            let btn_id = list_button_create(&mut world, cont_id)?;
+            let btn_id = list_button_create(world, cont_id).unwrap();
 
             if i == 0 {
                 let mut btn_entity = world.get_entity_mut(btn_id).unwrap();
@@ -326,7 +394,7 @@ fn main() -> Result<(), LvError> {
             world.despawn(fourth);
         }
 
-        let mut canvas_buf = [0u8; 400 * 100 * 2];
+        let mut canvas_buf = [0u8; 400 * 100 * 4];
 
         let mut canvas = Canvas::create_widget();
         lv_obj_set_grid_cell(
@@ -387,72 +455,6 @@ fn main() -> Result<(), LvError> {
         lv_image_set_rotation(&mut img, 200);
         lv_image_set_scale_x(&mut img, 400);
         world.spawn((Image, img));
-    }
-
-    info!("Create OK");
-
-    let mut is_pointer_down = false;
-
-    let mut prev_time = Instant::now();
-
-    window.update(&sim_display);
-
-    loop {
-        let current_time = Instant::now();
-        let diff = current_time.duration_since(prev_time);
-        prev_time = current_time;
-
-        let events = window.events().peekable();
-
-        for event in events {
-            #[allow(unused_assignments)]
-            match event {
-                SimulatorEvent::MouseButtonDown {
-                    mouse_btn: _,
-                    point,
-                } => {
-                    info!("Clicked on: {:?}", point);
-                    //latest_touch_status = PointerInputData::Touch(point).pressed().once();
-                    latest_touch_status = InputEvent {
-                        status: BufferStatus::Once,
-                        state: InputState::Pressed,
-                        data: point,
-                    };
-                    is_pointer_down = true;
-                }
-                SimulatorEvent::MouseButtonUp {
-                    mouse_btn: _,
-                    point,
-                } => {
-                    //latest_touch_status = PointerInputData::Touch(point).released().once();
-                    latest_touch_status = InputEvent {
-                        status: BufferStatus::Once,
-                        state: InputState::Released,
-                        data: point,
-                    };
-                    is_pointer_down = false;
-                }
-                SimulatorEvent::MouseMove { point } => {
-                    if is_pointer_down {
-                        //latest_touch_status = PointerInputData::Touch(point).pressed().once();
-                        latest_touch_status = InputEvent {
-                            status: BufferStatus::Once,
-                            state: InputState::Pressed,
-                            data: point,
-                        };
-                    }
-                }
-                SimulatorEvent::Quit => exit(0),
-                _ => {}
-            }
-        }
-
-        lv_tick_inc(diff);
-
-        lv_timer_handler();
-
-        window.update(&sim_display);
-    }
 }
 
 fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject_t) {
