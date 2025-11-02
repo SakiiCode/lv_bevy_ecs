@@ -4,10 +4,11 @@
 //!
 //! ```
 //! use std::time::Duration;
-//! use lv_bevy_ecs::widgets::{Button, LvglWorld};
 //! use lv_bevy_ecs::animation::Animation;
-//! use lv_bevy_ecs::sys::{LV_OPA_0, LV_OPA_100, LV_PART_MAIN, lv_anim_count_running};
 //! use lv_bevy_ecs::functions::*;
+//! use lv_bevy_ecs::support::OpacityLevel;
+//! use lv_bevy_ecs::sys::{lv_part_t_LV_PART_MAIN};
+//! use lv_bevy_ecs::widgets::{Button, LvglWorld};
 //!
 //! lv_bevy_ecs::setup_test_display!();
 //!
@@ -16,15 +17,15 @@
 //!
 //! let anim = Animation::new(
 //!     Duration::from_secs(5),
-//!     LV_OPA_0 as i32,
-//!     LV_OPA_100 as i32,
+//!     OpacityLevel::Transparent as i32,
+//!     OpacityLevel::Cover as i32,
 //!     |obj, val| {
-//!         lv_obj_set_style_opa(obj, val as u8, LV_PART_MAIN);
+//!         lv_obj_set_style_opa(obj, val as u8, lv_part_t_LV_PART_MAIN);
 //!     },
 //! );
 //! let mut button_entity = world.spawn((Button, button, anim));
 //! unsafe {
-//!     assert_eq!(lv_anim_count_running(), 1);
+//!     assert_eq!(lv_bevy_ecs::sys::lv_anim_count_running(), 1);
 //! }
 //! ```
 

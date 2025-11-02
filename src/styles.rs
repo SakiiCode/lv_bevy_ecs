@@ -6,7 +6,8 @@
 //! ```rust
 //! use lv_bevy_ecs::functions::*;
 //! use lv_bevy_ecs::styles::Style;
-//! use lv_bevy_ecs::sys::{LV_OPA_50, LV_PART_MAIN};
+//! use lv_bevy_ecs::support::OpacityLevel;
+//! use lv_bevy_ecs::sys::lv_part_t_LV_PART_MAIN;
 //! use lv_bevy_ecs::widgets::*;
 //!
 //! lv_bevy_ecs::setup_test_display!();
@@ -17,12 +18,12 @@
 //! let mut button_entity = world.spawn((Button, button));
 //!
 //! let mut style = Style::default();
-//! let opacity = LV_OPA_50 as u8;
+//! let opacity = OpacityLevel::Percent50 as u8;
 //! lv_style_set_opa(&mut style, opacity);
 //!
 //! button_entity.insert(style);
 //! let widget = button_entity.get_mut::<Widget>().unwrap();
-//! assert_eq!(lv_obj_get_style_opa_recursive(&*widget, LV_PART_MAIN), opacity - 1);
+//! assert_eq!(lv_obj_get_style_opa_recursive(&*widget, lv_part_t_LV_PART_MAIN), opacity - 1);
 //! ```
 
 use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};
