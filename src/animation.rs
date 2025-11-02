@@ -33,7 +33,7 @@ use std::{ffi::c_void, ptr::NonNull, time::Duration};
 use crate::info;
 use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};
 
-use crate::{trace, widgets::Widget};
+use crate::widgets::{Wdg, Widget};
 
 #[derive(Component)]
 #[component(on_insert=add_animation)]
@@ -44,7 +44,7 @@ pub struct Animation {
 impl Animation {
     pub fn new<F>(duration: Duration, start: i32, end: i32, animator: F) -> Self
     where
-        F: FnMut(&mut Widget, i32),
+        F: FnMut(&mut Wdg, i32),
     {
         let mut raw = unsafe {
             let mut anim = std::mem::MaybeUninit::<lightvgl_sys::lv_anim_t>::uninit();
@@ -67,7 +67,11 @@ impl Animation {
         }
     }
 
-    pub fn raw(&mut self) -> &mut lightvgl_sys::lv_anim_t {
+    pub fn raw(&self) -> &lightvgl_sys::lv_anim_t {
+        self.raw.as_ref().unwrap()
+    }
+
+    pub fn raw_mut(&mut self) -> &mut lightvgl_sys::lv_anim_t {
         self.raw.as_mut().unwrap()
     }
 }
@@ -95,7 +99,7 @@ fn add_animation(mut world: DeferredWorld, ctx: HookContext) {
 
 unsafe extern "C" fn animator_trampoline<F>(obj: *mut c_void, val: i32)
 where
-    F: FnMut(&mut Widget, i32),
+    F: FnMut(&mut Wdg, i32),
 {
     unsafe {
         let anim =

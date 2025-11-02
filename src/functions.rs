@@ -112,11 +112,9 @@ pub fn lv_subject_get_previous_pointer(subject: &mut Subject) -> *const c_void {
     unsafe { lightvgl_sys::lv_subject_get_previous_pointer(subject.raw_mut()) }
 }
 
-pub fn lv_subject_add_observer_obj<'a, F>(
-    subject: &'a mut Subject,
-    object: &mut Widget,
-    callback: F,
-) where
+#[rustfmt::skip]
+pub fn lv_subject_add_observer_obj<'a, F>(subject: &'a mut Subject, object: &mut Widget, callback: F)
+where
     F: FnMut(*mut lightvgl_sys::lv_observer_t, *mut lightvgl_sys::lv_subject_t) + 'a,
 {
     crate::subjects::lv_subject_add_observer_obj(subject, object, callback)

@@ -106,6 +106,7 @@ impl Subject {
     }
 }
 
+// the order of parameters is not the same, but callback should come last for readability
 pub(crate) fn lv_subject_add_observer_obj<'a, F>(
     subject: &'a mut Subject,
     object: &mut Widget,

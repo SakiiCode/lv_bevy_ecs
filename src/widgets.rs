@@ -80,7 +80,7 @@ impl LvglWorld {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, PartialEq)]
 pub struct Widget {
     raw: NonNull<lightvgl_sys::lv_obj_t>,
 }
@@ -169,6 +169,7 @@ fn on_insert_parent(
 }
 
 /// Represents a borrowed Widget
+#[derive(PartialEq)]
 pub struct Wdg {
     raw: NonNull<lv_obj_t>,
 }
