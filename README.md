@@ -34,11 +34,11 @@ DEP_LV_CONFIG_PATH = { relative = true, value = "." }
    This is a global variable, it can be stored in lazy_static! or passed around in an Arc<Mutex<>> if needed elsewhere than in main().
 
 ```rust
-use lazy_static::lazy_static;
-use lv_bevy_ecs::bevy::world::World;
-use lv_bevy_ecs::widgets::LvglWorld;
-use std::sync::Mutex;
-
+# use lazy_static::lazy_static;
+# use lv_bevy_ecs::bevy::world::World;
+# use lv_bevy_ecs::widgets::LvglWorld;
+# use std::sync::Mutex;
+#
 lazy_static! {
     static ref WORLD: Mutex<World> = Mutex::new(LvglWorld::new());
 }
@@ -47,9 +47,9 @@ lazy_static! {
 4. Last thing is to calculate frametime and call these LVGL functions in every loop cycle:
 
 ```rust
-use lv_bevy_ecs::functions::*;
-use std::time::{Instant, Duration};
-
+# use lv_bevy_ecs::functions::*;
+# use std::time::{Instant, Duration};
+#
 let mut prev_time = Instant::now();
 // ...
 loop {
@@ -59,7 +59,7 @@ loop {
     // ...
     lv_tick_inc(diff);
     lv_timer_handler();
-    break;
+#    break;
 }
 
 ```

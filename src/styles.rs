@@ -4,19 +4,19 @@
 //! Right now a Style can be only applied to a single widget.
 //!
 //! ```rust
-//! use lv_bevy_ecs::functions::*;
-//! use lv_bevy_ecs::styles::Style;
-//! use lv_bevy_ecs::support::OpacityLevel;
-//! use lv_bevy_ecs::sys::lv_part_t_LV_PART_MAIN;
-//! use lv_bevy_ecs::widgets::*;
-//!
-//! lv_bevy_ecs::setup_test_display!();
-//!
-//! let mut world = LvglWorld::new();
-//!
-//! let mut button = Button::create_widget();
-//! let mut button_entity = world.spawn((Button, button));
-//!
+//! # use lv_bevy_ecs::functions::*;
+//! # use lv_bevy_ecs::styles::Style;
+//! # use lv_bevy_ecs::support::OpacityLevel;
+//! # use lv_bevy_ecs::sys::lv_part_t_LV_PART_MAIN;
+//! # use lv_bevy_ecs::widgets::*;
+//! #
+//! # lv_bevy_ecs::setup_test_display!();
+//! #
+//! # let mut world = LvglWorld::new();
+//! #
+//! # let mut button = Button::create_widget();
+//! # let mut button_entity = world.spawn((Button, button));
+//! #
 //! let mut style = Style::default();
 //! let opacity = OpacityLevel::Percent50 as u8;
 //! lv_style_set_opa(&mut style, opacity);

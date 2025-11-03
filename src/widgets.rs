@@ -1,11 +1,11 @@
 //! # Widgets
 //!
 //! ```
-//! use lv_bevy_ecs::widgets::*;
-//! use lv_bevy_ecs::functions::*;
-//!
-//! lv_bevy_ecs::setup_test_display!();
-//!
+//! # use lv_bevy_ecs::widgets::*;
+//! # use lv_bevy_ecs::functions::*;
+//! #
+//! # lv_bevy_ecs::setup_test_display!();
+//! #
 //! let mut world = LvglWorld::new();
 //! let mut label: Widget = Label::create_widget();
 //! lv_label_set_text(&mut label, c"Example label");
@@ -25,77 +25,73 @@
 //! To access widgets after moving them to the World with the `spawn()` function, you have to store the created Entity ID or use queries.
 //!
 //! ```
-//! use core::ffi::CStr;
-//! use lv_bevy_ecs::widgets::{Widget, Label, LvglWorld};
-//! use lv_bevy_ecs::functions::*;
-//!
-//! lv_bevy_ecs::setup_test_display!();
-//!
-//! let mut world = LvglWorld::new();
-//! let mut label: Widget = Label::create_widget();
-//! lv_label_set_text(&mut label, c"Example label");
-//! let mut label_entity = world.spawn((Label, label));
-//!
+//! # use core::ffi::CStr;
+//! # use lv_bevy_ecs::widgets::{Widget, Label, LvglWorld};
+//! # use lv_bevy_ecs::functions::*;
+//! # use lv_bevy_ecs::sys::lv_label_get_text;
+//! #
+//! # lv_bevy_ecs::setup_test_display!();
+//! #
+//! # let mut world = LvglWorld::new();
+//! # let mut label: Widget = Label::create_widget();
+//! # lv_label_set_text(&mut label, c"Example label");
+//! # let mut label_entity = world.spawn((Label, label));
+//! #
 //! let mut label_widget = label_entity.get_mut::<Widget>().unwrap();
 //! unsafe {
-//!    let text = CStr::from_ptr(lv_bevy_ecs::sys::lv_label_get_text(label_widget.raw()));
+//!    let text = CStr::from_ptr(lv_label_get_text(label_widget.raw()));
 //!    assert_eq!(text, c"Example label");
 //! }
 //! ```
 //!
 //! ```
-//! use lv_bevy_ecs::widgets::{Widget, Label, LvglWorld};
-//! use lv_bevy_ecs::functions::*;
-//! use lv_bevy_ecs::bevy::prelude::*;
-//!
-//! lv_bevy_ecs::setup_test_display!();
-//!
-//! let mut world = LvglWorld::new();
-//! let mut label: Widget = Label::create_widget();
-//! lv_label_set_text(&mut label, c"Example label 1");
-//! let mut label_entity = world.spawn((Label, label));
-//!
-//! let mut label: Widget = Label::create_widget();
-//! lv_label_set_text(&mut label, c"Example label 2");
-//! let mut label_entity = world.spawn((Label, label));
-//!
+//! # use lv_bevy_ecs::widgets::{Widget, Label, LvglWorld};
+//! # use lv_bevy_ecs::functions::*;
+//! # use lv_bevy_ecs::bevy::prelude::*;
+//! #
+//! # lv_bevy_ecs::setup_test_display!();
+//! #
+//! # let mut world = LvglWorld::new();
+//! # let mut label: Widget = Label::create_widget();
+//! # lv_label_set_text(&mut label, c"Example label 1");
+//! # let mut label_entity = world.spawn((Label, label));
+//! #
 //! let mut labels = world.query_filtered::<&mut Widget, With<Label>>();
-//! assert_eq!(labels.iter(&world).count(),2);
+//! assert_eq!(labels.iter(&world).count(),1);
 //! ```
 //!
 //! In case of a unique entity:
 //! ```
-//! use lv_bevy_ecs::widgets::{Widget, Label, LvglWorld};
-//! use lv_bevy_ecs::functions::*;
-//! use lv_bevy_ecs::bevy::prelude::*;
-//!
-//! lv_bevy_ecs::setup_test_display!();
-//!
-//! let mut world = LvglWorld::new();
-//! let mut label: Widget = Label::create_widget();
-//! lv_label_set_text(&mut label, c"Example label");
-//! let mut label_entity = world.spawn((Label, label));
-//!
+//! # use lv_bevy_ecs::widgets::{Widget, Label, LvglWorld};
+//! # use lv_bevy_ecs::functions::*;
+//! # use lv_bevy_ecs::bevy::prelude::*;
+//! #
+//! # lv_bevy_ecs::setup_test_display!();
+//! #
+//! # let mut world = LvglWorld::new();
+//! # let mut label: Widget = Label::create_widget();
+//! # lv_label_set_text(&mut label, c"Example label");
+//! # let mut label_entity = world.spawn((Label, label));
+//! #
 //! let mut label = world.query_filtered::<&mut Widget, With<Label>>().single_mut(&mut world).unwrap();
 //! ```
 //!
 //! You are free to define any kind of custom component:
 //!
 //! ```
-//! use lv_bevy_ecs::widgets::{Widget, Label, LvglWorld};
-//! use lv_bevy_ecs::functions::*;
-//! use lv_bevy_ecs::bevy::prelude::*;
-//!
-//! lv_bevy_ecs::setup_test_display!();
-//!
+//! # use lv_bevy_ecs::widgets::{Widget, Label, LvglWorld};
+//! # use lv_bevy_ecs::functions::*;
+//! # use lv_bevy_ecs::bevy::prelude::*;
+//! #
+//! # lv_bevy_ecs::setup_test_display!();
+//! #
 //! #[derive(Component)]
 //! struct DynamicLabel;
 //!
-//!
-//! let mut world = LvglWorld::new();
-//! let mut label: Widget = Label::create_widget();
-//! lv_label_set_text(&mut label, c"Example label");
-//!
+//! # let mut world = LvglWorld::new();
+//! # let mut label: Widget = Label::create_widget();
+//! # lv_label_set_text(&mut label, c"Example label");
+//! #
 //! world.spawn((Label, label, DynamicLabel));
 //! //...
 //! let mut label = world.query_filtered::<&mut Widget, With<DynamicLabel>>().single_mut(&mut world).unwrap();
@@ -104,18 +100,21 @@
 //! ## Child widgets
 //! To add a widget as a child, set it as child entity
 //! ```
-//! use lv_bevy_ecs::widgets::{Widget, Label, LvglWorld, Button};
-//! use lv_bevy_ecs::functions::*;
-//!
-//! lv_bevy_ecs::setup_test_display!();
-//!
-//! let mut world = LvglWorld::new();
+//! # use lv_bevy_ecs::widgets::{Widget, Label, LvglWorld, Button};
+//! # use lv_bevy_ecs::functions::*;
+//! #
+//! # lv_bevy_ecs::setup_test_display!();
+//! #
+//! # let mut world = LvglWorld::new();
 //! let mut button: Widget = Button::create_widget();
 //! let mut label: Widget = Label::create_widget();
 //! lv_label_set_text(&mut label, c"Example label");
 //!
 //! let mut button_entity = world.spawn((Button, button));
 //! let mut label_entity = button_entity.with_child((Label, label));
+//!
+//! let mut button_widget = button_entity.get::<Widget>().unwrap();
+//! assert_eq!(lv_obj_get_child_count(button_widget), 1)
 //! ```
 
 use std::{

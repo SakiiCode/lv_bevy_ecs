@@ -4,13 +4,13 @@
 //!
 //! ## Simulator
 //! ```
-//! use embedded_graphics::pixelcolor::Rgb565;
-//! use embedded_graphics::prelude::*;
-//! use embedded_graphics_simulator::*;
-//! use lv_bevy_ecs::display::{DrawBuffer, Display};
-//! use lv_bevy_ecs::support::LvglColorFormat;
-//! use lv_bevy_ecs::sys::*;
-//!
+//! # use embedded_graphics::pixelcolor::Rgb565;
+//! # use embedded_graphics::prelude::*;
+//! # use embedded_graphics_simulator::*;
+//! # use lv_bevy_ecs::display::{DrawBuffer, Display};
+//! # use lv_bevy_ecs::support::LvglColorFormat;
+//! # use lv_bevy_ecs::sys::*;
+//! #
 //! const HOR_RES: u32 = 800;
 //! const VER_RES: u32 = 480;
 //! const LINE_HEIGHT: u32 = 10;
@@ -36,35 +36,9 @@
 //! ```
 //!
 //! ## ESP32
-//! ```ignore
-//! use embedded_graphics::pixelcolor::Rgb565;
-//! use embedded_graphics::prelude::*;
-//! use embedded_graphics_simulator::*;
-//! use lv_bevy_ecs::display::{DrawBuffer, Display};
 //!
-//! const HOR_RES: u32 = 800;
-//! const VER_RES: u32 = 480;
-//! const LINE_HEIGHT: u32 = 10;
-//!
-//! let mut delay = Delay::default();
-//! let mut tft_display = Builder::new(ST7789, di)
-//!     .color_order(mipidsi::options::ColorOrder::Rgb)
-//!     .orientation(
-//!         mipidsi::options::Orientation::default().rotate(mipidsi::options::Rotation::Deg270),
-//!     )
-//!     .reset_pin(gpio::PinDriver::output(pins.gpio4)?)
-//!     .init(&mut delay)
-//!     .expect("Cannot initialize display");
-//! let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
-//!
-//! let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(HOR_RES, LINE_HEIGHT);
-//! display.register(buffer, |refresh| {
-//!     // alternative (slower): tft_display.draw_iter(refresh.as_pixels()).unwrap();
-//!     tft_display
-//!         .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
-//!         .unwrap();
-//! });
-//! ```
+//! For code example on how to create a display on embedded,
+//! check out [lvgl-bevy-demo](https://github.com/SakiiCode/lvgl-bevy-demo).
 
 use std::{ffi::c_void, marker::PhantomData, ptr::NonNull};
 

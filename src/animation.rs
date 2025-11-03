@@ -3,15 +3,15 @@
 //! Animations are components that need to be added to entities
 //!
 //! ```
-//! use std::time::Duration;
-//! use lv_bevy_ecs::animation::Animation;
-//! use lv_bevy_ecs::functions::*;
-//! use lv_bevy_ecs::support::OpacityLevel;
-//! use lv_bevy_ecs::sys::{lv_part_t_LV_PART_MAIN};
-//! use lv_bevy_ecs::widgets::{Button, LvglWorld};
-//!
-//! lv_bevy_ecs::setup_test_display!();
-//!
+//! # use std::time::Duration;
+//! # use lv_bevy_ecs::animation::Animation;
+//! # use lv_bevy_ecs::functions::*;
+//! # use lv_bevy_ecs::support::OpacityLevel;
+//! # use lv_bevy_ecs::sys::{lv_part_t_LV_PART_MAIN, lv_anim_count_running};
+//! # use lv_bevy_ecs::widgets::{Button, LvglWorld};
+//! #
+//! # lv_bevy_ecs::setup_test_display!();
+//! #
 //! let mut world = LvglWorld::new();
 //! let button = Button::create_widget();
 //!
@@ -25,7 +25,7 @@
 //! );
 //! let mut button_entity = world.spawn((Button, button, anim));
 //! unsafe {
-//!     assert_eq!(lv_bevy_ecs::sys::lv_anim_count_running(), 1);
+//!     assert_eq!(lv_anim_count_running(), 1);
 //! }
 //! ```
 

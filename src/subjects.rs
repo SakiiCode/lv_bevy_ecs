@@ -1,18 +1,19 @@
 //! # Subjects
 //!
 //! ```rust
-//! use lv_bevy_ecs::functions::*;
-//! use lv_bevy_ecs::subjects::{Subject};
-//! use lv_bevy_ecs::widgets::*;
-//! use lv_bevy_ecs::sys::{lv_subject_get_int, lv_observer_get_target, lv_obj_t};
-//!
-//! lv_bevy_ecs::setup_test_display!();
-//!
+//! # use lv_bevy_ecs::functions::*;
+//! # use lv_bevy_ecs::subjects::{Subject};
+//! # use lv_bevy_ecs::widgets::*;
+//! # use lv_bevy_ecs::sys::{lv_subject_get_int, lv_observer_get_target, lv_obj_t, lv_dropdown_bind_value,
+//! #    lv_chart_type_t_LV_CHART_TYPE_LINE, lv_chart_type_t_LV_CHART_TYPE_BAR};
+//! #
+//! # lv_bevy_ecs::setup_test_display!();
+//! #
 //! let mut dropdown = Dropdown::create_widget();
 //! let mut chart_type_subject = Subject::new_int(0);
 //!
 //! unsafe {
-//!     lv_bevy_ecs::sys::lv_dropdown_bind_value(dropdown.raw_mut(), chart_type_subject.raw_mut());
+//!     lv_dropdown_bind_value(dropdown.raw_mut(), chart_type_subject.raw_mut());
 //! }
 //!
 //! let mut chart = Chart::create_widget();
@@ -20,15 +21,15 @@
 //!        let v = lv_subject_get_int(subject);
 //!        let mut chart = Wdg::from_ptr(lv_observer_get_target(observer) as *mut lv_obj_t);
 //!        let type_ = if v == 0 {
-//!            lv_bevy_ecs::sys::lv_chart_type_t_LV_CHART_TYPE_LINE
+//!            lv_chart_type_t_LV_CHART_TYPE_LINE
 //!        } else {
-//!            lv_bevy_ecs::sys::lv_chart_type_t_LV_CHART_TYPE_BAR
+//!            lv_chart_type_t_LV_CHART_TYPE_BAR
 //!        };
 //!        lv_chart_set_type(&mut chart, type_);
 //! });
 //! lv_subject_set_int(&mut chart_type_subject, 1);
 //!
-//! assert_eq!(lv_chart_get_type(&mut chart), lv_bevy_ecs::sys::lv_chart_type_t_LV_CHART_TYPE_BAR);
+//! assert_eq!(lv_chart_get_type(&mut chart), lv_chart_type_t_LV_CHART_TYPE_BAR);
 //! ```
 
 use std::{
