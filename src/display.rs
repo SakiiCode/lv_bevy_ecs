@@ -32,7 +32,6 @@
 //!     assert_eq!(lv_display_get_vertical_resolution(default_display), VER_RES as i32);
 //!     assert_eq!(lv_display_get_color_format(default_display), Rgb565::as_lv_color_format_t());
 //! }
-
 //! ```
 //!
 //! ## ESP32

@@ -446,7 +446,7 @@ impl Rusty for LvType {
         } else if self.is_mut_native_object() {
             quote!(&mut crate::widgets::Wdg)
         } else if self.is_const_style() {
-            quote!(&mut crate::styles::Style) // TODO make this const
+            quote!(&crate::styles::Style)
         } else if self.is_mut_style() {
             quote!(&mut crate::styles::Style)
         } else {

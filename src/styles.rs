@@ -1,7 +1,7 @@
 //! # Styles
 //!
 //! Styles are components that need to be added to entities.
-//! Right now a Style can be only applied to a single widget.
+//! Right now a Style can only be applied to a single widget, but they are cloneable.
 //!
 //! ```rust
 //! # use lv_bevy_ecs::functions::*;
@@ -29,9 +29,9 @@
 use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};
 use lightvgl_sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t};
 
-use crate::{info, widgets::Widget};
+use crate::{functions::lv_style_copy, info, widgets::Widget};
 
-#[derive(Component, Clone)]
+#[derive(Component)]
 #[component(on_insert=add_style)]
 #[component(on_replace=remove_style)]
 pub struct Style {
@@ -50,6 +50,15 @@ impl Default for Style {
             raw,
             selector: lv_part_t_LV_PART_MAIN,
         }
+    }
+}
+
+impl Clone for Style {
+    fn clone(&self) -> Self {
+        let mut result = Style::default();
+        lv_style_copy(&mut result, self);
+        result.selector = self.selector;
+        result
     }
 }
 
