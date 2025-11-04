@@ -5,7 +5,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use anyhow::Result;
 use bevy_ecs::query::With;
 use lv_bevy_ecs::{
     animation::Animation,
@@ -58,7 +57,7 @@ macro_rules! lv_grid_fr {
 #[derive(Component)]
 struct DynamicLabel;
 
-fn main() -> Result<()> {
+fn main() {
     lv_log_init();
     // to use an other logging backend, simply initialize it instead of lv_log_init()
     // env_logger::init();

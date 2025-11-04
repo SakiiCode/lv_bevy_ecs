@@ -1,12 +1,8 @@
 //! Utility structs and functions
 
 use core::convert::TryInto;
-use core::fmt;
 use embedded_graphics::pixelcolor::{BinaryColor, Gray8, Rgb565, Rgb888};
 use lightvgl_sys::lv_coord_t;
-use std::error::Error;
-
-pub type LvResult<T> = Result<T, LvError>;
 
 pub const LV_SIZE_CONTENT: u32 = 2001 | lightvgl_sys::LV_COORD_TYPE_SPEC;
 
@@ -20,44 +16,6 @@ macro_rules! cstr {
 
 pub fn lv_pct(pct: lv_coord_t) -> lv_coord_t {
     unsafe { lightvgl_sys::lv_pct(pct) }
-}
-
-/// Generic LVGL error. All other errors can be coerced into it.
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub enum LvError {
-    InvalidReference,
-    Uninitialized,
-    LvOOMemory,
-    AlreadyInUse,
-}
-
-impl fmt::Display for LvError {
-    #[allow(deprecated)]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.description())
-    }
-}
-
-impl Error for LvError {
-    fn cause(&self) -> Option<&dyn Error> {
-        Some(self)
-    }
-    fn description(&self) -> &str {
-        match self {
-            LvError::InvalidReference => "Accessed invalid reference or ptr",
-            LvError::Uninitialized => "LVGL uninitialized",
-            LvError::LvOOMemory => "LVGL out of memory",
-            LvError::AlreadyInUse => "Resource already in use",
-        }
-    }
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            LvError::InvalidReference => Some(self),
-            LvError::Uninitialized => Some(self),
-            LvError::LvOOMemory => Some(self),
-            LvError::AlreadyInUse => Some(self),
-        }
-    }
 }
 
 pub(crate) fn lv_color_make(r: u8, g: u8, b: u8) -> lightvgl_sys::lv_color_t {

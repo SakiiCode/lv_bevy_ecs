@@ -47,7 +47,7 @@ use bevy_ecs::{
 };
 use lightvgl_sys::lv_timer_t;
 
-use crate::{info, support::LvError};
+use crate::info;
 
 #[allow(dead_code)]
 #[derive(Component)]
@@ -69,7 +69,7 @@ unsafe impl Send for Timer {}
 unsafe impl Sync for Timer {}
 
 impl Timer {
-    pub fn new(world: &mut World, period: Duration) -> Result<Self, LvError> {
+    pub fn new(world: &mut World, period: Duration) -> Option<Self> {
         let mut schedule = Schedule::default();
         unsafe {
             let timer = lightvgl_sys::lv_timer_create(
@@ -77,11 +77,11 @@ impl Timer {
                 period.as_millis() as u32,
                 Box::into_raw(Box::new((&mut schedule, world))) as *mut _,
             );
-            if let Some(ptr) = NonNull::new(timer) {
-                Ok(Self { raw: ptr, schedule })
-            } else {
-                Err(LvError::InvalidReference)
-            }
+            let ptr = NonNull::new(timer);
+            Some(Self {
+                raw: ptr?,
+                schedule,
+            })
         }
     }
 

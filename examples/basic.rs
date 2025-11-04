@@ -13,7 +13,7 @@ use lv_bevy_ecs::{
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
-    support::{Align, LvError, OpacityLevel},
+    support::{Align, OpacityLevel},
     sys::lv_part_t_LV_PART_MAIN,
     widgets::{Arc, Button, Label, LvglWorld},
 };
@@ -30,7 +30,7 @@ use embedded_graphics_simulator::{
 #[derive(Component)]
 struct DynamicButton;
 
-fn main() -> Result<(), LvError> {
+fn main() {
     lv_log_init();
     // to use an other logging backend, simply initialize it instead of lv_log_init()
     // env_logger::init();
