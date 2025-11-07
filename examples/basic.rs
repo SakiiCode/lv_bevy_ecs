@@ -31,9 +31,7 @@ use embedded_graphics_simulator::{
 struct DynamicButton;
 
 fn main() {
-    lv_log_init();
-    // to use an other logging backend, simply initialize it instead of lv_log_init()
-    // env_logger::init();
+    lv_bevy_ecs::logging::lv_log_init();
 
     const HOR_RES: u32 = 320;
     const VER_RES: u32 = 240;

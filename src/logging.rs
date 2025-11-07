@@ -1,6 +1,6 @@
 use log::Level;
 
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 
 macro_rules! cstr {
     ($txt:expr) => {
@@ -20,7 +20,46 @@ macro_rules! func {
     }};
 }
 
-pub(crate) fn lv_log_init() {
+/// Forward LVGL logging to the `log` crate
+///
+/// Must not be used together with lv_log_init();
+pub fn connect() {
+    unsafe {
+        lightvgl_sys::lv_log_register_print_cb(Some(lvgl_log));
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn lvgl_log(level: lightvgl_sys::lv_log_level_t, buf: *const core::ffi::c_char) {
+    let message = unsafe { CStr::from_ptr(buf).to_owned() };
+    let message = message.to_string_lossy();
+    let message = message.trim();
+    let parts = message.split(':').collect::<Vec<&str>>();
+    let target = parts[0].split(" ").last().unwrap();
+    let message = parts[1..].join(":");
+    match level as u32 {
+        lightvgl_sys::LV_LOG_LEVEL_TRACE => {
+            log::trace!(target:target, "{}", message.trim());
+        }
+        lightvgl_sys::LV_LOG_LEVEL_INFO => {
+            log::info!(target:target, "{}", message.trim());
+        }
+        lightvgl_sys::LV_LOG_LEVEL_WARN => {
+            log::warn!(target:target, "{}", message.trim());
+        }
+        lightvgl_sys::LV_LOG_LEVEL_ERROR => {
+            log::error!(target:target, "{}", message.trim());
+        }
+        _ => {
+            log::error!("Invalid log level: {level}");
+        }
+    }
+}
+
+/// Use LVGL as the backend for the `log` crate.
+///
+/// Must not be used together with `lv_bevy_ecs::logging::connect()`
+pub fn lv_log_init() {
     match log::set_logger(&LvglLogger) {
         Ok(_) => log::set_max_level(log::LevelFilter::Trace),
         Err(err) => println!("Could not initialize logging: {}", err.to_string()),

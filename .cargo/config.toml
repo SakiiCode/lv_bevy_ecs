@@ -1,2 +1,3 @@
 [env]
 DEP_LV_CONFIG_PATH = { relative = true, value = "." }
+RUST_LOG = "info"
