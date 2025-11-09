@@ -11,7 +11,7 @@ type CGResult<T> = Result<T, Box<dyn Error>>;
 
 const LIB_PREFIX: &str = "lv_";
 
-const FUNCTION_BLACKLIST: [&'static str; 11] = [
+const FUNCTION_BLACKLIST: [&str; 11] = [
     "lv_obj_null_on_delete",
     "lv_obj_add_style",
     "lv_obj_replace_style",
@@ -115,10 +115,9 @@ impl Rusty for LvFunc {
             _ => {
                 let return_value: &LvType = self.ret.as_ref().unwrap();
                 if !return_value.is_pointer() {
-                    parse_str(&return_value.literal_name).expect(&format!(
-                        "Cannot parse {} as type",
-                        return_value.literal_name
-                    ))
+                    parse_str(&return_value.literal_name).unwrap_or_else(|_| {
+                        panic!("Cannot parse {} as type", return_value.literal_name)
+                    })
                 } else {
                     println!("Return value is pointer ({})", return_value.literal_name);
                     return Err(WrapperError::Skip);
@@ -456,8 +455,8 @@ impl Rusty for LvType {
                 println!("Void pointer as argument ({literal_name})");
                 return Err(WrapperError::Skip);
             }
-            let ty: TypePath =
-                parse_str(&raw_name).expect(&format!("Cannot parse {raw_name} to a type"));
+            let ty: TypePath = parse_str(&raw_name)
+                .unwrap_or_else(|_| panic!("Cannot parse {raw_name} to a type"));
             if self.literal_name.starts_with("* mut") {
                 quote!(&mut #ty)
             } else if self.literal_name.starts_with("*") {

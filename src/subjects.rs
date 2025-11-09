@@ -40,7 +40,7 @@ use std::{
 use bevy_ecs::component::Component;
 use lightvgl_sys::lv_subject_t;
 
-use crate::{info, widgets::Widget};
+use crate::{info, warn, widgets::Widget};
 
 #[derive(Component)]
 pub struct Subject {
@@ -133,7 +133,11 @@ unsafe extern "C" fn subject_callback<F>(
     F: FnMut(*mut lightvgl_sys::lv_observer_t, *mut lightvgl_sys::lv_subject_t),
 {
     unsafe {
-        let callback = &mut *((*observer).user_data as *mut F);
-        callback(observer, subject);
+        if !(*observer).user_data.is_null() {
+            let callback = &mut *((*observer).user_data as *mut F);
+            callback(observer, subject);
+        } else {
+            warn!("Subject callback user data was null, this should never happen!");
+        }
     }
 }

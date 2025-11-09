@@ -3,6 +3,8 @@ use std::{ffi::c_void, marker::PhantomData, ptr::NonNull};
 
 use embedded_graphics::prelude::Point;
 
+use crate::warn;
+
 /// Boolean states for an input.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub enum InputState {
@@ -136,17 +138,21 @@ unsafe extern "C" fn read_input<F, T>(
     F: FnMut() -> InputEvent<T>,
 {
     unsafe {
-        let callback = &mut *((*indev).user_data as *mut F);
-        let event = callback();
-        match event.status {
-            BufferStatus::Once => {
-                (*data).continue_reading = false;
-            }
-            BufferStatus::Buffered => {
-                (*data).continue_reading = true;
-            }
-        };
-        T::set_lv_indev_data(&event.data, data.as_mut().unwrap());
-        (*data).state = event.state.as_lv_indev_state();
+        if !(*indev).user_data.is_null() {
+            let callback = &mut *((*indev).user_data as *mut F);
+            let event = callback();
+            match event.status {
+                BufferStatus::Once => {
+                    (*data).continue_reading = false;
+                }
+                BufferStatus::Buffered => {
+                    (*data).continue_reading = true;
+                }
+            };
+            T::set_lv_indev_data(&event.data, data.as_mut().unwrap());
+            (*data).state = event.state.as_lv_indev_state();
+        } else {
+            warn!("Input callback user data was null, this should never happen!");
+        }
     }
 }

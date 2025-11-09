@@ -50,7 +50,7 @@ use lightvgl_sys::{
     lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL, lv_display_t, lv_draw_buf_t,
 };
 
-use crate::{info, support::LvglColorFormat};
+use crate::{info, support::LvglColorFormat, warn};
 
 pub struct Display {
     raw: NonNull<lv_display_t>,
@@ -153,10 +153,8 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
             };
             callback(&mut update);
         } else {
-            info!("User data is null");
+            warn!("Display callback user data was null, this should never happen!");
         }
-        // Not doing this causes a segfault in rust >= 1.69.0
-        //*disp_drv = display_driver;
         // Indicate to LVGL that we are ready with the flushing
         lightvgl_sys::lv_display_flush_ready(display);
     }

@@ -107,7 +107,7 @@ where
         let anim = NonNull::new(ptr).unwrap();
         let obj = obj as *mut lightvgl_sys::lv_obj_t;
         if anim.as_ref().user_data.is_null() {
-            warn!("Animation user data was empty, this should never happen!");
+            warn!("Animation user data was null, this should never happen!");
             return;
         }
         let mut obj_wdg = Wdg::from_ptr(obj);
