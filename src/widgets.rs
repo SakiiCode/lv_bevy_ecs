@@ -144,7 +144,6 @@ impl LvglWorld {
 }
 
 #[derive(Component, PartialEq)]
-#[component(storage = "SparseSet")]
 pub struct Widget {
     raw: NonNull<lightvgl_sys::lv_obj_t>,
 }
