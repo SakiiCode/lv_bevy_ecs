@@ -43,6 +43,7 @@ use lightvgl_sys::lv_subject_t;
 use crate::{info, warn, widgets::Widget};
 
 #[derive(Component)]
+#[component(storage = "SparseSet")]
 pub struct Subject {
     raw: lv_subject_t,
 }

@@ -37,7 +37,8 @@ use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorl
 use crate::widgets::{Wdg, Widget};
 
 #[derive(Component)]
-#[component(on_insert=add_animation)]
+#[component(on_insert = add_animation)]
+#[component(storage = "SparseSet")]
 pub struct Animation {
     raw: Option<lightvgl_sys::lv_anim_t>,
 }

@@ -144,6 +144,7 @@ impl LvglWorld {
 }
 
 #[derive(Component, PartialEq)]
+#[component(storage = "SparseSet")]
 pub struct Widget {
     raw: NonNull<lightvgl_sys::lv_obj_t>,
 }
@@ -191,6 +192,7 @@ impl Drop for Widget {
 macro_rules! impl_widget {
     ($t:ident, $func:path) => {
         #[derive(bevy_ecs::component::Component)]
+        #[component(storage = "SparseSet")]
         pub struct $t;
 
         impl $t {
