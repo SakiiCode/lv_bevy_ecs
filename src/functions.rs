@@ -20,15 +20,11 @@ pub fn lv_init() {
 }
 
 pub fn lv_tick_inc(diff: Duration) {
-    unsafe {
-        lightvgl_sys::lv_tick_inc(diff.as_millis() as u32);
-    }
+    unsafe { lightvgl_sys::lv_tick_inc(diff.as_millis() as u32) }
 }
 
-pub fn lv_timer_handler() {
-    unsafe {
-        lightvgl_sys::lv_timer_handler();
-    }
+pub fn lv_timer_handler() -> u32 {
+    unsafe { lightvgl_sys::lv_timer_handler() }
 }
 
 #[rustfmt::skip]
