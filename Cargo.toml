@@ -44,3 +44,5 @@ default = ["ctor"]
 ctor = ["dep:ctor"]
 
 lvgl-alloc = []
+
+no_ecs = ["lv_codegen/no_ecs"]

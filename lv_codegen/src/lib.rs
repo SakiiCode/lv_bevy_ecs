@@ -11,6 +11,10 @@ type CGResult<T> = Result<T, Box<dyn Error>>;
 
 const LIB_PREFIX: &str = "lv_";
 
+#[cfg(feature = "no_ecs")]
+const FUNCTION_BLACKLIST: [&str; 11] = ["lv_style_init"];
+
+#[cfg(not(feature = "no_ecs"))]
 const FUNCTION_BLACKLIST: [&str; 11] = [
     "lv_obj_null_on_delete",
     "lv_obj_add_style",

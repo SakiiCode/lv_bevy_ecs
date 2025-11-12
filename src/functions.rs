@@ -9,6 +9,7 @@ use log::Level;
 
 use crate::{
     events::Event,
+    styles::Style,
     subjects::Subject,
     widgets::{Wdg, Widget},
 };
@@ -128,6 +129,12 @@ pub fn lv_event_get_current_target_obj(event: &mut lightvgl_sys::lv_event_t) -> 
         let target = lightvgl_sys::lv_event_get_current_target_obj(event);
         Wdg::try_from_ptr(target)
     }
+}
+
+#[cfg(not(feature = "no_ecs"))]
+pub fn lv_obj_add_style(widget: &mut Wdg, mut style: Style, selector: u32) {
+    unsafe { lightvgl_sys::lv_obj_add_style(widget.raw_mut(), style.raw_mut(), selector) }
+    core::mem::forget(style);
 }
 
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
