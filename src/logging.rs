@@ -1,3 +1,18 @@
+//! # Logging
+//! You can forward LVGL logs to the `log` crate by calling `lv_bevy_ecs::logging::connect();` during startup.
+//!
+//! Or the other way around, calling `lv_bevy_ecs::logging::lv_log_init();` will forward the `log` crate macros
+//! to LVGL's logger. This way you also have line numbers at the end of each message by default.
+//!
+//! Using both will create an infinite loop and stack overflow.
+//!
+//! If you use the logging macros from this crate (e. g. `lv_bevy_ecs::info!("This is an info")`)
+//! then the message will use the function name instead of module name as target,
+//! which makes it consistent with LVGL logging.
+//!
+//! Don't forget to adjust the logging level on both sides!
+//!
+//! See `examples/custom_logging.rs` for sample code.
 use log::Level;
 
 use std::ffi::{CStr, CString};
