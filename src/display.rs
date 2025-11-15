@@ -46,9 +46,7 @@ use embedded_graphics::{
     prelude::{PixelColor, Point, Size},
     primitives::Rectangle,
 };
-use lightvgl_sys::{
-    lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL, lv_display_t, lv_draw_buf_t,
-};
+use lightvgl_sys::{lv_display_t, lv_draw_buf_t};
 
 use crate::{info, support::LvglColorFormat, warn};
 
@@ -138,8 +136,8 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
                     height: h as u32,
                 },
                 top_left: Point {
-                    x: (*area).x1.into(),
-                    y: (*area).y1.into(),
+                    x: (*area).x1,
+                    y: (*area).y1,
                 },
             };
 
@@ -181,7 +179,7 @@ impl<const N: usize, C> DisplayRefresh<'_, N, C> {
                 let color_len = x_len * iy + ix;
                 let raw_color = self.colors[color_len].clone();
                 let color: PC = raw_color.into();
-                Pixel(Point::new(x as i32, y as i32), color)
+                Pixel(Point::new(x, y), color)
             })
         })
     }

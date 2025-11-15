@@ -12,7 +12,7 @@
 //! #
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
-//! # let mut world = LvglWorld::new();
+//! # let mut world = LvglWorld::default();
 //! #
 //! # let mut button = Button::create_widget();
 //! # let mut button_entity = world.spawn((Button, button));
@@ -97,9 +97,9 @@ fn add_style(mut world: DeferredWorld, ctx: HookContext) {
         .get_mut::<Widget>(ctx.entity)
         .expect("Style components must be added to Widget entities")
         .raw_mut();
-    let mut style = world.get_mut::<Style>(ctx.entity).unwrap();
+    let style = world.get_mut::<Style>(ctx.entity).unwrap();
     unsafe {
-        lightvgl_sys::lv_obj_add_style(widget, &mut style.raw, style.selector);
+        lightvgl_sys::lv_obj_add_style(widget, &style.raw, style.selector);
     }
     info!("Added Style");
 }
@@ -110,9 +110,9 @@ fn remove_style(mut world: DeferredWorld, ctx: HookContext) {
         .get_mut::<Widget>(ctx.entity)
         .expect("Style components must be added to Widget entities")
         .raw_mut();
-    let mut style = world.get_mut::<Style>(ctx.entity).unwrap();
+    let style = world.get_mut::<Style>(ctx.entity).unwrap();
     unsafe {
-        lightvgl_sys::lv_obj_remove_style(widget, &mut style.raw, style.selector);
+        lightvgl_sys::lv_obj_remove_style(widget, &style.raw, style.selector);
     }
     info!("Removed Style");
 }

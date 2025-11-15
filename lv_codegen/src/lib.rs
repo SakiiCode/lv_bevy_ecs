@@ -108,14 +108,14 @@ impl Rusty for LvFunc {
         }
 
         // Handle return values
-        let return_type = match self.ret {
+        let return_tokens = match self.ret {
             // function returns void
-            None => quote!(()),
+            None => quote!(),
             // function returns something
             _ => {
                 let return_value: &LvType = self.ret.as_ref().unwrap();
                 if !return_value.is_pointer() {
-                    parse_str(&return_value.literal_name).unwrap_or_else(|_| {
+                    parse_str(&format!("-> {}", return_value.literal_name)).unwrap_or_else(|_| {
                         panic!("Cannot parse {} as type", return_value.literal_name)
                     })
                 } else {
@@ -238,7 +238,7 @@ impl Rusty for LvFunc {
         }
 
         Ok(quote! {
-            pub fn #func_name(#args_decl) -> #return_type {
+            pub fn #func_name(#args_decl) #return_tokens {
                 unsafe {
                     #args_preprocessing
                     #return_assignment lightvgl_sys::#func_name(#ffi_args)#optional_semicolon

@@ -76,7 +76,7 @@ fn main() {
 
     info!("Input OK");
 
-    let mut world = LvglWorld::new();
+    let mut world = LvglWorld::default();
 
     info!("ECS OK");
 

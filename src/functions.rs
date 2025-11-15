@@ -59,6 +59,7 @@ pub fn lv_subject_set_int(subject: &mut Subject, value: i32) {
 }
 
 #[rustfmt::skip]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn lv_subject_set_string(subject: &mut Subject, value: *mut c_void) {
     unsafe { lightvgl_sys::lv_subject_set_pointer(subject.raw_mut(), value) }
 }

@@ -10,6 +10,7 @@ use crate::widgets::Wdg;
 /// All objects (such as Buttons/Labels/Sliders etc.) receive these generic events
 /// regardless of their type.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+#[allow(clippy::empty_docs)]
 pub enum Event {
     /// The object has been pressed
     Pressed,

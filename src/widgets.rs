@@ -6,7 +6,7 @@
 //! #
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
-//! let mut world = LvglWorld::new();
+//! let mut world = LvglWorld::default();
 //! let mut label: Widget = Label::create_widget();
 //! lv_label_set_text(&mut label, c"Example label");
 //! let mut label_entity = world.spawn((Label, label));
@@ -32,7 +32,7 @@
 //! #
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
-//! # let mut world = LvglWorld::new();
+//! # let mut world = LvglWorld::default();
 //! # let mut label: Widget = Label::create_widget();
 //! # lv_label_set_text(&mut label, c"Example label");
 //! # let mut label_entity = world.spawn((Label, label));
@@ -51,7 +51,7 @@
 //! #
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
-//! # let mut world = LvglWorld::new();
+//! # let mut world = LvglWorld::default();
 //! # let mut label: Widget = Label::create_widget();
 //! # lv_label_set_text(&mut label, c"Example label 1");
 //! # let mut label_entity = world.spawn((Label, label));
@@ -68,7 +68,7 @@
 //! #
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
-//! # let mut world = LvglWorld::new();
+//! # let mut world = LvglWorld::default();
 //! # let mut label: Widget = Label::create_widget();
 //! # lv_label_set_text(&mut label, c"Example label");
 //! # let mut label_entity = world.spawn((Label, label));
@@ -88,7 +88,7 @@
 //! #[derive(Component)]
 //! struct DynamicLabel;
 //!
-//! # let mut world = LvglWorld::new();
+//! # let mut world = LvglWorld::default();
 //! # let mut label: Widget = Label::create_widget();
 //! # lv_label_set_text(&mut label, c"Example label");
 //! #
@@ -105,7 +105,7 @@
 //! #
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
-//! # let mut world = LvglWorld::new();
+//! # let mut world = LvglWorld::default();
 //! let mut button: Widget = Button::create_widget();
 //! let mut label: Widget = Label::create_widget();
 //! lv_label_set_text(&mut label, c"Example label");
@@ -133,13 +133,26 @@ use bevy_ecs::{
 };
 use lightvgl_sys::lv_obj_t;
 
-pub struct LvglWorld;
+pub struct LvglWorld(World);
 
-impl LvglWorld {
-    pub fn new() -> World {
+impl Default for LvglWorld {
+    fn default() -> Self {
         let mut world = World::new();
         world.add_observer(on_insert_parent);
-        world
+        Self(world)
+    }
+}
+
+impl Deref for LvglWorld {
+    type Target = World;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for LvglWorld {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
@@ -183,7 +196,7 @@ impl Drop for Widget {
     fn drop(&mut self) {
         unsafe {
             info!("Dropping Obj");
-            // Some delay is needed to prevent double deleting children
+            // Small delay is needed to prevent double-freeing child objects
             // TODO more safe solution
             lightvgl_sys::lv_obj_delete_async(self.raw.as_ptr());
         }
@@ -217,6 +230,7 @@ macro_rules! impl_widget {
     };
 }
 
+#[allow(clippy::type_complexity)]
 fn on_insert_parent(
     trigger: On<Insert, ChildOf>,
     mut set: ParamSet<(
@@ -264,11 +278,11 @@ impl Wdg {
         //unsafe { (&mut r#ref as *mut _ as *mut Self).as_mut().unwrap() }
     }*/
 
-    pub fn from_non_null<'a>(ptr: &'a NonNull<lv_obj_t>) -> &'a Self {
+    pub fn from_non_null(ptr: &NonNull<lv_obj_t>) -> &Self {
         unsafe { &*(ptr as *const _ as *const Self) }
     }
 
-    pub fn from_non_null_mut<'a>(ptr: &'a mut NonNull<lv_obj_t>) -> &'a mut Self {
+    pub fn from_non_null_mut(ptr: &mut NonNull<lv_obj_t>) -> &mut Self {
         unsafe { &mut *(ptr as *mut _ as *mut Self) }
     }
 

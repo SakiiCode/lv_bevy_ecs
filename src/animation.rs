@@ -12,7 +12,7 @@
 //! #
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
-//! let mut world = LvglWorld::new();
+//! let mut world = LvglWorld::default();
 //! let button = Button::create_widget();
 //!
 //! let anim = Animation::new(

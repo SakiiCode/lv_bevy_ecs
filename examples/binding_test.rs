@@ -98,7 +98,7 @@ fn main() {
     // Register a new input device that's capable of reading the current state of the input
     let _touch_screen = InputDevice::<Pointer>::create(|| latest_touch_status);
 
-    let mut world = LvglWorld::new();
+    let mut world = LvglWorld::default();
 
     create_ui(&mut world);
 

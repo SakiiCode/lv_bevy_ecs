@@ -30,17 +30,16 @@ It is highly recommended to read [Chapter 14 of the Unofficial Bevy Cheat Book](
 DEP_LV_CONFIG_PATH = { relative = true, value = "." }
 ```
 
-3. You have to obtain a World instance with `LvglWorld::new();`.
+3. You have to obtain a World instance with `LvglWorld::default();`.
    This is a global variable, it can be stored in lazy_static! or passed around in an Arc<Mutex<>> if needed elsewhere than in main().
 
 ```rust
 # use lazy_static::lazy_static;
-# use lv_bevy_ecs::bevy::world::World;
 # use lv_bevy_ecs::widgets::LvglWorld;
 # use std::sync::Mutex;
 #
 lazy_static! {
-    static ref WORLD: Mutex<World> = Mutex::new(LvglWorld::new());
+    static ref WORLD: Mutex<LvglWorld> = Mutex::new(LvglWorld::default());
 }
 ```
 
@@ -146,10 +145,10 @@ To increase upload speed set `baudrate = 460800` in `espflash.toml`
 - [x] Async calls
 - [x] Subjects
 - [x] Logging
+- [x] LVGL allocator
 - [ ] Auto-generated enums
 - [ ] Copy C docs to rustdoc
 - [ ] #![no_std] compatibility
-- [ ] implement GlobalAlloc
 - [ ] File system
 - [ ] Custom fonts
 - [ ] Snapshots

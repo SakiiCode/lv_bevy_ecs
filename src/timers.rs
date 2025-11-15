@@ -7,7 +7,7 @@
 //! # use lv_bevy_ecs::sys::lv_timer_get_next;
 //! #
 //! #
-//! # let mut world = LvglWorld::new();
+//! # let mut world = LvglWorld::default();
 //! #
 //! let mut timer = Timer::new(
 //!     &mut world,

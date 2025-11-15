@@ -1,6 +1,5 @@
 //! Utility structs and functions
 
-use core::convert::TryInto;
 use embedded_graphics::pixelcolor::{BinaryColor, Gray8, Rgb565, Rgb888};
 use lightvgl_sys::lv_coord_t;
 
@@ -135,11 +134,7 @@ pub enum LabelLongMode {
 
 impl From<LabelLongMode> for lightvgl_sys::lv_label_long_mode_t {
     fn from(value: LabelLongMode) -> Self {
-        unsafe {
-            (value as lightvgl_sys::lv_label_long_mode_t)
-                .try_into()
-                .unwrap_unchecked()
-        }
+        value as lightvgl_sys::lv_label_long_mode_t
     }
 }
 

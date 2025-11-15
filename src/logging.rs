@@ -29,8 +29,13 @@ pub fn connect() {
     }
 }
 
+/// # Safety
+/// `buf` must be non-null, pointing to a null terminated valid C string
 #[unsafe(no_mangle)]
-pub extern "C" fn lvgl_log(level: lightvgl_sys::lv_log_level_t, buf: *const core::ffi::c_char) {
+pub unsafe extern "C" fn lvgl_log(
+    level: lightvgl_sys::lv_log_level_t,
+    buf: *const core::ffi::c_char,
+) {
     let message = unsafe { CStr::from_ptr(buf).to_owned() };
     let message = message.to_string_lossy();
     let message = message.trim();
@@ -62,7 +67,7 @@ pub extern "C" fn lvgl_log(level: lightvgl_sys::lv_log_level_t, buf: *const core
 pub fn lv_log_init() {
     match log::set_logger(&LvglLogger) {
         Ok(_) => log::set_max_level(log::LevelFilter::Trace),
-        Err(err) => println!("Could not initialize logging: {}", err.to_string()),
+        Err(err) => println!("Could not initialize logging: {}", err),
     }
 }
 

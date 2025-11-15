@@ -89,6 +89,7 @@ impl Subject {
         }
     }
 
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new_ptr(value: *mut c_void) -> Self {
         unsafe {
             let mut subject = MaybeUninit::<lightvgl_sys::lv_subject_t>::uninit();
