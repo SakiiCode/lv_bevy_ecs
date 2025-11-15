@@ -133,6 +133,17 @@ partition_table = "partitions.csv"
 
 To increase upload speed set `baudrate = 460800` in `espflash.toml`
 
+## But I don't want to use an ECS...
+
+Enabling the `no_ecs` feature unlocks some functions that allow you to bring your own storage solution.
+
+I know that the World object adds considerable code size, and in the future the ECS-unrelated core
+functionality might be pulled out to another crate to allow UI code generators and other storage solutions to work independently.
+
+Right now Bevy ECS makes UI code a lot easier and it would be great if we could utilize the rest of the Bevy ecosystem.
+
+Feedback on this (or any other) matter is appreciated.
+
 ## Features
 
 - [x] Displays
@@ -146,6 +157,7 @@ To increase upload speed set `baudrate = 460800` in `espflash.toml`
 - [x] Subjects
 - [x] Logging
 - [x] LVGL allocator
+- [x] "no_ecs" mode
 - [ ] Auto-generated enums
 - [ ] Copy C docs to rustdoc
 - [ ] #![no_std] compatibility
