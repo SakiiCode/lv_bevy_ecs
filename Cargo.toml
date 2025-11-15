@@ -46,3 +46,7 @@ ctor = ["dep:ctor"]
 lvgl-alloc = []
 
 no_ecs = ["lv_codegen/no_ecs"]
+
+[[example]]
+name = "no_ecs"
+required-features = ["no_ecs"]

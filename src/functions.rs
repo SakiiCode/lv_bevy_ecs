@@ -7,9 +7,10 @@ use std::{
 
 use log::Level;
 
+#[cfg(feature = "no_ecs")]
+use crate::styles::Style;
 use crate::{
     events::Event,
-    styles::Style,
     subjects::Subject,
     widgets::{Wdg, Widget},
 };
@@ -131,10 +132,15 @@ pub fn lv_event_get_current_target_obj(event: &mut lightvgl_sys::lv_event_t) -> 
     }
 }
 
-#[cfg(not(feature = "no_ecs"))]
-pub fn lv_obj_add_style(widget: &mut Wdg, mut style: Style, selector: u32) {
+#[cfg(feature = "no_ecs")]
+pub fn lv_obj_add_style(widget: &mut Wdg, mut style: Style, selector: lv_style_selector_t) {
     unsafe { lightvgl_sys::lv_obj_add_style(widget.raw_mut(), style.raw_mut(), selector) }
     core::mem::forget(style);
+}
+
+#[cfg(feature = "no_ecs")]
+pub fn lv_obj_set_parent(obj: &mut Wdg, parent: &mut Wdg) {
+    unsafe { lightvgl_sys::lv_obj_set_parent(obj.raw_mut(), parent.raw_mut()) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));

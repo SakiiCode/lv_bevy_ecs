@@ -63,6 +63,11 @@ impl Animation {
         Self { raw: Some(raw) }
     }
 
+    #[cfg(feature = "no_ecs")]
+    pub fn set_widget(&mut self, widget: &mut Wdg) {
+        self.raw_mut().var = widget.raw_mut() as *mut _;
+    }
+
     pub fn start(&mut self) {
         unsafe {
             self.raw = Some(*lightvgl_sys::lv_anim_start(&self.raw.take().unwrap()));

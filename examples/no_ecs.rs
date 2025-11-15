@@ -98,10 +98,11 @@ fn main() {
         let mut button = Button::create_widget();
         let mut label = Label::create_widget();
         lv_label_set_text(&mut label, c"SPAWN");
+        lv_obj_set_parent(&mut label, &mut button);
         //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
         //let label_entity = world.spawn((Label, label)).id();
 
-        let anim = Animation::new(
+        let mut anim = Animation::new(
             Duration::from_secs(5),
             OpacityLevel::Transparent as i32,
             OpacityLevel::Cover as i32,
@@ -109,6 +110,8 @@ fn main() {
                 lv_obj_set_style_opa(obj, val as u8, lv_part_t_LV_PART_MAIN);
             },
         );
+
+        anim.set_widget(&mut button);
 
         lv_obj_add_event_cb(&mut button, Event::Clicked, |_| {
             //let mut world = WORLD.lock().unwrap();
@@ -120,16 +123,18 @@ fn main() {
                 }
                 None => {
                     let mut dynamic_button = Button::create_widget();
-                    let mut label = Label::create_widget();
+                    let mut dynamic_label = Label::create_widget();
                     lv_obj_set_align(&mut dynamic_button, Align::TopRight.into());
-                    lv_label_set_text(&mut label, c"This is dynamic");
+                    lv_label_set_text(&mut dynamic_label, c"This is dynamic");
+                    lv_obj_set_parent(&mut dynamic_label, &mut dynamic_button);
                     objects.dynamic_button = Some(dynamic_button);
-                    objects.dynamic_button_label = Some(label);
+                    objects.dynamic_button_label = Some(dynamic_label);
                 }
             }
         });
 
         objects.animation = Some(anim);
+        objects.animation.as_mut().unwrap().start();
         objects.spawner_button = Some(button);
         objects.spawner_button_label = Some(label);
 
