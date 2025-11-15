@@ -51,6 +51,7 @@ use crate::info;
 
 #[allow(dead_code)]
 #[derive(Component)]
+#[component(storage = "SparseSet")]
 pub struct Timer {
     raw: NonNull<lv_timer_t>,
     schedule: Schedule,

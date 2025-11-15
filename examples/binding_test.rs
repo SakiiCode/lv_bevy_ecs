@@ -55,6 +55,7 @@ macro_rules! lv_grid_fr {
 }
 
 #[derive(Component)]
+#[component(storage = "SparseSet")]
 struct DynamicLabel;
 
 fn main() {

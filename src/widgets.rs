@@ -191,6 +191,7 @@ impl Drop for Widget {
 macro_rules! impl_widget {
     ($t:ident, $func:path) => {
         #[derive(bevy_ecs::component::Component)]
+        #[component(storage = "SparseSet")]
         pub struct $t;
 
         impl $t {

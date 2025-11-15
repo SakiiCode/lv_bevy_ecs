@@ -34,6 +34,7 @@ use crate::{functions::lv_style_copy, info, widgets::Widget};
 #[derive(Component)]
 #[component(on_insert=add_style)]
 #[component(on_replace=remove_style)]
+#[component(storage = "SparseSet")]
 pub struct Style {
     raw: lightvgl_sys::lv_style_t,
     selector: lv_style_selector_t,
