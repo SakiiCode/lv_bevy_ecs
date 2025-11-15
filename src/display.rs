@@ -72,12 +72,10 @@ impl Display {
         F: FnMut(&mut DisplayRefresh<N, C>),
     {
         unsafe {
-            lightvgl_sys::lv_display_set_buffers(
+            lightvgl_sys::lv_display_set_draw_buffers(
                 self.raw(),
-                buffer.raw.as_ptr() as *mut c_void,
+                buffer.raw.as_ptr(),
                 std::ptr::null_mut(),
-                N as u32,
-                lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL,
             );
             register_display(self.raw.as_ptr(), callback);
         }
