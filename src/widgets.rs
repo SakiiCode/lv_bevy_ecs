@@ -131,7 +131,7 @@ use bevy_ecs::{
     system::{ParamSet, Query},
     world::World,
 };
-use lightvgl_sys::{lv_obj_delete, lv_obj_t};
+use lightvgl_sys::lv_obj_t;
 
 pub struct LvglWorld;
 
@@ -145,25 +145,25 @@ impl LvglWorld {
 
 #[derive(Component, PartialEq)]
 pub struct Widget {
-    raw: NonNull<lightvgl_sys::lv_obj_t>,
+    raw: NonNull<lv_obj_t>,
 }
 
 impl Widget {
-    pub fn raw(&self) -> *const lightvgl_sys::lv_obj_t {
+    pub fn raw(&self) -> *const lv_obj_t {
         self.raw.as_ptr()
     }
 
-    pub fn raw_mut(&mut self) -> *mut lightvgl_sys::lv_obj_t {
+    pub fn raw_mut(&mut self) -> *mut lv_obj_t {
         self.raw.as_ptr()
     }
 
-    pub fn from_ptr(ptr: *mut lightvgl_sys::lv_obj_t) -> Option<Self> {
+    pub fn from_ptr(ptr: *mut lv_obj_t) -> Option<Self> {
         Some(Self {
             raw: NonNull::new(ptr)?,
         })
     }
 
-    pub fn from_non_null(ptr: NonNull<lightvgl_sys::lv_obj_t>) -> Self {
+    pub fn from_non_null(ptr: NonNull<lv_obj_t>) -> Self {
         Self { raw: ptr }
     }
 
@@ -183,7 +183,9 @@ impl Drop for Widget {
     fn drop(&mut self) {
         unsafe {
             info!("Dropping Obj");
-            lv_obj_delete(self.raw.as_ptr());
+            // Some delay is needed to prevent double deleting children
+            // TODO more safe solution
+            lightvgl_sys::lv_obj_delete_async(self.raw.as_ptr());
         }
     }
 }

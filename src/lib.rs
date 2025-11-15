@@ -2,6 +2,8 @@
 
 #[macro_use]
 pub mod widgets;
+#[cfg(feature = "lvgl-alloc")]
+pub mod alloc;
 pub mod animation;
 pub mod bevy {
     //! Re-exported modules from bevy_ecs

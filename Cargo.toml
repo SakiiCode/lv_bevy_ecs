@@ -42,3 +42,5 @@ default = ["ctor"]
 
 # Automatically call lv_init() at startup
 ctor = ["dep:ctor"]
+
+lvgl-alloc = []
