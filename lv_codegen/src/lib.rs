@@ -678,7 +678,7 @@ mod test {
 
         let code = arc_set_bg_end_angle.code(&arc_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_arc_set_bg_end_angle(obj: &mut crate::widgets::Wdg, end: u16) -> () {
+            pub fn lv_arc_set_bg_end_angle(obj: &mut crate::widgets::Wdg, end: u16) {
                 unsafe {
                     lightvgl_sys::lv_arc_set_bg_end_angle(obj.raw_mut(), end)
                 }
@@ -709,7 +709,7 @@ mod test {
         let code = label_set_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
 
-            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &::core::ffi::CStr) -> () {
+            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &::core::ffi::CStr) {
                 unsafe {
                     lightvgl_sys::lv_label_set_text(
                         label.raw_mut(),
@@ -785,7 +785,7 @@ mod test {
 
         let code = label_set_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &::core::ffi::CStr) -> () {
+            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &::core::ffi::CStr) {
                 unsafe {
                     lightvgl_sys::lv_label_set_text(
                         label.raw_mut(),
@@ -818,7 +818,7 @@ mod test {
 
         let code = arc_rotate_obj_to_angle.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_arc_rotate_obj_to_angle(obj: &crate::widgets::Wdg, obj_to_rotate: &mut crate::widgets::Wdg, r_offset: lv_coord_t) -> () {
+            pub fn lv_arc_rotate_obj_to_angle(obj: &crate::widgets::Wdg, obj_to_rotate: &mut crate::widgets::Wdg, r_offset: lv_coord_t) {
                 unsafe {
                     lightvgl_sys::lv_arc_rotate_obj_to_angle(
                         obj.raw(),
