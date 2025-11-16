@@ -3,7 +3,7 @@
 //! Animations are components that need to be added to entities
 //!
 //! ```
-//! # use std::time::Duration;
+//! # use core::time::Duration;
 //! # use lv_bevy_ecs::animation::Animation;
 //! # use lv_bevy_ecs::functions::*;
 //! # use lv_bevy_ecs::support::OpacityLevel;
@@ -29,12 +29,13 @@
 //! }
 //! ```
 
-use std::{ffi::c_void, ptr::NonNull, time::Duration};
+use ::alloc::boxed::Box;
+use ::core::{ffi::c_void, mem::MaybeUninit, ptr::NonNull, time::Duration};
 
-use crate::{info, warn};
 use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};
 
 use crate::widgets::{Wdg, Widget};
+use crate::{info, warn};
 
 #[derive(Component)]
 #[component(on_insert = add_animation)]
@@ -49,7 +50,7 @@ impl Animation {
         F: FnMut(&mut Wdg, i32),
     {
         let mut raw = unsafe {
-            let mut anim = std::mem::MaybeUninit::<lightvgl_sys::lv_anim_t>::uninit();
+            let mut anim = MaybeUninit::<lightvgl_sys::lv_anim_t>::uninit();
             lightvgl_sys::lv_anim_init(anim.as_mut_ptr());
             anim.assume_init()
         };

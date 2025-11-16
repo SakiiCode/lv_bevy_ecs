@@ -32,10 +32,11 @@
 //! assert_eq!(lv_chart_get_type(&mut chart), lv_chart_type_t_LV_CHART_TYPE_BAR);
 //! ```
 
-use std::{
+use ::core::{
     ffi::{CStr, c_char, c_void},
     mem::MaybeUninit,
 };
+use alloc::{boxed::Box, vec};
 
 use bevy_ecs::component::Component;
 use lightvgl_sys::lv_subject_t;
@@ -79,7 +80,7 @@ impl Subject {
             lightvgl_sys::lv_subject_init_string(
                 subject.as_mut_ptr(),
                 &mut Box::leak(vec![zero; len].into_boxed_slice())[0],
-                std::ptr::null_mut(),
+                core::ptr::null_mut(),
                 len,
                 value.as_ptr(),
             );

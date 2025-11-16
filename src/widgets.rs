@@ -117,12 +117,11 @@
 //! assert_eq!(lv_obj_get_child_count(button_widget), 1)
 //! ```
 
-use std::{
+use ::core::{
     ops::{Deref, DerefMut},
     ptr::NonNull,
 };
 
-use crate::info;
 use bevy_ecs::{
     component::Component,
     hierarchy::ChildOf,
@@ -132,6 +131,8 @@ use bevy_ecs::{
     world::World,
 };
 use lightvgl_sys::lv_obj_t;
+
+use crate::info;
 
 pub struct LvglWorld(World);
 

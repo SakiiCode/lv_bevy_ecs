@@ -7,7 +7,7 @@ readme = "README.md"
 authors = ["SakiiCode"]
 homepage = "https://github.com/SakiiCode/lv_bevy_ecs"
 repository = "https://github.com/SakiiCode/lv_bevy_ecs"
-categories = ["embedded", "gui", "graphics"]
+categories = ["embedded", "gui", "graphics", "no-std"]
 keywords = ["lvgl", "ecs", "bevy", "embedded", "graphics"]
 license = "MIT"
 
@@ -44,7 +44,7 @@ default = ["ctor"]
 # Automatically call lv_init() at startup
 ctor = ["dep:ctor"]
 
-lvgl-alloc = []
+lvgl_alloc = []
 
 no_ecs = ["lv_codegen/no_ecs"]
 

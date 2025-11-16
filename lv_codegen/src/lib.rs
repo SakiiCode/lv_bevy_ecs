@@ -330,7 +330,7 @@ impl LvArg {
             let name = format_ident!("{}", &self.name);
             let name_raw = format_ident!("{}_raw", &self.name);
             quote! {
-                *#name = std::ffi::CString::from_raw(#name_raw);
+                *#name = ::alloc::ffi::CString::from_raw(#name_raw);
             }
         } else {
             quote! {}
@@ -446,9 +446,9 @@ impl Rusty for LvType {
             println!("Array as argument ({})", self.literal_name);
             return Err(WrapperError::Skip);
         } else if self.is_const_str() {
-            quote!(&std::ffi::CStr)
+            quote!(&::core::ffi::CStr)
         } else if self.is_mut_str() {
-            quote!(&mut std::ffi::CString)
+            quote!(&mut ::alloc::ffi::CString)
         } else if self.is_const_native_object() {
             quote!(&crate::widgets::Wdg)
         } else if self.is_mut_native_object() {
@@ -709,7 +709,7 @@ mod test {
         let code = label_set_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
 
-            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &std::ffi::CStr) -> () {
+            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &::core::ffi::CStr) -> () {
                 unsafe {
                     lightvgl_sys::lv_label_set_text(
                         label.raw_mut(),
@@ -749,13 +749,13 @@ mod test {
             pub fn lv_roller_get_option_str(
                 obj: &crate::widgets::Wdg,
                 option: u32,
-                buf: &mut std::ffi::CString,
+                buf: &mut ::alloc::ffi::CString,
                 buf_size: u32
             ) -> lv_result_t {
                 unsafe {
                     let buf_raw = buf.clone().into_raw();
                     let rust_result = lightvgl_sys::lv_roller_get_option_str(obj.raw(), option, buf_raw, buf_size);
-                    *buf = std::ffi::CString::from_raw(buf_raw);
+                    *buf = ::alloc::ffi::CString::from_raw(buf_raw);
                     rust_result
                 }
             }
@@ -785,7 +785,7 @@ mod test {
 
         let code = label_set_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &std::ffi::CStr) -> () {
+            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &::core::ffi::CStr) -> () {
                 unsafe {
                     lightvgl_sys::lv_label_set_text(
                         label.raw_mut(),

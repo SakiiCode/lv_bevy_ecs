@@ -37,7 +37,8 @@
 //! })
 //! ```
 
-use std::{ffi::c_void, ptr::NonNull, time::Duration};
+use ::alloc::boxed::Box;
+use ::core::{ffi::c_void, ptr::NonNull, time::Duration};
 
 use bevy_ecs::{
     component::Component,

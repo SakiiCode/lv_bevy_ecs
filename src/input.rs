@@ -1,5 +1,6 @@
 //! Input
-use std::{ffi::c_void, marker::PhantomData, ptr::NonNull};
+use ::alloc::boxed::Box;
+use ::core::{ffi::c_void, marker::PhantomData, ptr::NonNull};
 
 use embedded_graphics::prelude::Point;
 

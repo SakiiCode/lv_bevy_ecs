@@ -1,4 +1,6 @@
 //! # Events
+use ::alloc::boxed::Box;
+
 use crate::widgets::Wdg;
 
 /// Events are triggered in LVGL when something happens which might be interesting to

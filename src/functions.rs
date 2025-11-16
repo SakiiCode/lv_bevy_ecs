@@ -1,6 +1,6 @@
 //! Auto-generated safe bindings to LVGL functions
 
-use std::{
+use ::core::{
     ffi::{CStr, c_void},
     time::Duration,
 };

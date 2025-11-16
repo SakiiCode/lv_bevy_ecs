@@ -1,9 +1,12 @@
 #![doc = include_str!("../README.md")]
+#![no_std]
+
+extern crate alloc;
 
 #[macro_use]
 pub mod widgets;
-#[cfg(feature = "lvgl-alloc")]
-pub mod alloc;
+#[cfg(feature = "lvgl_alloc")]
+pub mod allocator;
 pub mod animation;
 pub mod bevy {
     //! Re-exported modules from bevy_ecs

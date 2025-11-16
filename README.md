@@ -1,6 +1,6 @@
 # lv_bevy_ecs
 
-Safe Rust bindings to the LVGL library using bevy_ecs.
+Safe Rust bindings to the LVGL library using bevy_ecs. Compatible with `#![no_std]` environments by default.
 
 ## What is an ECS?
 
@@ -79,6 +79,11 @@ cargo run --example basic
 
 There is an example project targeting the Cheap Yellow Display (ESP32) with `std` enabled: [lvgl-bevy-demo](https://github.com/SakiiCode/lvgl-bevy-demo)
 
+### LVGL Global Allocator
+
+A [global allocator](https://github.com/SakiiCode/lv_bevy_ecs/blob/master/src/allocator.rs) for Rust leveraging the [LVGL memory allocator](https://docs.lvgl.io/9.4/API/stdlib/lv_mem_h.html) is provided, but not enabled by default.
+Can be enabled with the feature `lvgl_alloc`. This will make all dynamic memory to be allocated by LVGL internal memory manager.
+
 ## But I don't want to use an ECS...
 
 Enabling the `no_ecs` feature unlocks some functions that allow you to bring your own storage solution.
@@ -104,9 +109,9 @@ Feedback on this (or any other) matter is appreciated.
 - [x] Logging
 - [x] LVGL allocator
 - [x] "no_ecs" mode
+- [x] #![no_std] compatibility
 - [ ] Auto-generated enums
 - [ ] Copy C docs to rustdoc
-- [ ] #![no_std] compatibility
 - [ ] File system
 - [ ] Custom fonts
 - [ ] Snapshots

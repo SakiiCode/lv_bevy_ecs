@@ -13,9 +13,13 @@
 //! Don't forget to adjust the logging level on both sides!
 //!
 //! See `examples/custom_logging.rs` for sample code.
-use log::Level;
+//!
 
-use std::ffi::{CStr, CString};
+use ::alloc::ffi::CString;
+use ::core::ffi::CStr;
+use alloc::{borrow::ToOwned, string::ToString, vec::Vec};
+
+use log::{Level, error};
 
 macro_rules! cstr {
     ($txt:expr) => {
@@ -28,7 +32,7 @@ macro_rules! func {
     () => {{
         fn f() {}
         fn type_name_of<T>(_: T) -> &'static str {
-            std::any::type_name::<T>()
+            core::any::type_name::<T>()
         }
         let name = type_name_of(f);
         name[..name.len() - 3].split("::").last().unwrap()
@@ -82,7 +86,7 @@ pub unsafe extern "C" fn lvgl_log(
 pub fn lv_log_init() {
     match log::set_logger(&LvglLogger) {
         Ok(_) => log::set_max_level(log::LevelFilter::Trace),
-        Err(err) => println!("Could not initialize logging: {}", err),
+        Err(err) => error!("Could not initialize logging: {}", err),
     }
 }
 

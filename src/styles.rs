@@ -26,6 +26,8 @@
 //! assert_eq!(lv_obj_get_style_opa_recursive(&*widget, lv_part_t_LV_PART_MAIN), opacity - 1);
 //! ```
 
+use ::core::mem::MaybeUninit;
+
 use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};
 use lightvgl_sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t};
 
@@ -43,7 +45,7 @@ pub struct Style {
 impl Default for Style {
     fn default() -> Self {
         let raw = unsafe {
-            let mut style = std::mem::MaybeUninit::<lightvgl_sys::lv_style_t>::uninit();
+            let mut style = MaybeUninit::<lightvgl_sys::lv_style_t>::uninit();
             lightvgl_sys::lv_style_init(style.as_mut_ptr());
             style.assume_init()
         };
@@ -74,7 +76,7 @@ impl Style {
 
     pub fn new(selector: lv_style_selector_t) -> Self {
         let raw = unsafe {
-            let mut style = std::mem::MaybeUninit::<lightvgl_sys::lv_style_t>::uninit();
+            let mut style = MaybeUninit::<lightvgl_sys::lv_style_t>::uninit();
             lightvgl_sys::lv_style_init(style.as_mut_ptr());
             style.assume_init()
         };

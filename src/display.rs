@@ -39,7 +39,8 @@
 //! For code example on how to create a display on embedded,
 //! check out [lvgl-bevy-demo](https://github.com/SakiiCode/lvgl-bevy-demo).
 
-use std::{ffi::c_void, marker::PhantomData, ptr::NonNull};
+use ::alloc::boxed::Box;
+use ::core::{ffi::c_void, marker::PhantomData, ptr::NonNull};
 
 use embedded_graphics::{
     Pixel,
@@ -73,7 +74,7 @@ impl Display {
             lightvgl_sys::lv_display_set_draw_buffers(
                 self.raw(),
                 buffer.raw.as_ptr(),
-                std::ptr::null_mut(),
+                ::core::ptr::null_mut(),
             );
             register_display(self.raw.as_ptr(), callback);
         }
@@ -141,7 +142,7 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
                 },
             };
 
-            let slice = std::slice::from_raw_parts(buf, (w * h) as usize);
+            let slice = ::core::slice::from_raw_parts(buf, (w * h) as usize);
 
             let mut update = DisplayRefresh {
                 rectangle,
