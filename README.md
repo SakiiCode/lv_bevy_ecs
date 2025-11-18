@@ -31,16 +31,13 @@ DEP_LV_CONFIG_PATH = { relative = true, value = "." }
 ```
 
 3. You have to obtain a World instance with `LvglWorld::default();`.
-   This is a global variable, it can be stored in lazy_static! or passed around in an Arc<Mutex<>> if needed elsewhere than in main().
+   This is a global variable, it can be stored in a LazyLock or passed around in an Arc<Mutex<>> if needed elsewhere than in main().
 
 ```rust
-# use lazy_static::lazy_static;
 # use lv_bevy_ecs::widgets::LvglWorld;
-# use std::sync::Mutex;
-#
-lazy_static! {
-    static ref WORLD: Mutex<LvglWorld> = Mutex::new(LvglWorld::default());
-}
+# use std::sync::{LazyLock, Mutex};
+
+static WORLD: LazyLock<Mutex<LvglWorld>> = LazyLock::new(|| Mutex::new(LvglWorld::default()));
 ```
 
 4. Last thing is to calculate frametime and call these LVGL functions in every loop cycle:

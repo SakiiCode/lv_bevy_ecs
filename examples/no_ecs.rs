@@ -1,10 +1,9 @@
 use std::{
     process::exit,
-    sync::Mutex,
+    sync::{LazyLock, Mutex},
     time::{Duration, Instant},
 };
 
-use lazy_static::lazy_static;
 use lv_bevy_ecs::{
     animation::Animation,
     display::{Display, DrawBuffer},
@@ -39,9 +38,7 @@ struct Objects {
     arc: Option<Widget>,
 }
 
-lazy_static! {
-    static ref objects_lock: Mutex<Objects> = Mutex::new(Objects::default());
-}
+static OBJECTS: LazyLock<Mutex<Objects>> = LazyLock::new(|| Mutex::new(Objects::default()));
 
 fn main() {
     lv_bevy_ecs::logging::lv_log_init();
@@ -93,7 +90,7 @@ fn main() {
     info!("ECS OK");
 
     {
-        let mut objects = objects_lock.lock().unwrap();
+        let mut objects = OBJECTS.lock().unwrap();
         //let mut world = WORLD.lock().unwrap();
         let mut button = Button::create_widget();
         let mut label = Label::create_widget();
@@ -115,7 +112,7 @@ fn main() {
 
         lv_obj_add_event_cb(&mut button, Event::Clicked, |_| {
             //let mut world = WORLD.lock().unwrap();
-            let mut objects = objects_lock.lock().unwrap();
+            let mut objects = OBJECTS.lock().unwrap();
             match &objects.dynamic_button {
                 Some(_widget) => {
                     objects.dynamic_button = None;
