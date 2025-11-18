@@ -7,11 +7,12 @@ use embedded_graphics::prelude::Point;
 use crate::warn;
 
 /// Boolean states for an input.
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
 pub enum InputState {
     /// Input device key is currently pressed down.
     Pressed,
     /// Input device key is currently released.
+    #[default]
     Released,
 }
 
@@ -25,19 +26,30 @@ impl InputState {
 }
 
 /// Boolean buffering states for an input device driver.
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
 pub enum BufferStatus {
     /// One instance of `InputState` remains to be read.
+    #[default]
     Once,
     /// Multiple instances of `InputState` remain to be read.
     Buffered,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct InputEvent<T: InputType> {
     pub status: BufferStatus,
     pub state: InputState,
     pub data: T::DataType,
+}
+
+impl<T: InputType> InputEvent<T> {
+    pub const fn new(data: T::DataType) -> Self {
+        InputEvent {
+            status: BufferStatus::Once,
+            state: InputState::Released,
+            data,
+        }
+    }
 }
 
 pub trait InputType {
@@ -46,7 +58,7 @@ pub trait InputType {
     fn set_lv_indev_data(event_data: &Self::DataType, data: &mut lightvgl_sys::lv_indev_data_t);
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct Pointer;
 
 impl InputType for Pointer {
