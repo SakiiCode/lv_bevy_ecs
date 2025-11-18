@@ -40,7 +40,9 @@ DEP_LV_CONFIG_PATH = { relative = true, value = "." }
 static WORLD: LazyLock<Mutex<LvglWorld>> = LazyLock::new(|| Mutex::new(LvglWorld::default()));
 ```
 
-4. Last thing is to calculate frametime and call these LVGL functions in every loop cycle:
+4. Last thing is to calculate frametime and call these LVGL functions in every loop cycle
+
+   _If you are running this inside another framework, you should [use its tick counter](https://docs.lvgl.io/9.4/details/integration/overview/connecting_lvgl.html#tick-interface) instead to get precise and constant framerate._
 
 ```rust
 # use lv_bevy_ecs::functions::*;
@@ -57,7 +59,6 @@ loop {
     lv_timer_handler();
 #    break;
 }
-
 ```
 
 Check the respective module documentations and the examples for further usage.
