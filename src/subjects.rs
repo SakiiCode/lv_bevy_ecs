@@ -79,7 +79,7 @@ impl Subject {
             let zero: c_char = 0;
             lightvgl_sys::lv_subject_init_string(
                 subject.as_mut_ptr(),
-                &mut Box::leak(vec![zero; len].into_boxed_slice())[0],
+                vec![zero; len].into_boxed_slice().as_mut_ptr(),
                 core::ptr::null_mut(),
                 len,
                 value.as_ptr(),

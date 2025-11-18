@@ -15,9 +15,8 @@
 //! See `examples/custom_logging.rs` for sample code.
 //!
 
-use ::alloc::ffi::CString;
+use ::alloc::{ffi::CString, vec::Vec};
 use ::core::ffi::CStr;
-use alloc::{borrow::ToOwned, string::ToString, vec::Vec};
 
 use log::{Level, error};
 
@@ -55,7 +54,7 @@ pub unsafe extern "C" fn lvgl_log(
     level: lightvgl_sys::lv_log_level_t,
     buf: *const core::ffi::c_char,
 ) {
-    let message = unsafe { CStr::from_ptr(buf).to_owned() };
+    let message = unsafe { CStr::from_ptr(buf) };
     let message = message.to_string_lossy();
     let message = message.trim();
     let parts = message.split(':').collect::<Vec<&str>>();
@@ -131,7 +130,7 @@ impl log::Log for LvglLogger {
             cstr!(record.file().unwrap_or_default()),
             record.line().unwrap_or_default(),
             cstr!(record.target()),
-            cstr!(record.args().to_string()),
+            cstr!(record.args().as_str().unwrap()),
         );
     }
     fn flush(&self) {}
