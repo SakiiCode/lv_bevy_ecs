@@ -130,7 +130,7 @@ impl log::Log for LvglLogger {
             cstr!(record.file().unwrap_or_default()),
             record.line().unwrap_or_default(),
             cstr!(record.target()),
-            cstr!(record.args().as_str().unwrap()),
+            cstr!(record.args().as_str().unwrap_or_default()),
         );
     }
     fn flush(&self) {}
