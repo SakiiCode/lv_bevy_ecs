@@ -43,10 +43,6 @@ const FUNCTION_BLACKLIST: [&str; 12] = [
 
 #[derive(Debug, Clone, Error)]
 pub enum SkipReason {
-    #[error("Return value is array ({0})")]
-    ReturnArray(String),
-    #[error("Void pointer as argument ({0})")]
-    VoidPtrArgument(String),
     #[error("Already implemented ({0})")]
     CustomStruct(String),
     #[error("Constructor function ({0})")]
@@ -73,18 +69,7 @@ impl Rusty for LvWidget {
     type Parent = ();
 
     fn code(&self, _parent: &Self::Parent) -> WrapperResult<TokenStream> {
-        let methods: Vec<TokenStream> = self
-            .methods
-            .iter()
-            .flat_map(|m| {
-                m.code(self).map_err(|error| match error {
-                    SkipReason::ReturnArray(_) | SkipReason::VoidPtrArgument(_) => {
-                        println!("{} - {}", m.name, error)
-                    }
-                    _ => {}
-                })
-            })
-            .collect();
+        let methods: Vec<TokenStream> = self.methods.iter().flat_map(|m| m.code(self)).collect();
         Ok(quote! {
             #(#methods)*
         })
@@ -160,13 +145,13 @@ impl Rusty for LvFunc {
                         parse_str("-> Option<Wdg>").unwrap()
                     } else if return_value.is_const_str() || return_value.is_mut_str() {
                         parse_str("-> &CStr").unwrap()
-                    } else if return_value.is_array() {
-                        return Err(SkipReason::ReturnArray(return_value.literal_name.clone()));
                     } else if return_value.is_mut_pointer() {
-                        parse_str(&format!("-> Option<NonNull<{}>>", return_value.raw_name()))
-                            .unwrap()
+                        let raw_name = return_value.literal_name.replacen("* mut ", "", 1);
+                        parse_str(&format!("-> Option<NonNull<{}>>", raw_name)).unwrap()
                     } else {
-                        parse_str(&format!("-> Option<&{}>", return_value.raw_name())).unwrap()
+                        assert!(return_value.is_const_pointer());
+                        let raw_name = return_value.literal_name.replacen("* const ", "", 1);
+                        parse_str(&format!("-> Option<&{}>", raw_name)).unwrap()
                     }
                 }
             }
@@ -1092,20 +1077,5 @@ mod test {
         let expected_code = quote! {};
 
         assert_eq!(code.to_string(), expected_code.to_string());
-    }
-
-    /// cargo test list_unimplemented_functions -- --nocapture --ignored
-    #[test]
-    #[ignore]
-    fn list_unimplemented_functions() {
-        use proc_macro2::TokenStream;
-        let source = lightvgl_sys::_bindgen_raw_src();
-
-        let codegen = CodeGen::from(source).unwrap();
-        let _widgets_impl: Vec<TokenStream> = codegen
-            .get_widgets()
-            .iter()
-            .flat_map(|w| w.code(&()))
-            .collect();
     }
 }
