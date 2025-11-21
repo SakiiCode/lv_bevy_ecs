@@ -30,12 +30,9 @@ use embedded_graphics_simulator::{
 
 #[derive(Default)]
 struct Objects {
-    spawner_button: Option<Widget>,
-    spawner_button_label: Option<Widget>,
     dynamic_button: Option<Widget>,
     dynamic_button_label: Option<Widget>,
     animation: Option<Animation>,
-    arc: Option<Widget>,
 }
 
 static OBJECTS: LazyLock<Mutex<Objects>> = LazyLock::new(|| Mutex::new(Objects::default()));
@@ -132,8 +129,8 @@ fn main() {
 
         objects.animation = Some(anim);
         objects.animation.as_mut().unwrap().start();
-        objects.spawner_button = Some(button);
-        objects.spawner_button_label = Some(label);
+        //objects.spawner_button = Some(button);
+        //objects.spawner_button_label = Some(label);
 
         //let mut button_entity = world.spawn((Button, button, anim));
 
@@ -144,18 +141,18 @@ fn main() {
         lv_style_set_align(&mut style, Align::TopLeft.into());
         lv_style_set_bg_color(&mut style, lv_color_make(255, 0, 0));
 
-        lv_obj_add_style(
-            objects.spawner_button.as_mut().unwrap(),
-            style,
-            lv_part_t_LV_PART_MAIN,
-        );
+        lv_obj_add_style(&mut button, style, lv_part_t_LV_PART_MAIN);
+
+        button.leak();
+        label.leak();
         //button_entity.insert(style);
         //button_entity.remove::<Style>();
         // button_entity.insert(style);
 
         let mut arc = Arc::create_widget();
         lv_obj_set_align(&mut arc, Align::BottomMid.into());
-        objects.arc = Some(arc);
+        //objects.arc = Some(arc);
+        arc.leak();
 
         //world.spawn((Arc, arc));
     }

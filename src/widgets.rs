@@ -181,11 +181,21 @@ impl Widget {
         Self { raw: ptr }
     }
 
-    pub fn as_wdg(&self) -> &Wdg {
+    pub fn leak(self) -> Wdg {
+        let wdg = Wdg::from_ptr(self.raw.as_ptr());
+        ::core::mem::forget(self);
+        wdg
+    }
+}
+
+impl AsRef<Wdg> for Widget {
+    fn as_ref(&self) -> &Wdg {
         Wdg::from_non_null(&self.raw)
     }
+}
 
-    pub fn as_mut_wdg(&mut self) -> &mut Wdg {
+impl AsMut<Wdg> for Widget {
+    fn as_mut(&mut self) -> &mut Wdg {
         Wdg::from_non_null_mut(&mut self.raw)
     }
 }
