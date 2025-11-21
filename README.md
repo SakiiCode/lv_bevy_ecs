@@ -10,6 +10,15 @@ columns (components) and jobs (systems).
 You have to move LVGL objects into this database,
 so that they don't go out of scope and get deallocated. Bevy's Observers will mirror these database operations to LVGL's world.
 
+### But I don't want to use an ECS...
+
+Enabling the `no_ecs` feature unlocks some functions that allow you to bring your own storage solution.
+
+If you don't care about storage at all, and know in advance that a Widget will live for the rest of the program's execution,
+you can call `Widget::leak()` to leak memory and prevent calling the destructor.
+
+Check out [no_ecs.rs]() on how to use it.
+
 ## Usage
 
 It is highly recommended to read [Chapter 14 of the Unofficial Bevy Cheat Book](https://bevy-cheatbook.github.io/programming.html) before using this library.
@@ -42,7 +51,7 @@ static WORLD: LazyLock<Mutex<LvglWorld>> = LazyLock::new(|| Mutex::new(LvglWorld
 
 4. Last thing is to calculate frametime and call these LVGL functions in every loop cycle
 
-   _If you are running this inside another framework, you should [use its tick counter](https://docs.lvgl.io/9.4/details/integration/overview/connecting_lvgl.html#tick-interface) instead to get precise and constant framerate._
+   _If you are running this inside another framework (like FreeRTOS), you should [use its tick counter](https://docs.lvgl.io/9.4/details/integration/overview/connecting_lvgl.html#tick-interface) instead to get precise and constant framerate._
 
 ```rust
 # use lv_bevy_ecs::functions::*;
@@ -61,7 +70,7 @@ loop {
 }
 ```
 
-Check the respective module documentations and the examples for further usage.
+Check the [documentation](https://docs.rs/crate/lv_bevy_ecs/latest) and the [examples](https://github.com/SakiiCode/lv_bevy_ecs/tree/master/examples) for further usage.
 
 ## Running the demo
 
@@ -81,17 +90,6 @@ There is an example project targeting the Cheap Yellow Display (ESP32) with `std
 
 A [global allocator](https://github.com/SakiiCode/lv_bevy_ecs/blob/master/src/allocator.rs) for Rust leveraging the [LVGL memory allocator](https://docs.lvgl.io/9.4/API/stdlib/lv_mem_h.html) is provided, but not enabled by default.
 Can be enabled with the feature `lvgl_alloc`. This will make all dynamic memory to be allocated by LVGL internal memory manager.
-
-## But I don't want to use an ECS...
-
-Enabling the `no_ecs` feature unlocks some functions that allow you to bring your own storage solution.
-
-I know that the World object adds considerable code size, and in the future the ECS-unrelated core
-functionality might be pulled out to another crate to allow UI code generators and other storage solutions to work independently.
-
-Right now Bevy ECS makes UI code a lot easier and it would be great if we could utilize the rest of the Bevy ecosystem.
-
-Feedback on this (or any other) matter is appreciated.
 
 ## Features
 
