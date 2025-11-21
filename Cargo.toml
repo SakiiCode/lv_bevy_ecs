@@ -15,6 +15,9 @@ license = "MIT"
 name = "lv_bevy_ecs"
 path = "src/lib.rs"
 
+[package.metadata.docs.rs]
+features = ["use-vendored-config"]
+
 [dependencies]
 bevy_ecs = { version = "0.17.0", default-features = false }
 ctor = { version = "0.6.0", optional = true }
@@ -46,6 +49,8 @@ ctor = ["dep:ctor"]
 lvgl_alloc = []
 
 no_ecs = ["lv_codegen/no_ecs"]
+
+use-vendored-config = ["lightvgl-sys/use-vendored-config"]
 
 [[example]]
 name = "no_ecs"
