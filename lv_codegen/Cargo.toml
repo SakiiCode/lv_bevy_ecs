@@ -12,6 +12,12 @@ regex = "1.11.1"
 syn = { version = "2.0.101", features = ["full"] }
 Inflector = "0.11.4"
 itertools = "0.14.0"
+thiserror = "2.0.17"
+
+[dev-dependencies]
+lightvgl-sys = { version = "~9.4.0", default-features = false, features = [
+    "raw-bindings",
+] }
 
 [features]
 no_ecs = []

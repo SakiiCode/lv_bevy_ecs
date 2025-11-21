@@ -6,6 +6,7 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::error::Error;
 use syn::{FnArg, ForeignItem, ForeignItemFn, Item, ReturnType, TypePath, parse_str};
+use thiserror::Error;
 
 type CGResult<T> = Result<T, Box<dyn Error>>;
 
@@ -38,12 +39,23 @@ const FUNCTION_BLACKLIST: [&str; 11] = [
     "lv_list_get_button_text",         // lifetime can't be elided
 ];
 
-#[derive(Debug, Copy, Clone)]
-pub enum WrapperError {
-    Skip,
+#[derive(Debug, Clone, Error)]
+pub enum SkipReason {
+    #[error("Return value is pointer ({0})")]
+    ReturnPointer(String),
+    #[error("Array as argument ({0})")]
+    ArrayArgument(String),
+    #[error("Void pointer as argument ({0})")]
+    VoidPtrArgument(String),
+    #[error("Already implemented ({0})")]
+    CustomStruct(String),
+    #[error("Constructor function ({0})")]
+    Constructor(String),
+    #[error("Blacklisted function ({0})")]
+    Blacklisted(String),
 }
 
-pub type WrapperResult<T> = Result<T, WrapperError>;
+pub type WrapperResult<T> = Result<T, SkipReason>;
 
 pub trait Rusty {
     type Parent;
@@ -61,7 +73,18 @@ impl Rusty for LvWidget {
     type Parent = ();
 
     fn code(&self, _parent: &Self::Parent) -> WrapperResult<TokenStream> {
-        let methods: Vec<TokenStream> = self.methods.iter().flat_map(|m| m.code(self)).collect();
+        let methods: Vec<TokenStream> = self
+            .methods
+            .iter()
+            .flat_map(|m| {
+                m.code(self).map_err(|error| match error {
+                    SkipReason::ReturnPointer(_)
+                    | SkipReason::ArrayArgument(_)
+                    | SkipReason::VoidPtrArgument(_) => println!("{} - {}", m.name, error),
+                    _ => {}
+                })
+            })
+            .collect();
         Ok(quote! {
             #(#methods)*
         })
@@ -74,7 +97,7 @@ impl LvWidget {
         let create_function = format_ident!("lv_{}_create", &self.name);
 
         if self.name == "obj" || self.name == "style" {
-            Err(WrapperError::Skip)
+            Err(SkipReason::CustomStruct(self.name.clone()))
         } else {
             Ok(quote! {
                 impl_widget!(#pascal_name, lightvgl_sys::#create_function);
@@ -114,10 +137,10 @@ impl Rusty for LvFunc {
         let func_name = format_ident!("{}", self.name);
 
         // skip constructors and blacklisted functions
-        if new_name.as_str().eq("create") && parent.name != "obj"
-            || FUNCTION_BLACKLIST.contains(&self.name.as_str())
-        {
-            return Err(WrapperError::Skip);
+        if new_name.as_str().eq("create") && parent.name != "obj" {
+            return Err(SkipReason::Constructor(self.name.clone()));
+        } else if FUNCTION_BLACKLIST.contains(&self.name.as_str()) {
+            return Err(SkipReason::Blacklisted(self.name.clone()));
         }
 
         // Handle return values
@@ -138,8 +161,7 @@ impl Rusty for LvFunc {
                     } else if return_value.is_const_str() || return_value.is_mut_str() {
                         parse_str("-> &CStr").unwrap()
                     } else {
-                        println!("Return value is pointer ({})", return_value.literal_name);
-                        return Err(WrapperError::Skip);
+                        return Err(SkipReason::ReturnPointer(return_value.literal_name.clone()));
                     }
                 }
             }
@@ -477,8 +499,7 @@ impl Rusty for LvType {
 
     fn code(&self, _parent: &Self::Parent) -> WrapperResult<TokenStream> {
         let val = if self.is_array() {
-            println!("Array as argument ({})", self.literal_name);
-            return Err(WrapperError::Skip);
+            return Err(SkipReason::ArrayArgument(self.literal_name.clone()));
         } else if self.is_const_str() {
             quote!(&::core::ffi::CStr)
         } else if self.is_mut_str() {
@@ -495,8 +516,7 @@ impl Rusty for LvType {
             let literal_name = self.literal_name.as_str();
             let raw_name = literal_name.replace("* const ", "").replace("* mut ", "");
             if raw_name == "cty :: c_void" {
-                println!("Void pointer as argument ({literal_name})");
-                return Err(WrapperError::Skip);
+                return Err(SkipReason::VoidPtrArgument(self.literal_name.clone()));
             }
             let ty: TypePath = parse_str(&raw_name)
                 .unwrap_or_else(|_| panic!("Cannot parse {raw_name} to a type"));
@@ -1013,5 +1033,20 @@ mod test {
         let expected_code = quote! {};
 
         assert_eq!(code.to_string(), expected_code.to_string());
+    }
+
+    /// cargo test list_unimplemented_functions -- --nocapture --ignored
+    #[test]
+    #[ignore]
+    fn list_unimplemented_functions() {
+        use proc_macro2::TokenStream;
+        let source = lightvgl_sys::_bindgen_raw_src();
+
+        let codegen = CodeGen::from(source).unwrap();
+        let _widgets_impl: Vec<TokenStream> = codegen
+            .get_widgets()
+            .iter()
+            .flat_map(|w| w.code(&()))
+            .collect();
     }
 }
