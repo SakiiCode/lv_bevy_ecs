@@ -12,28 +12,30 @@ type CGResult<T> = Result<T, Box<dyn Error>>;
 const LIB_PREFIX: &str = "lv_";
 
 #[cfg(feature = "no_ecs")]
-const FUNCTION_BLACKLIST: [&str; 5] = [
-    "lv_style_init",
-    "lv_obj_null_on_delete",
-    "lv_obj_add_style",
-    "lv_obj_set_parent",
-    "lv_list_get_button_text", // because of missing lifetime
+const FUNCTION_BLACKLIST: [&str; 8] = [
+    "lv_style_init",                   // use Style::default() instead
+    "lv_obj_null_on_delete",           // can invalidate NonNull<>
+    "lv_obj_add_style",                // use functions::lv_obj_add_style() instead
+    "lv_obj_set_parent",               // use functions::lv_obj_set_parent() instead
+    "lv_event_get_target",             // use functions::lv_event_get_target() instead
+    "lv_event_get_target_obj",         // use functions::lv_event_get_target_obj() instead
+    "lv_event_get_current_target_obj", // use functions::lv_event_get_current_target_obj() instead
+    "lv_list_get_button_text",         // lifetime can't be elided
 ];
 
 #[cfg(not(feature = "no_ecs"))]
-const FUNCTION_BLACKLIST: [&str; 12] = [
-    "lv_obj_null_on_delete",
-    "lv_obj_add_style",
-    "lv_obj_replace_style",
-    "lv_obj_remove_style",
-    "lv_obj_remove_style_all",
-    "lv_obj_refresh_style",
-    "lv_style_init",
-    "lv_obj_set_parent",
-    "lv_event_get_target",
-    "lv_event_get_target_obj",
-    "lv_event_get_current_target_obj",
-    "lv_list_get_button_text", // because of missing lifetime
+const FUNCTION_BLACKLIST: [&str; 11] = [
+    "lv_obj_null_on_delete",           // can invalidate NonNull<>
+    "lv_obj_add_style",                // add component instead
+    "lv_obj_replace_style",            // replace component instead
+    "lv_obj_remove_style",             // remove component instead
+    "lv_obj_remove_style_all",         // remove components instead
+    "lv_style_init",                   // use Style::default() instead
+    "lv_obj_set_parent",               // use EntityWorldMut::add_child() instead
+    "lv_event_get_target",             // use functions::lv_event_get_target() instead
+    "lv_event_get_target_obj",         // use functions::lv_event_get_target_obj() instead
+    "lv_event_get_current_target_obj", // use functions::lv_event_get_current_target_obj() instead
+    "lv_list_get_button_text",         // lifetime can't be elided
 ];
 
 #[derive(Debug, Copy, Clone)]
