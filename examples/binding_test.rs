@@ -6,6 +6,7 @@ use std::{
 };
 
 use bevy_ecs::query::With;
+use lightvgl_sys::lv_image_set_src;
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, hierarchy::Children, world::World},
@@ -403,8 +404,8 @@ fn create_ui(world: &mut World) {
     );
 
     unsafe {
-        lv_canvas_set_buffer(
-            &mut canvas,
+        lightvgl_sys::lv_canvas_set_buffer(
+            canvas.raw_mut(),
             lv_draw_buf_align(
                 (canvas_buf.as_mut_ptr() as *mut c_void).as_mut().unwrap(),
                 lv_color_format_t_LV_COLOR_FORMAT_RGB565,
@@ -438,13 +439,19 @@ fn create_ui(world: &mut World) {
     };
 
     let mut img = Image::create_widget();
-    lv_image_set_src(&mut img, test_img_lvgl_logo_jpg);
+    unsafe {
+        lv_image_set_src(img.raw_mut(), test_img_lvgl_logo_jpg);
+    }
+
     lv_obj_align(&mut img, lv_align_t_LV_ALIGN_BOTTOM_RIGHT, -20, -20);
     lv_obj_add_flag(&mut img, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
     world.spawn((Image, img));
 
     let mut img = Image::create_widget();
-    lv_image_set_src(&mut img, test_img_lvgl_logo_png);
+    unsafe {
+        lv_image_set_src(img.raw_mut(), test_img_lvgl_logo_png);
+    }
+
     lv_obj_set_pos(&mut img, 500, 420);
     lv_obj_add_flag(&mut img, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
     lv_image_set_rotation(&mut img, 200);

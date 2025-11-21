@@ -45,8 +45,6 @@ const FUNCTION_BLACKLIST: [&str; 12] = [
 pub enum SkipReason {
     #[error("Return value is array ({0})")]
     ReturnArray(String),
-    #[error("Array as argument ({0})")]
-    ArrayArgument(String),
     #[error("Void pointer as argument ({0})")]
     VoidPtrArgument(String),
     #[error("Already implemented ({0})")]
@@ -80,9 +78,9 @@ impl Rusty for LvWidget {
             .iter()
             .flat_map(|m| {
                 m.code(self).map_err(|error| match error {
-                    SkipReason::ReturnArray(_)
-                    | SkipReason::ArrayArgument(_)
-                    | SkipReason::VoidPtrArgument(_) => println!("{} - {}", m.name, error),
+                    SkipReason::ReturnArray(_) | SkipReason::VoidPtrArgument(_) => {
+                        println!("{} - {}", m.name, error)
+                    }
                     _ => {}
                 })
             })
@@ -416,7 +414,18 @@ impl LvArg {
 
     pub fn get_value_usage(&self) -> TokenStream {
         let ident = self.get_name_ident();
-        if self.typ.is_const_str() {
+        if self.typ.is_array() {
+            if self.typ.is_const_pointer() {
+                quote! {
+                    &(#ident.as_ptr())
+                }
+            } else {
+                assert!(self.typ.is_mut_pointer());
+                quote! {
+                    &mut (#ident.as_ptr())
+                }
+            }
+        } else if self.typ.is_const_str() {
             quote! {
                 #ident.as_ptr()
             }
@@ -534,7 +543,12 @@ impl Rusty for LvType {
 
     fn code(&self, _parent: &Self::Parent) -> WrapperResult<TokenStream> {
         let val = if self.is_array() {
-            return Err(SkipReason::ArrayArgument(self.literal_name.clone()));
+            let raw_type = parse_str::<TypePath>(&self.raw_name()).unwrap();
+            if self.is_mut_pointer() {
+                quote!(&mut [#raw_type])
+            } else {
+                quote!(&[#raw_type])
+            }
         } else if self.is_const_str() {
             quote!(&CStr)
         } else if self.is_mut_str() {
@@ -549,7 +563,7 @@ impl Rusty for LvType {
             quote!(&mut crate::styles::Style)
         } else {
             let raw_name = self.raw_name();
-            if raw_name == "cty :: c_void" {
+            if raw_name == ":: core :: ffi :: c_void" {
                 return Err(SkipReason::VoidPtrArgument(self.literal_name.clone()));
             }
             let ty: TypePath = parse_str(&raw_name)
