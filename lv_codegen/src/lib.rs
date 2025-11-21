@@ -12,15 +12,16 @@ type CGResult<T> = Result<T, Box<dyn Error>>;
 const LIB_PREFIX: &str = "lv_";
 
 #[cfg(feature = "no_ecs")]
-const FUNCTION_BLACKLIST: [&str; 4] = [
+const FUNCTION_BLACKLIST: [&str; 5] = [
     "lv_style_init",
     "lv_obj_null_on_delete",
     "lv_obj_add_style",
     "lv_obj_set_parent",
+    "lv_list_get_button_text", // because of missing lifetime
 ];
 
 #[cfg(not(feature = "no_ecs"))]
-const FUNCTION_BLACKLIST: [&str; 11] = [
+const FUNCTION_BLACKLIST: [&str; 12] = [
     "lv_obj_null_on_delete",
     "lv_obj_add_style",
     "lv_obj_replace_style",
@@ -32,6 +33,7 @@ const FUNCTION_BLACKLIST: [&str; 11] = [
     "lv_event_get_target",
     "lv_event_get_target_obj",
     "lv_event_get_current_target_obj",
+    "lv_list_get_button_text", // because of missing lifetime
 ];
 
 #[derive(Debug, Copy, Clone)]
@@ -128,9 +130,11 @@ impl Rusty for LvFunc {
                         panic!("Cannot parse {} as type", return_value.literal_name)
                     })
                 } else {
-                    if return_value.is_mut_native_object() || return_value.is_const_native_object()
+                    if return_value.is_const_native_object() || return_value.is_mut_native_object()
                     {
                         parse_str("-> Option<Wdg>").unwrap()
+                    } else if return_value.is_const_str() || return_value.is_mut_str() {
+                        parse_str("-> &CStr").unwrap()
                     } else {
                         println!("Return value is pointer ({})", return_value.literal_name);
                         return Err(WrapperError::Skip);
@@ -242,12 +246,26 @@ impl Rusty for LvFunc {
         let return_expr;
         let optional_semicolon;
         let return_value = self.ret.as_ref();
-        if let Some(return_value) = return_value
-            && (return_value.is_const_native_object() || return_value.is_mut_native_object())
-        {
-            return_assignment = quote!(let pointer = );
-            return_expr = quote!(Wdg::try_from_ptr(pointer));
-            optional_semicolon = quote!(;);
+        if let Some(return_value) = return_value {
+            if return_value.is_const_native_object() || return_value.is_mut_native_object() {
+                return_assignment = quote!(let pointer = );
+                return_expr = quote!(Wdg::try_from_ptr(pointer));
+                optional_semicolon = quote!(;);
+            } else if return_value.is_const_str() || return_value.is_mut_str() {
+                return_assignment = quote!(let pointer = );
+                return_expr = quote!(CStr::from_ptr(pointer));
+                optional_semicolon = quote!(;);
+            } else {
+                if args_postprocessing.is_empty() {
+                    return_assignment = quote!();
+                    return_expr = quote!();
+                    optional_semicolon = quote!();
+                } else {
+                    return_assignment = quote!(let rust_result = );
+                    return_expr = quote!(rust_result);
+                    optional_semicolon = quote!(;);
+                }
+            }
         } else {
             if args_postprocessing.is_empty() {
                 return_assignment = quote!();
@@ -921,6 +939,34 @@ mod test {
                 unsafe {
                     let pointer = lightvgl_sys::lv_dropdown_get_list(obj.raw_mut());
                     Wdg::try_from_ptr(pointer)
+                }
+            }
+        };
+
+        assert_eq!(code.to_string(), expected_code.to_string());
+    }
+
+    #[test]
+    fn generate_method_wrapper_for_str_return() {
+        let bindgen_code = quote! {
+            unsafe extern "C" {
+                pub fn lv_label_get_text(obj: *const lv_obj_t) -> *mut ::core::ffi::c_char;
+            }
+        };
+        let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
+
+        let label_get_text = cg.get(0).unwrap().clone();
+        let parent_widget = LvWidget {
+            name: "obj".to_string(),
+            methods: vec![],
+        };
+
+        let code = label_get_text.code(&parent_widget).unwrap();
+        let expected_code = quote! {
+            pub fn lv_label_get_text(obj: &crate::widgets::Wdg) -> &CStr {
+                unsafe {
+                    let pointer = lightvgl_sys::lv_label_get_text(obj.raw());
+                    CStr::from_ptr(pointer)
                 }
             }
         };
