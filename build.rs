@@ -21,7 +21,9 @@ fn main() {
         .collect();
 
     let code = quote! {
+        use ::core::ptr::NonNull;
         use lightvgl_sys::*;
+
         #(#widgets_impl)*
     };
 

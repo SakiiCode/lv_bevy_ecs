@@ -13,11 +13,12 @@ type CGResult<T> = Result<T, Box<dyn Error>>;
 const LIB_PREFIX: &str = "lv_";
 
 #[cfg(feature = "no_ecs")]
-const FUNCTION_BLACKLIST: [&str; 8] = [
+const FUNCTION_BLACKLIST: [&str; 9] = [
     "lv_style_init",                   // use Style::default() instead
     "lv_obj_null_on_delete",           // can invalidate NonNull<>
     "lv_obj_add_style",                // use functions::lv_obj_add_style() instead
     "lv_obj_set_parent",               // use functions::lv_obj_set_parent() instead
+    "lv_obj_add_event_cb",             // implemented manually
     "lv_event_get_target",             // use functions::lv_event_get_target() instead
     "lv_event_get_target_obj",         // use functions::lv_event_get_target_obj() instead
     "lv_event_get_current_target_obj", // use functions::lv_event_get_current_target_obj() instead
@@ -25,14 +26,15 @@ const FUNCTION_BLACKLIST: [&str; 8] = [
 ];
 
 #[cfg(not(feature = "no_ecs"))]
-const FUNCTION_BLACKLIST: [&str; 11] = [
+const FUNCTION_BLACKLIST: [&str; 12] = [
     "lv_obj_null_on_delete",           // can invalidate NonNull<>
     "lv_obj_add_style",                // add component instead
     "lv_obj_replace_style",            // replace component instead
     "lv_obj_remove_style",             // remove component instead
     "lv_obj_remove_style_all",         // remove components instead
-    "lv_style_init",                   // use Style::default() instead
     "lv_obj_set_parent",               // use EntityWorldMut::add_child() instead
+    "lv_obj_add_event_cb",             // implemented manually
+    "lv_style_init",                   // use Style::default() instead
     "lv_event_get_target",             // use functions::lv_event_get_target() instead
     "lv_event_get_target_obj",         // use functions::lv_event_get_target_obj() instead
     "lv_event_get_current_target_obj", // use functions::lv_event_get_current_target_obj() instead
@@ -41,8 +43,10 @@ const FUNCTION_BLACKLIST: [&str; 11] = [
 
 #[derive(Debug, Clone, Error)]
 pub enum SkipReason {
-    #[error("Return value is pointer ({0})")]
-    ReturnPointer(String),
+    #[error("Return value is array ({0})")]
+    ReturnArray(String),
+    #[error("Return value is const pointer ({0})")]
+    ReturnConstPtr(String),
     #[error("Array as argument ({0})")]
     ArrayArgument(String),
     #[error("Void pointer as argument ({0})")]
@@ -78,7 +82,8 @@ impl Rusty for LvWidget {
             .iter()
             .flat_map(|m| {
                 m.code(self).map_err(|error| match error {
-                    SkipReason::ReturnPointer(_)
+                    SkipReason::ReturnArray(_)
+                    | SkipReason::ReturnConstPtr(_)
                     | SkipReason::ArrayArgument(_)
                     | SkipReason::VoidPtrArgument(_) => println!("{} - {}", m.name, error),
                     _ => {}
@@ -160,8 +165,15 @@ impl Rusty for LvFunc {
                         parse_str("-> Option<Wdg>").unwrap()
                     } else if return_value.is_const_str() || return_value.is_mut_str() {
                         parse_str("-> &CStr").unwrap()
+                    } else if return_value.is_array() {
+                        return Err(SkipReason::ReturnArray(return_value.literal_name.clone()));
+                    } else if return_value.is_mut_pointer() {
+                        parse_str(&format!("-> Option<NonNull<{}>>", return_value.raw_name()))
+                            .unwrap()
                     } else {
-                        return Err(SkipReason::ReturnPointer(return_value.literal_name.clone()));
+                        return Err(SkipReason::ReturnConstPtr(
+                            return_value.literal_name.clone(),
+                        ));
                     }
                 }
             }
@@ -278,6 +290,10 @@ impl Rusty for LvFunc {
             } else if return_value.is_const_str() || return_value.is_mut_str() {
                 return_assignment = quote!(let pointer = );
                 return_expr = quote!(CStr::from_ptr(pointer));
+                optional_semicolon = quote!(;);
+            } else if return_value.is_pointer() {
+                return_assignment = quote!(let pointer = );
+                return_expr = quote!(NonNull::new(pointer));
                 optional_semicolon = quote!(;);
             } else {
                 if args_postprocessing.is_empty() {
@@ -457,6 +473,12 @@ impl LvType {
         }
     }
 
+    pub fn raw_name(&self) -> String {
+        self.literal_name
+            .replace("* const ", "")
+            .replace("* mut ", "")
+    }
+
     pub fn is_const(&self) -> bool {
         self.literal_name.starts_with("const ")
     }
@@ -489,6 +511,14 @@ impl LvType {
         self.literal_name.starts_with('*')
     }
 
+    pub fn is_const_pointer(&self) -> bool {
+        self.literal_name.starts_with("* const")
+    }
+
+    pub fn is_mut_pointer(&self) -> bool {
+        self.literal_name.starts_with("* mut")
+    }
+
     pub fn is_array(&self) -> bool {
         self.literal_name.starts_with("* mut *") || self.literal_name.starts_with("* const *")
     }
@@ -501,7 +531,7 @@ impl Rusty for LvType {
         let val = if self.is_array() {
             return Err(SkipReason::ArrayArgument(self.literal_name.clone()));
         } else if self.is_const_str() {
-            quote!(&::core::ffi::CStr)
+            quote!(&CStr)
         } else if self.is_mut_str() {
             quote!(&mut ::alloc::ffi::CString)
         } else if self.is_const_native_object() {
@@ -513,8 +543,7 @@ impl Rusty for LvType {
         } else if self.is_mut_style() {
             quote!(&mut crate::styles::Style)
         } else {
-            let literal_name = self.literal_name.as_str();
-            let raw_name = literal_name.replace("* const ", "").replace("* mut ", "");
+            let raw_name = self.raw_name();
             if raw_name == "cty :: c_void" {
                 return Err(SkipReason::VoidPtrArgument(self.literal_name.clone()));
             }
@@ -749,7 +778,7 @@ mod test {
                 #[doc = " Set a new text for a label. Memory will be allocated to store the text by the label."]
                 #[doc = " @param label pointer to a label object"]
                 #[doc = " @param text '\\0' terminated character string. NULL to refresh with the current text."]
-                pub fn lv_label_set_text(label: *mut lv_obj_t, text: *const ::core::ffi::c_char);
+                pub fn lv_label_set_text(label: *mut lv_obj_t, text: *const c_char);
             }
         };
         let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
@@ -763,7 +792,7 @@ mod test {
         let code = label_set_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
 
-            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &::core::ffi::CStr) {
+            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &CStr) {
                 unsafe {
                     lightvgl_sys::lv_label_set_text(
                         label.raw_mut(),
@@ -784,7 +813,7 @@ mod test {
                 pub fn lv_roller_get_option_str(
                     obj: *const lv_obj_t,
                     option: u32,
-                    buf: *mut ::core::ffi::c_char,
+                    buf: *mut c_char,
                     buf_size: u32,
                 ) -> lv_result_t;
             }
@@ -861,7 +890,7 @@ mod test {
                 #[doc = " Set a new text for a label. Memory will be allocated to store the text by the label."]
                 #[doc = " @param label pointer to a label object"]
                 #[doc = " @param text '\\0' terminated character string. NULL to refresh with the current text."]
-                pub fn lv_label_set_text(label: *mut lv_obj_t, text: *const ::core::ffi::c_char);
+                pub fn lv_label_set_text(label: *mut lv_obj_t, text: *const c_char);
             }
         };
         let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
@@ -874,7 +903,7 @@ mod test {
 
         let code = label_set_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &::core::ffi::CStr) {
+            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &CStr) {
                 unsafe {
                     lightvgl_sys::lv_label_set_text(
                         label.raw_mut(),
@@ -972,7 +1001,7 @@ mod test {
     fn generate_method_wrapper_for_str_return() {
         let bindgen_code = quote! {
             unsafe extern "C" {
-                pub fn lv_label_get_text(obj: *const lv_obj_t) -> *mut ::core::ffi::c_char;
+                pub fn lv_label_get_text(obj: *const lv_obj_t) -> *mut c_char;
             }
         };
         let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
