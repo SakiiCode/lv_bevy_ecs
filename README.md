@@ -21,7 +21,7 @@ Enabling the `no_ecs` feature unlocks some functions that allow you to bring you
 If you don't care about storage at all, and know in advance that a Widget will live for the rest of the program's execution,
 you can call `Widget::leak()` to leak memory and prevent calling the destructor.
 
-Check out [no_ecs.rs]() on how to use it.
+Check out [no_ecs.rs]() on how to use these.
 
 ## Usage
 
@@ -123,7 +123,8 @@ Can be enabled with the feature `lvgl_alloc`. This will make all dynamic memory 
 
 | lv_bevy_ecs | bevy_ecs | lightvgl-sys | LVGL  |
 | ----------- | -------- | ------------ | ----- |
-| 0.5.1       | 0.17.3   | 9.4.2        | 9.4.0 |
+| 0.6.0       | 0.17.3   | 9.4.2        | 9.4.0 |
+| 0.5.2       | 0.17.3   | 9.4.2        | 9.4.0 |
 | 0.5.0       | 0.17.2   | 9.4.0        | 9.4.0 |
 | 0.4.0       | 0.17.2   | 9.3.0        | 9.3.0 |
 | 0.3.0       | 0.16.0   | 9.3.0        | 9.3.0 |
