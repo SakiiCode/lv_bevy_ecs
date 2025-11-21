@@ -22,6 +22,7 @@ fn main() {
 
     let code = quote! {
         use ::core::ptr::NonNull;
+        use ::core::any::Any;
         use lightvgl_sys::*;
 
         #(#widgets_impl)*

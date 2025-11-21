@@ -250,14 +250,12 @@ impl Rusty for LvFunc {
         //   TODO: When handling getters this should be self.raw().as_ptr() instead, this also requires updating args_decl
         // - The arguments will be appended to the accumulator (args_accumulator) as they are generated in the closure
         let ffi_args = self.args.iter().fold(quote!(), |args_accumulator, arg| {
+            let var = arg.get_value_usage();
             let next_arg = if arg.typ.is_mut_native_object() {
-                let var = arg.get_value_usage();
                 quote! {#var.raw_mut()}
             } else if arg.typ.is_const_native_object() {
-                let var = arg.get_value_usage();
                 quote! {#var.raw()}
             } else {
-                let var = arg.get_value_usage();
                 quote!(#var)
             };
 
@@ -442,6 +440,10 @@ impl LvArg {
             quote! {
                 #ident.raw_mut()
             }
+        } else if self.typ.is_mut_void() {
+            quote! {#ident as *mut _ as *mut c_void}
+        } else if self.typ.is_const_void() {
+            quote! {#ident as *const _ as *const c_void}
         } else {
             quote! {
                 #ident
@@ -533,6 +535,14 @@ impl LvType {
         self.literal_name.starts_with("* mut")
     }
 
+    pub fn is_const_void(&self) -> bool {
+        self.literal_name == "* const :: core :: ffi :: c_void"
+    }
+
+    pub fn is_mut_void(&self) -> bool {
+        self.literal_name == "* mut :: core :: ffi :: c_void"
+    }
+
     pub fn is_array(&self) -> bool {
         self.literal_name.starts_with("* mut *") || self.literal_name.starts_with("* const *")
     }
@@ -561,11 +571,12 @@ impl Rusty for LvType {
             quote!(&crate::styles::Style)
         } else if self.is_mut_style() {
             quote!(&mut crate::styles::Style)
+        } else if self.is_mut_void() {
+            quote!(&mut dyn Any)
+        } else if self.is_const_void() {
+            quote!(&dyn Any)
         } else {
             let raw_name = self.raw_name();
-            if raw_name == ":: core :: ffi :: c_void" {
-                return Err(SkipReason::VoidPtrArgument(self.literal_name.clone()));
-            }
             let ty: TypePath = parse_str(&raw_name)
                 .unwrap_or_else(|_| panic!("Cannot parse {raw_name} to a type"));
             if self.literal_name.starts_with("* mut") {
