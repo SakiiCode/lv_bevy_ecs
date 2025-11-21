@@ -128,8 +128,13 @@ impl Rusty for LvFunc {
                         panic!("Cannot parse {} as type", return_value.literal_name)
                     })
                 } else {
-                    println!("Return value is pointer ({})", return_value.literal_name);
-                    return Err(WrapperError::Skip);
+                    if return_value.is_mut_native_object() || return_value.is_const_native_object()
+                    {
+                        parse_str("-> Option<Wdg>").unwrap()
+                    } else {
+                        println!("Return value is pointer ({})", return_value.literal_name);
+                        return Err(WrapperError::Skip);
+                    }
                 }
             }
         };
@@ -236,14 +241,23 @@ impl Rusty for LvFunc {
         let return_assignment;
         let return_expr;
         let optional_semicolon;
-        if args_postprocessing.is_empty() {
-            return_assignment = quote!();
-            return_expr = quote!();
-            optional_semicolon = quote!();
-        } else {
-            return_assignment = quote!(let rust_result = );
-            return_expr = quote!(rust_result);
+        let return_value = self.ret.as_ref();
+        if let Some(return_value) = return_value
+            && (return_value.is_const_native_object() || return_value.is_mut_native_object())
+        {
+            return_assignment = quote!(let pointer = );
+            return_expr = quote!(Wdg::try_from_ptr(pointer));
             optional_semicolon = quote!(;);
+        } else {
+            if args_postprocessing.is_empty() {
+                return_assignment = quote!();
+                return_expr = quote!();
+                optional_semicolon = quote!();
+            } else {
+                return_assignment = quote!(let rust_result = );
+                return_expr = quote!(rust_result);
+                optional_semicolon = quote!(;);
+            }
         }
 
         Ok(quote! {
@@ -766,38 +780,6 @@ mod test {
     }
 
     #[test]
-    fn generate_method_wrapper_for_void_return() {
-        let bindgen_code = quote! {
-            extern "C" {
-                #[doc = " Set a new text for a label. Memory will be allocated to store the text by the label."]
-                #[doc = " @param label pointer to a label object"]
-                #[doc = " @param text '\\0' terminated character string. NULL to refresh with the current text."]
-                pub fn lv_label_set_text(label: *mut lv_obj_t, text: *const ::core::ffi::c_char);
-            }
-        };
-        let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
-
-        let label_set_text = cg.get(0).unwrap().clone();
-        let parent_widget = LvWidget {
-            name: "label".to_string(),
-            methods: vec![],
-        };
-
-        let code = label_set_text.code(&parent_widget).unwrap();
-        let expected_code = quote! {
-            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &::core::ffi::CStr) {
-                unsafe {
-                    lightvgl_sys::lv_label_set_text(
-                        label.raw_mut(),
-                        text.as_ptr()
-                    )
-                }
-            }
-        };
-        assert_eq!(code.to_string(), expected_code.to_string());
-    }
-
-    #[test]
     fn generate_method_wrapper_with_mut_obj_parameter() {
         let bindgen_code = quote! {
             extern "C" {
@@ -829,6 +811,38 @@ mod test {
             }
         };
 
+        assert_eq!(code.to_string(), expected_code.to_string());
+    }
+
+    #[test]
+    fn generate_method_wrapper_for_void_return() {
+        let bindgen_code = quote! {
+            extern "C" {
+                #[doc = " Set a new text for a label. Memory will be allocated to store the text by the label."]
+                #[doc = " @param label pointer to a label object"]
+                #[doc = " @param text '\\0' terminated character string. NULL to refresh with the current text."]
+                pub fn lv_label_set_text(label: *mut lv_obj_t, text: *const ::core::ffi::c_char);
+            }
+        };
+        let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
+
+        let label_set_text = cg.get(0).unwrap().clone();
+        let parent_widget = LvWidget {
+            name: "label".to_string(),
+            methods: vec![],
+        };
+
+        let code = label_set_text.code(&parent_widget).unwrap();
+        let expected_code = quote! {
+            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &::core::ffi::CStr) {
+                unsafe {
+                    lightvgl_sys::lv_label_set_text(
+                        label.raw_mut(),
+                        text.as_ptr()
+                    )
+                }
+            }
+        };
         assert_eq!(code.to_string(), expected_code.to_string());
     }
 
@@ -879,6 +893,34 @@ mod test {
             pub fn lv_label_get_text_selection_start(label: &mut crate::widgets::Wdg) -> u32 {
                 unsafe {
                     lightvgl_sys::lv_label_get_text_selection_start(label.raw_mut())
+                }
+            }
+        };
+
+        assert_eq!(code.to_string(), expected_code.to_string());
+    }
+
+    #[test]
+    fn generate_method_wrapper_for_obj_return() {
+        let bindgen_code = quote! {
+            unsafe extern "C" {
+                pub fn lv_dropdown_get_list(obj: *mut lv_obj_t) -> *mut lv_obj_t;
+            }
+        };
+        let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
+
+        let dropdown_get_list = cg.get(0).unwrap().clone();
+        let parent_widget = LvWidget {
+            name: "obj".to_string(),
+            methods: vec![],
+        };
+
+        let code = dropdown_get_list.code(&parent_widget).unwrap();
+        let expected_code = quote! {
+            pub fn lv_dropdown_get_list(obj: &mut crate::widgets::Wdg) -> Option<Wdg> {
+                unsafe {
+                    let pointer = lightvgl_sys::lv_dropdown_get_list(obj.raw_mut());
+                    Wdg::try_from_ptr(pointer)
                 }
             }
         };
