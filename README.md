@@ -2,6 +2,10 @@
 
 Safe Rust bindings to the LVGL library using bevy_ecs. Compatible with `#![no_std]` environments by default.
 
+[![Crates.io](https://img.shields.io/crates/v/lv_bevy_ecs.svg)](https://crates.io/crates/lv_bevy_ecs)
+[![Docs](https://docs.rs/lv_bevy_ecs/badge.svg)](https://docs.rs/lv_bevy_ecs/latest/lv_bevy_ecs/)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+
 ## What is an ECS?
 
 ECS stands for Entity Component System. You can think of it as a database with rows (entities),
