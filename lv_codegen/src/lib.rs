@@ -45,8 +45,6 @@ const FUNCTION_BLACKLIST: [&str; 12] = [
 pub enum SkipReason {
     #[error("Return value is array ({0})")]
     ReturnArray(String),
-    #[error("Return value is const pointer ({0})")]
-    ReturnConstPtr(String),
     #[error("Array as argument ({0})")]
     ArrayArgument(String),
     #[error("Void pointer as argument ({0})")]
@@ -83,7 +81,6 @@ impl Rusty for LvWidget {
             .flat_map(|m| {
                 m.code(self).map_err(|error| match error {
                     SkipReason::ReturnArray(_)
-                    | SkipReason::ReturnConstPtr(_)
                     | SkipReason::ArrayArgument(_)
                     | SkipReason::VoidPtrArgument(_) => println!("{} - {}", m.name, error),
                     _ => {}
@@ -171,9 +168,7 @@ impl Rusty for LvFunc {
                         parse_str(&format!("-> Option<NonNull<{}>>", return_value.raw_name()))
                             .unwrap()
                     } else {
-                        return Err(SkipReason::ReturnConstPtr(
-                            return_value.literal_name.clone(),
-                        ));
+                        parse_str(&format!("-> Option<&{}>", return_value.raw_name())).unwrap()
                     }
                 }
             }
@@ -292,9 +287,19 @@ impl Rusty for LvFunc {
                 return_expr = quote!(CStr::from_ptr(pointer));
                 optional_semicolon = quote!(;);
             } else if return_value.is_pointer() {
-                return_assignment = quote!(let pointer = );
-                return_expr = quote!(NonNull::new(pointer));
-                optional_semicolon = quote!(;);
+                if return_value.is_mut_pointer() {
+                    return_assignment = quote!(let pointer = );
+                    return_expr = quote!(NonNull::new(pointer));
+                    optional_semicolon = quote!(;);
+                } else {
+                    return_assignment = quote!(let pointer = );
+                    return_expr = quote!(if !pointer.is_null() {
+                        Some(&*pointer)
+                    } else {
+                        None
+                    });
+                    optional_semicolon = quote!(;);
+                }
             } else {
                 if args_postprocessing.is_empty() {
                     return_assignment = quote!();
