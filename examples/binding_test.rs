@@ -6,7 +6,6 @@ use std::{
 };
 
 use bevy_ecs::query::With;
-use lightvgl_sys::lv_image_set_src;
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, hierarchy::Children, world::World},
@@ -22,18 +21,18 @@ use lv_bevy_ecs::{
         LV_ANIM_REPEAT_INFINITE, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST, LV_SYMBOL_FILE,
         lv_align_t_LV_ALIGN_BOTTOM_RIGHT, lv_anim_path_ease_out, lv_anim_set_path_cb,
         lv_anim_set_repeat_count, lv_area_t, lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
-        lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED, lv_buttonmatrix_get_button_text,
-        lv_buttonmatrix_set_map, lv_chart_add_series, lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X,
-        lv_chart_set_type, lv_chart_type_t_LV_CHART_TYPE_BAR, lv_chart_type_t_LV_CHART_TYPE_LINE,
+        lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED, lv_buttonmatrix_set_map,
+        lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X, lv_chart_set_type,
+        lv_chart_type_t_LV_CHART_TYPE_BAR, lv_chart_type_t_LV_CHART_TYPE_LINE,
         lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_color_hex, lv_color_hex3, lv_color_mix,
-        lv_color_t, lv_draw_buf_align, lv_draw_image_dsc_t, lv_draw_line_dsc_t,
-        lv_dropdown_bind_value, lv_event_t, lv_flex_flow_t_LV_FLEX_FLOW_COLUMN,
-        lv_font_montserrat_24, lv_grid_align_t_LV_GRID_ALIGN_CENTER,
-        lv_grid_align_t_LV_GRID_ALIGN_START, lv_grid_align_t_LV_GRID_ALIGN_STRETCH, lv_layer_t,
-        lv_obj_create, lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT,
-        lv_obj_set_grid_dsc_array, lv_obj_t, lv_observer_get_target, lv_observer_t,
-        lv_palette_darken, lv_palette_t_LV_PALETTE_BLUE, lv_part_t_LV_PART_ITEMS, lv_screen_active,
-        lv_state_t_LV_STATE_CHECKED, lv_subject_get_int, lv_subject_t,
+        lv_color_t, lv_draw_buf_align, lv_draw_image_dsc_t, lv_draw_line_dsc_t, lv_event_t,
+        lv_flex_flow_t_LV_FLEX_FLOW_COLUMN, lv_font_montserrat_24,
+        lv_grid_align_t_LV_GRID_ALIGN_CENTER, lv_grid_align_t_LV_GRID_ALIGN_START,
+        lv_grid_align_t_LV_GRID_ALIGN_STRETCH, lv_layer_t, lv_obj_create,
+        lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT, lv_obj_t,
+        lv_observer_get_target, lv_observer_t, lv_palette_darken, lv_palette_t_LV_PALETTE_BLUE,
+        lv_part_t_LV_PART_ITEMS, lv_screen_active, lv_state_t_LV_STATE_CHECKED, lv_subject_get_int,
+        lv_subject_t,
     },
     widgets::{
         Button, Buttonmatrix, Canvas, Chart, Dropdown, Image, Label, LvglWorld, Wdg, Widget,
@@ -176,13 +175,13 @@ fn create_ui(world: &mut World) {
         lv_style_set_text_font(&mut style_big_font, &lv_font_montserrat_24);
     }
 
-    let mut grid_cols = [
+    let grid_cols = [
         300 as i32,
         lv_grid_fr!(3) as i32,
         lv_grid_fr!(2) as i32,
         LV_GRID_TEMPLATE_LAST as i32,
     ];
-    let mut grid_rows = [
+    let grid_rows = [
         100 as i32,
         lv_grid_fr!(1) as i32,
         LV_GRID_CONTENT as i32,
@@ -190,11 +189,8 @@ fn create_ui(world: &mut World) {
     ];
 
     unsafe {
-        lv_obj_set_grid_dsc_array(
-            lv_screen_active(),
-            grid_cols.as_mut_ptr(),
-            grid_rows.as_mut_ptr(),
-        );
+        let mut active_screen = Wdg::from_ptr(lv_screen_active());
+        lv_obj_set_grid_dsc_array(&mut active_screen, &grid_cols[0], &grid_rows[0]);
     }
 
     let mut chart_type_subject = Subject::new_int(0);
@@ -212,9 +208,7 @@ fn create_ui(world: &mut World) {
         1,
     );
 
-    unsafe {
-        lv_dropdown_bind_value(dropdown.raw_mut(), chart_type_subject.raw_mut());
-    }
+    lv_dropdown_bind_value(&mut dropdown, chart_type_subject.raw_mut());
 
     world.spawn((Dropdown, dropdown));
 
@@ -229,16 +223,12 @@ fn create_ui(world: &mut World) {
         1,
     );
 
-    unsafe {
-        let series =
-            lv_chart_add_series(chart.raw_mut(), c3, lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X);
-        let mut chart_y_array = [10, 25, 50, 40, 30, 35, 60, 65, 70, 75];
+    let mut series =
+        lv_chart_add_series(&mut chart, c3, lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X).unwrap();
+    let mut chart_y_array = [10, 25, 50, 40, 30, 35, 60, 65, 70, 75];
 
-        lv_chart_set_series_ext_y_array(
-            &mut chart,
-            series.as_mut().unwrap(),
-            &mut chart_y_array[0],
-        );
+    unsafe {
+        lv_chart_set_series_ext_y_array(&mut chart, series.as_mut(), &mut chart_y_array[0]);
     }
 
     lv_subject_add_observer_obj(&mut chart_type_subject, &mut chart, chart_type_observer_cb);
@@ -404,14 +394,13 @@ fn create_ui(world: &mut World) {
     );
 
     unsafe {
-        lightvgl_sys::lv_canvas_set_buffer(
-            canvas.raw_mut(),
-            lv_draw_buf_align(
-                (canvas_buf.as_mut_ptr() as *mut c_void).as_mut().unwrap(),
-                lv_color_format_t_LV_COLOR_FORMAT_RGB565,
-            )
-            .as_mut()
-            .unwrap(),
+        let buf = lv_draw_buf_align(
+            (canvas_buf.as_mut_ptr() as *mut c_void).as_mut().unwrap(),
+            lv_color_format_t_LV_COLOR_FORMAT_RGB565,
+        );
+        lv_canvas_set_buffer(
+            &mut canvas,
+            buf.as_mut().unwrap(),
             400,
             100,
             lv_color_format_t_LV_COLOR_FORMAT_RGB565,
@@ -426,31 +415,27 @@ fn create_ui(world: &mut World) {
 
     let test_img_lvgl_logo_png_path = c"A:examples/assets/test_img_lvgl_logo.png".as_ptr();
     let test_img_lvgl_logo_png = unsafe {
-        (test_img_lvgl_logo_png_path as *mut c_void)
-            .as_mut()
+        (test_img_lvgl_logo_png_path.cast::<c_void>())
+            .as_ref()
             .unwrap()
     };
 
     let test_img_lvgl_logo_jpg_path = c"A:examples/assets/test_img_lvgl_logo.jpg".as_ptr();
     let test_img_lvgl_logo_jpg = unsafe {
-        (test_img_lvgl_logo_jpg_path as *mut c_void)
-            .as_mut()
+        (test_img_lvgl_logo_jpg_path.cast::<c_void>())
+            .as_ref()
             .unwrap()
     };
 
     let mut img = Image::create_widget();
-    unsafe {
-        lv_image_set_src(img.raw_mut(), test_img_lvgl_logo_jpg);
-    }
+    lv_image_set_src(&mut img, test_img_lvgl_logo_jpg);
 
     lv_obj_align(&mut img, lv_align_t_LV_ALIGN_BOTTOM_RIGHT, -20, -20);
     lv_obj_add_flag(&mut img, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
     world.spawn((Image, img));
 
     let mut img = Image::create_widget();
-    unsafe {
-        lv_image_set_src(img.raw_mut(), test_img_lvgl_logo_png);
-    }
+    lv_image_set_src(&mut img, test_img_lvgl_logo_png);
 
     lv_obj_set_pos(&mut img, 500, 420);
     lv_obj_add_flag(&mut img, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
@@ -478,18 +463,16 @@ fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject
 }
 
 fn buttonmatrix_event_cb(world: &mut World, e: &mut lv_event_t) {
-    unsafe {
-        // lv_event_get_user_data must not be used! (user data is reserved for the callback function)
-        let buttonmatrix = Wdg::from_ptr(lv_event_get_target(e) as *mut lv_obj_t);
-        let idx = lv_buttonmatrix_get_selected_button(&buttonmatrix);
-        let text = CStr::from_ptr(lv_buttonmatrix_get_button_text(buttonmatrix.raw(), idx));
-        let mut label = world
-            .query_filtered::<&mut Widget, With<DynamicLabel>>()
-            .single_mut(world)
-            .unwrap();
+    // lv_event_get_user_data must not be used! (user data is reserved for the callback function)
+    let buttonmatrix = Wdg::from_ptr(lv_event_get_target(e) as *mut lv_obj_t);
+    let idx = lv_buttonmatrix_get_selected_button(&buttonmatrix);
+    let text = lv_buttonmatrix_get_button_text(&buttonmatrix, idx);
+    let mut label = world
+        .query_filtered::<&mut Widget, With<DynamicLabel>>()
+        .single_mut(world)
+        .unwrap();
 
-        lv_label_set_text(&mut label, text);
-    }
+    lv_label_set_text(&mut label, text);
 }
 
 fn list_button_create(world: &mut World, parent: Entity) -> Entity {
