@@ -188,6 +188,14 @@ impl Widget {
     }
 }
 
+impl Default for Widget {
+    fn default() -> Self {
+        unsafe {
+            Widget::from_ptr(lightvgl_sys::lv_obj_create(lightvgl_sys::lv_screen_active())).unwrap()
+        }
+    }
+}
+
 impl AsRef<Wdg> for Widget {
     fn as_ref(&self) -> &Wdg {
         Wdg::from_non_null(&self.raw)

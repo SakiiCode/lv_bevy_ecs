@@ -55,6 +55,10 @@ where
     crate::timers::lv_async_call(callback)
 }
 
+pub fn lv_screen_active() -> Option<Wdg> {
+    unsafe { Wdg::try_from_ptr(lightvgl_sys::lv_screen_active()) }
+}
+
 #[rustfmt::skip]
 pub fn lv_subject_set_int(subject: &mut Subject, value: i32) {
     unsafe { lightvgl_sys::lv_subject_set_int(subject.raw_mut(), value) }
