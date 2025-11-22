@@ -396,12 +396,12 @@ impl LvArg {
         if self.typ.is_array() {
             if self.typ.is_const_pointer() {
                 quote! {
-                    &(#ident.as_ptr())
+                    #ident.as_ptr()
                 }
             } else {
                 assert!(self.typ.is_mut_pointer());
                 quote! {
-                    &mut (#ident.as_ptr())
+                    #ident.as_mut_ptr()
                 }
             }
         } else if self.typ.is_const_str() {
@@ -476,16 +476,26 @@ impl LvType {
             .replace("* mut ", "")
     }
 
+    pub fn item_name(&self) -> String {
+        assert!(self.is_array());
+        if self.is_mut_pointer() {
+            self.literal_name.replacen("* mut ", "", 1)
+        } else {
+            self.literal_name.replacen("* const ", "", 1)
+        }
+    }
+
     pub fn is_const(&self) -> bool {
         self.literal_name.starts_with("const ")
     }
 
     pub fn is_const_str(&self) -> bool {
         self.literal_name == "* const :: core :: ffi :: c_char"
+            || self.literal_name == "* const c_char"
     }
 
     pub fn is_mut_str(&self) -> bool {
-        self.literal_name == "* mut :: core :: ffi :: c_char"
+        self.literal_name == "* mut :: core :: ffi :: c_char" || self.literal_name == "* mut c_char"
     }
 
     pub fn is_const_native_object(&self) -> bool {
@@ -533,17 +543,17 @@ impl Rusty for LvType {
     type Parent = LvArg;
 
     fn code(&self, _parent: &Self::Parent) -> WrapperResult<TokenStream> {
-        let val = if self.is_array() {
-            let raw_type = parse_str::<TypePath>(&self.raw_name()).unwrap();
-            if self.is_mut_pointer() {
-                quote!(&mut [#raw_type])
-            } else {
-                quote!(&[#raw_type])
-            }
-        } else if self.is_const_str() {
+        let val = if self.is_const_str() {
             quote!(&CStr)
         } else if self.is_mut_str() {
             quote!(&mut ::alloc::ffi::CString)
+        } else if self.is_array() {
+            let item_type = parse_str::<TokenStream>(&self.item_name()).unwrap();
+            if self.is_mut_pointer() {
+                quote!(&mut [#item_type])
+            } else {
+                quote!(&[#item_type])
+            }
         } else if self.is_const_native_object() {
             quote!(&crate::widgets::Wdg)
         } else if self.is_mut_native_object() {

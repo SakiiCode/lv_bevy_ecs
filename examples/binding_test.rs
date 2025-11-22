@@ -1,6 +1,7 @@
 use std::{
     ffi::{CStr, CString, c_void},
     process::exit,
+    str::FromStr,
     thread::sleep,
     time::{Duration, Instant},
 };
@@ -21,7 +22,7 @@ use lv_bevy_ecs::{
         LV_ANIM_REPEAT_INFINITE, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST, LV_SYMBOL_FILE,
         lv_align_t_LV_ALIGN_BOTTOM_RIGHT, lv_anim_path_ease_out, lv_anim_set_path_cb,
         lv_anim_set_repeat_count, lv_area_t, lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
-        lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED, lv_buttonmatrix_set_map,
+        lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED,
         lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X, lv_chart_set_type,
         lv_chart_type_t_LV_CHART_TYPE_BAR, lv_chart_type_t_LV_CHART_TYPE_LINE,
         lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_color_hex, lv_color_hex3, lv_color_mix,
@@ -250,14 +251,16 @@ fn create_ui(world: &mut World) {
     let mut label_entity = world.spawn((DynamicLabel, Label, label));
     label_entity.insert(style_big_font.clone());
 
-    // *const i8 is not Sync so static cannot be used
-    let btnmatrix_options = Box::new([
-        c"First".as_ptr(),
-        c"Second".as_ptr(),
-        c"\n".as_ptr(),
-        c"Third".as_ptr(),
-        c"".as_ptr(),
-    ]);
+    let btnmatrix_options = {
+        let options = ["First", "Second", "\n", "Third", ""];
+        let combined = options.map(|s| CString::from_str(s).unwrap());
+        let ptrs = combined.map(|cs| {
+            let ptr = cs.as_c_str().as_ptr();
+            core::mem::forget(cs);
+            ptr
+        });
+        ptrs
+    };
 
     let btnmatrix_ctrl = Box::new([
         lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED,
@@ -276,9 +279,7 @@ fn create_ui(world: &mut World) {
         1,
     );
 
-    unsafe {
-        lv_buttonmatrix_set_map(btnmatrix.raw_mut(), &Box::leak(btnmatrix_options)[0]);
-    }
+    lv_buttonmatrix_set_map(&mut btnmatrix, &btnmatrix_options);
 
     lv_buttonmatrix_set_ctrl_map(&mut btnmatrix, &Box::leak(btnmatrix_ctrl)[0]);
 
