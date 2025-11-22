@@ -84,6 +84,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "constptr"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "001de8c8cab8e9c316e4c3c284d3f9de095e1c07bd16e2d7796394996556bd22"
+
+[[package]]
 name = "either"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -163,6 +169,7 @@ name = "lv_codegen"
 version = "0.2.3"
 dependencies = [
  "Inflector",
+ "constptr",
  "itertools 0.14.0",
  "lightvgl-sys",
  "proc-macro2",

@@ -291,6 +291,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "constptr"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "001de8c8cab8e9c316e4c3c284d3f9de095e1c07bd16e2d7796394996556bd22"
+
+[[package]]
 name = "crc32fast"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -681,6 +687,7 @@ name = "lv_bevy_ecs"
 version = "0.6.0"
 dependencies = [
  "bevy_ecs",
+ "constptr",
  "ctor",
  "embedded-graphics",
  "embedded-graphics-simulator",
@@ -698,6 +705,7 @@ name = "lv_codegen"
 version = "0.2.3"
 dependencies = [
  "Inflector",
+ "constptr",
  "itertools 0.14.0",
  "proc-macro2",
  "quote",

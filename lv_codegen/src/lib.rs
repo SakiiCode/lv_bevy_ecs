@@ -151,7 +151,7 @@ impl Rusty for LvFunc {
                     } else {
                         assert!(return_value.is_const_pointer());
                         let raw_name = return_value.literal_name.replacen("* const ", "", 1);
-                        parse_str(&format!("-> Option<&{}>", raw_name)).unwrap()
+                        parse_str(&format!("-> Option<ConstPtr<{}>>", raw_name)).unwrap()
                     }
                 }
             }
@@ -274,11 +274,7 @@ impl Rusty for LvFunc {
                     optional_semicolon = quote!(;);
                 } else {
                     return_assignment = quote!(let pointer = );
-                    return_expr = quote!(if !pointer.is_null() {
-                        Some(&*pointer)
-                    } else {
-                        None
-                    });
+                    return_expr = quote!(ConstPtr::new(pointer));
                     optional_semicolon = quote!(;);
                 }
             } else {

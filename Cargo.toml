@@ -26,6 +26,7 @@ lightvgl-sys = { path = "../lightvgl-sys", version = "~9.4.0", default-features 
   "library",
 ] }
 log = { version = "0.4" }
+constptr = "0.3.1"
 
 [dev-dependencies]
 embedded-graphics-simulator = "0.8.0"
