@@ -15,7 +15,7 @@
 //! See `examples/custom_logging.rs` for sample code.
 //!
 
-use ::alloc::{ffi::CString, vec::Vec};
+use ::alloc::{ffi::CString, format, vec::Vec};
 use ::core::ffi::CStr;
 
 use log::{Level, error};
@@ -59,7 +59,6 @@ pub unsafe extern "C" fn lvgl_log(
     let message = message.trim();
     let parts = message.split(':').collect::<Vec<&str>>();
     let target = parts[0].split(" ").last().unwrap();
-    // FIXME: does not work properly if the message contains ':'
     let message = parts[1..].join(":");
     match level as u32 {
         lightvgl_sys::LV_LOG_LEVEL_TRACE => {
@@ -131,7 +130,7 @@ impl log::Log for LvglLogger {
             cstr!(record.file().unwrap_or_default()),
             record.line().unwrap_or_default(),
             cstr!(record.target()),
-            cstr!(record.args().as_str().unwrap_or_default()),
+            cstr!(format!("{}", record.args())),
         );
     }
     fn flush(&self) {}
