@@ -2,6 +2,10 @@ use std::{
     ffi::{CStr, CString, c_void},
     process::exit,
     str::FromStr,
+    sync::{
+        Mutex,
+        atomic::{AtomicBool, Ordering},
+    },
     thread::sleep,
     time::{Duration, Instant},
 };
@@ -83,23 +87,12 @@ fn main() {
             .unwrap();
     });
 
-    // Define the initial state of your input
-    //let mut latest_touch_status = PointerInputData::Touch(Point::new(0, 0)).released().once();
-
-    let mut latest_touch_status = InputEvent {
-        status: lv_bevy_ecs::input::BufferStatus::Once,
-        state: lv_bevy_ecs::input::InputState::Released,
-        data: Point::new(0, 0),
-    };
-
     // Register a new input device that's capable of reading the current state of the input
-    let _touch_screen = InputDevice::<Pointer>::create(|| latest_touch_status);
+    let _touch_screen = InputDevice::<Pointer>::create(|| get_touch_input(window.events()));
 
     let mut world = LvglWorld::default();
 
     create_ui(&mut world);
-
-    let mut is_pointer_down = false;
 
     let mut prev_time = Instant::now();
 
@@ -109,50 +102,6 @@ fn main() {
         let current_time = Instant::now();
         let diff = current_time.duration_since(prev_time);
         prev_time = current_time;
-
-        let events = window.events().peekable();
-
-        for event in events {
-            #[allow(unused_assignments)]
-            match event {
-                SimulatorEvent::MouseButtonDown {
-                    mouse_btn: _,
-                    point,
-                } => {
-                    //latest_touch_status = PointerInputData::Touch(point).pressed().once();
-                    latest_touch_status = InputEvent {
-                        status: BufferStatus::Once,
-                        state: InputState::Pressed,
-                        data: point,
-                    };
-                    is_pointer_down = true;
-                }
-                SimulatorEvent::MouseButtonUp {
-                    mouse_btn: _,
-                    point,
-                } => {
-                    //latest_touch_status = PointerInputData::Touch(point).released().once();
-                    latest_touch_status = InputEvent {
-                        status: BufferStatus::Once,
-                        state: InputState::Released,
-                        data: point,
-                    };
-                    is_pointer_down = false;
-                }
-                SimulatorEvent::MouseMove { point } => {
-                    if is_pointer_down {
-                        //latest_touch_status = PointerInputData::Touch(point).pressed().once();
-                        latest_touch_status = InputEvent {
-                            status: BufferStatus::Once,
-                            state: InputState::Pressed,
-                            data: point,
-                        };
-                    }
-                }
-                SimulatorEvent::Quit => exit(0),
-                _ => {}
-            }
-        }
 
         lv_tick_inc(diff);
 
@@ -555,4 +504,58 @@ fn draw_to_canvas(canvas: &mut Widget) {
             );
         }
     }
+}
+
+fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<Pointer> {
+    static IS_POINTER_DOWN: AtomicBool = AtomicBool::new(false);
+
+    static LATEST_TOUCH_STATUS: Mutex<InputEvent<Pointer>> =
+        Mutex::new(InputEvent::new(Point::zero()));
+
+    let mut next_touch_status = None;
+
+    for event in events {
+        match event {
+            SimulatorEvent::MouseButtonDown {
+                mouse_btn: _,
+                point,
+            } => {
+                next_touch_status = Some(InputEvent {
+                    status: BufferStatus::Once,
+                    state: InputState::Pressed,
+                    data: point,
+                });
+                IS_POINTER_DOWN.store(true, Ordering::Relaxed);
+            }
+            SimulatorEvent::MouseButtonUp {
+                mouse_btn: _,
+                point,
+            } => {
+                next_touch_status = Some(InputEvent {
+                    status: BufferStatus::Once,
+                    state: InputState::Released,
+                    data: point,
+                });
+                IS_POINTER_DOWN.store(false, Ordering::Relaxed);
+            }
+            SimulatorEvent::MouseMove { point } => {
+                if IS_POINTER_DOWN.load(Ordering::Relaxed) {
+                    next_touch_status = Some(InputEvent {
+                        status: BufferStatus::Once,
+                        state: InputState::Pressed,
+                        data: point,
+                    });
+                }
+            }
+            SimulatorEvent::Quit => exit(0),
+            _ => {}
+        }
+    }
+
+    let mut lock = LATEST_TOUCH_STATUS.lock().unwrap();
+
+    if let Some(latest_touch_status) = next_touch_status {
+        *lock = latest_touch_status;
+    }
+    return *lock;
 }

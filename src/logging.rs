@@ -59,6 +59,7 @@ pub unsafe extern "C" fn lvgl_log(
     let message = message.trim();
     let parts = message.split(':').collect::<Vec<&str>>();
     let target = parts[0].split(" ").last().unwrap();
+    // FIXME: does not work properly if the message contains ':'
     let message = parts[1..].join(":");
     match level as u32 {
         lightvgl_sys::LV_LOG_LEVEL_TRACE => {

@@ -1,6 +1,9 @@
 use std::{
     process::exit,
-    sync::{LazyLock, Mutex},
+    sync::{
+        LazyLock, Mutex,
+        atomic::{AtomicBool, Ordering},
+    },
     time::{Duration, Instant},
 };
 
@@ -71,16 +74,8 @@ fn main() {
 
     info!("Display Driver OK");
 
-    // Define the initial state of your input
-    //let mut latest_touch_status = PointerInputData::Touch(Point::new(0, 0)).released().once();
-    let mut latest_touch_status = InputEvent {
-        status: BufferStatus::Once,
-        state: InputState::Released,
-        data: Point::new(0, 0),
-    };
-
     // Register a new input device that's capable of reading the current state of the input
-    let _touch_screen = InputDevice::<Pointer>::create(|| latest_touch_status);
+    let _touch_screen = InputDevice::<Pointer>::create(|| get_touch_input(window.events()));
 
     info!("Input OK");
 
@@ -88,13 +83,10 @@ fn main() {
 
     {
         let mut objects = OBJECTS.lock().unwrap();
-        //let mut world = WORLD.lock().unwrap();
         let mut button = Button::create_widget();
         let mut label = Label::create_widget();
         lv_label_set_text(&mut label, c"SPAWN");
         lv_obj_set_parent(&mut label, &mut button);
-        //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
-        //let label_entity = world.spawn((Label, label)).id();
 
         let mut anim = Animation::new(
             Duration::from_secs(5),
@@ -108,7 +100,6 @@ fn main() {
         anim.set_widget(&mut button);
 
         lv_obj_add_event_cb(&mut button, Event::Clicked, |_| {
-            //let mut world = WORLD.lock().unwrap();
             let mut objects = OBJECTS.lock().unwrap();
             match &objects.dynamic_button {
                 Some(_widget) => {
@@ -129,12 +120,6 @@ fn main() {
 
         objects.animation = Some(anim);
         objects.animation.as_mut().unwrap().start();
-        //objects.spawner_button = Some(button);
-        //objects.spawner_button_label = Some(label);
-
-        //let mut button_entity = world.spawn((Button, button, anim));
-
-        //button_entity.add_child(label_entity);
 
         let mut style = Style::default();
         lv_style_set_opa(&mut style, OpacityLevel::Percent50 as u8);
@@ -145,90 +130,81 @@ fn main() {
 
         button.leak();
         label.leak();
-        //button_entity.insert(style);
-        //button_entity.remove::<Style>();
-        // button_entity.insert(style);
 
         let mut arc = Arc::create_widget();
         lv_obj_set_align(&mut arc, Align::BottomMid.into());
-        //objects.arc = Some(arc);
         arc.leak();
-
-        //world.spawn((Arc, arc));
     }
 
     info!("Create OK");
 
-    let mut is_pointer_down = false;
-
     let mut prev_time = Instant::now();
 
-    {
-        trace!("Window update");
-        window.update(&sim_display);
-        trace!("Window update done");
-    }
+    window.update(&sim_display);
 
     loop {
         let current_time = Instant::now();
         let diff = current_time.duration_since(prev_time);
         prev_time = current_time;
 
-        trace!("Window events");
-        let events = window.events().peekable();
+        lv_tick_inc(diff);
 
-        for event in events {
-            #[allow(unused_assignments)]
-            match event {
-                SimulatorEvent::MouseButtonDown {
-                    mouse_btn: _,
-                    point,
-                } => {
-                    info!("Clicked on: {:?}", point);
-                    //latest_touch_status = PointerInputData::Touch(point).pressed().once();
-                    latest_touch_status = InputEvent {
+        lv_timer_handler();
+
+        window.update(&sim_display);
+    }
+}
+
+fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<Pointer> {
+    static IS_POINTER_DOWN: AtomicBool = AtomicBool::new(false);
+
+    static LATEST_TOUCH_STATUS: Mutex<InputEvent<Pointer>> =
+        Mutex::new(InputEvent::new(Point::zero()));
+
+    let mut next_touch_status = None;
+
+    for event in events {
+        match event {
+            SimulatorEvent::MouseButtonDown {
+                mouse_btn: _,
+                point,
+            } => {
+                next_touch_status = Some(InputEvent {
+                    status: BufferStatus::Once,
+                    state: InputState::Pressed,
+                    data: point,
+                });
+                IS_POINTER_DOWN.store(true, Ordering::Relaxed);
+            }
+            SimulatorEvent::MouseButtonUp {
+                mouse_btn: _,
+                point,
+            } => {
+                next_touch_status = Some(InputEvent {
+                    status: BufferStatus::Once,
+                    state: InputState::Released,
+                    data: point,
+                });
+                IS_POINTER_DOWN.store(false, Ordering::Relaxed);
+            }
+            SimulatorEvent::MouseMove { point } => {
+                if IS_POINTER_DOWN.load(Ordering::Relaxed) {
+                    next_touch_status = Some(InputEvent {
                         status: BufferStatus::Once,
                         state: InputState::Pressed,
                         data: point,
-                    };
-                    is_pointer_down = true;
+                    });
                 }
-                SimulatorEvent::MouseButtonUp {
-                    mouse_btn: _,
-                    point,
-                } => {
-                    //latest_touch_status = PointerInputData::Touch(point).released().once();
-                    latest_touch_status = InputEvent {
-                        status: BufferStatus::Once,
-                        state: InputState::Released,
-                        data: point,
-                    };
-                    is_pointer_down = false;
-                }
-                SimulatorEvent::MouseMove { point } => {
-                    if is_pointer_down {
-                        //latest_touch_status = PointerInputData::Touch(point).pressed().once();
-                        latest_touch_status = InputEvent {
-                            status: BufferStatus::Once,
-                            state: InputState::Pressed,
-                            data: point,
-                        };
-                    }
-                }
-                SimulatorEvent::Quit => exit(0),
-                _ => {}
             }
-        }
-        {
-            trace!("LVGL tick update");
-
-            lv_tick_inc(diff);
-
-            trace!("LVGL update");
-            lv_timer_handler();
-            trace!("Window update");
-
-            window.update(&sim_display);
+            SimulatorEvent::Quit => exit(0),
+            _ => {}
         }
     }
+
+    let mut lock = LATEST_TOUCH_STATUS.lock().unwrap();
+
+    if let Some(latest_touch_status) = next_touch_status {
+        *lock = latest_touch_status;
+    }
+    return *lock;
 }
