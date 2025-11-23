@@ -166,7 +166,7 @@ checksum = "34080505efa8e45a4b816c349525ebe327ceaa8559756f0356cba97ef3bf7432"
 
 [[package]]
 name = "lv_codegen"
-version = "0.2.3"
+version = "0.3.0"
 dependencies = [
  "Inflector",
  "constptr",
@@ -278,9 +278,9 @@ checksum = "139247bfd1965ad72162877fbbc1f5410b6fda94c65e5fa91b59b58c56444398"
 
 [[package]]
 name = "syn"
-version = "2.0.109"
+version = "2.0.111"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f17c7e013e88258aa9543dcbe81aca68a667a9ac37cd69c9fbc07858bfe0e2f"
+checksum = "390cc9a294ab71bdb1aa2e99d13be9c753cd2d7bd6560c77118597410c4d2e87"
 dependencies = [
  "proc-macro2",
  "quote",
