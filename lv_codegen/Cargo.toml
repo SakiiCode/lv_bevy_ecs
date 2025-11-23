@@ -15,10 +15,5 @@ itertools = "0.14.0"
 thiserror = "2.0.17"
 constptr = "0.3.1"
 
-[dev-dependencies]
-lightvgl-sys = { version = "~9.4.0", default-features = false, features = [
-    "raw-bindings",
-] }
-
 [features]
 no_ecs = []
