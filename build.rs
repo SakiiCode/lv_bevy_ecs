@@ -37,14 +37,16 @@ fn main() {
     )
     .unwrap();
 
-    rustfmt_path().map(|rustfmt_path| {
-        Command::new(&rustfmt_path)
-            .arg(&rs)
-            .arg("--config")
-            .arg("max_width=200")
-            .spawn()
-            .expect("rustfmt generated.rs was unsuccessful");
-    });
+    rustfmt_path()
+        .and_then(|rustfmt_path| {
+            Command::new(&rustfmt_path)
+                .arg(&rs)
+                .arg("--config")
+                .arg("max_width=200")
+                .spawn()
+                .ok()
+        })
+        .and_then(|mut cmd| cmd.wait().ok());
 
     let widgets_path = out_path.join("widgets.rs");
     let widgets_impl: Vec<TokenStream> = codegen
@@ -63,14 +65,16 @@ fn main() {
     )
     .unwrap();
 
-    rustfmt_path().map(|rustfmt_path| {
-        Command::new(&rustfmt_path)
-            .arg(&widgets_path)
-            .arg("--config")
-            .arg("max_width=200")
-            .spawn()
-            .expect("rustfmt widgets.rs was unsuccessful");
-    });
+    rustfmt_path()
+        .and_then(|rustfmt_path| {
+            Command::new(&rustfmt_path)
+                .arg(&widgets_path)
+                .arg("--config")
+                .arg("max_width=200")
+                .spawn()
+                .ok()
+        })
+        .and_then(|mut cmd| cmd.wait().ok());
 }
 
 fn rustfmt_path() -> Option<PathBuf> {
@@ -79,5 +83,5 @@ fn rustfmt_path() -> Option<PathBuf> {
     } else if let Ok(rustfmt) = which::which("rustfmt") {
         return Some(rustfmt);
     }
-    return None;
+    None
 }
