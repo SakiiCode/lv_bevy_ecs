@@ -906,7 +906,7 @@ mod test {
     }
 
     #[test]
-    fn generate_method_wrapper_with_mut_obj_parameter() {
+    fn generate_method_wrapper_with_mut_obj_as_argument() {
         let bindgen_code = quote! {
             extern "C" {
                 pub fn lv_arc_rotate_obj_to_angle(
@@ -936,6 +936,134 @@ mod test {
                 }
             }
         };
+    }
+
+    #[test]
+    fn generate_method_wrapper_with_mut_void_pointer_as_argument() {
+        let bindgen_code = quote! {
+            unsafe extern "C" {
+                #[doc = " Set the user_data field of the object\n @param obj   pointer to an object\n @param user_data   pointer to the new user_data."]
+                pub fn lv_obj_set_user_data(obj: *mut lv_obj_t, user_data: *mut ::core::ffi::c_void);
+            }
+        };
+        let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
+
+        let obj_set_user_data = cg.get(0).unwrap().clone();
+        let parent_widget = LvWidget {
+            name: "arc".to_string(),
+            methods: vec![],
+        };
+
+        let code = obj_set_user_data.code(&parent_widget).unwrap();
+        let expected_code = quote! {
+            #[cfg_attr(
+                not(doctest),
+                doc = "Set the user_data field of the object\n\n@param obj   pointer to an object\n\n@param user_data   pointer to the new user_data."
+            )]
+            pub fn lv_obj_set_user_data(obj: &mut Wdg, user_data: &mut dyn Any) {
+                unsafe { lightvgl_sys::lv_obj_set_user_data(obj.raw_mut(), user_data as *mut _ as *mut c_void) }
+            }
+        };
+
+        assert_eq!(code.to_string(), expected_code.to_string());
+    }
+
+    #[test]
+    fn generate_method_wrapper_with_const_void_pointer_as_argument() {
+        let bindgen_code = quote! {
+            unsafe extern "C" {
+                #[doc = " Add button to a list\n @param list      pointer to a list, it will be the parent of the new button\n @param icon      icon for the button, when NULL it will have no icon\n @param txt       text of the new button, when NULL no text will be added\n @return          pointer to the created button"]
+                pub fn lv_list_add_button(
+                    list: *mut lv_obj_t,
+                    icon: *const ::core::ffi::c_void,
+                    txt: *const ::core::ffi::c_char,
+                ) -> *mut lv_obj_t;
+            }
+        };
+        let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
+
+        let obj_set_user_data = cg.get(0).unwrap().clone();
+        let parent_widget = LvWidget {
+            name: "arc".to_string(),
+            methods: vec![],
+        };
+
+        let code = obj_set_user_data.code(&parent_widget).unwrap();
+        let expected_code = quote! {
+            #[cfg_attr(
+                not(doctest),
+                doc = "Add button to a list\n\n@param list      pointer to a list, it will be the parent of the new button\n\n@param icon      icon for the button, when NULL it will have no icon\n\n@param txt       text of the new button, when NULL no text will be added\n\n@return          pointer to the created button"
+            )]
+            pub fn lv_list_add_button(list: &mut Wdg, icon: &dyn Any, txt: &CStr) -> Option<Wdg> {
+                unsafe {
+                    let pointer = lightvgl_sys::lv_list_add_button(list.raw_mut(), icon as *const _ as *const c_void, txt.as_ptr());
+                    Wdg::try_from_ptr(pointer)
+                }
+            }
+        };
+
+        assert_eq!(code.to_string(), expected_code.to_string());
+    }
+
+    #[test]
+    fn generate_method_wrapper_with_const_array_as_argument() {
+        let bindgen_code = quote! {
+            unsafe extern "C" {
+                #[doc = " Set a new map. Buttons will be created/deleted according to the map. The\n button matrix keeps a reference to the map and so the string array must not\n be deallocated during the life of the matrix.\n @param obj       pointer to a button matrix object\n @param map       pointer a string array. The last string has to be: \"\". Use \"\\n\" to make a line break."]
+                pub fn lv_buttonmatrix_set_map(obj: *mut lv_obj_t, map: *const *const ::core::ffi::c_char);
+            }
+        };
+        let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
+
+        let buttonmatrix_set_map = cg.get(0).unwrap().clone();
+        let parent_widget = LvWidget {
+            name: "arc".to_string(),
+            methods: vec![],
+        };
+
+        let code = buttonmatrix_set_map.code(&parent_widget).unwrap();
+        let expected_code = quote! {
+            #[cfg_attr(
+                not(doctest),
+                doc = "Set a new map. Buttons will be created/deleted according to the map. The\n\nbutton matrix keeps a reference to the map and so the string array must not\n\nbe deallocated during the life of the matrix.\n\n@param obj       pointer to a button matrix object\n\n@param map       pointer a string array. The last string has to be: \\\"\\\". Use \\\"\\\\n\\\" to make a line break."
+            )]
+            pub fn lv_buttonmatrix_set_map(obj: &mut Wdg, map: &[*const ::core::ffi::c_char]) {
+                unsafe { lightvgl_sys::lv_buttonmatrix_set_map(obj.raw_mut(), map.as_ptr()) }
+            }
+        };
+
+        assert_eq!(code.to_string(), expected_code.to_string());
+    }
+
+    #[test]
+    fn generate_method_wrapper_with_mut_array_as_argument() {
+        let bindgen_code = quote! {
+            unsafe extern "C" {
+                #[doc = " Set the name of the days\n @param obj           pointer to a calendar object\n @param day_names     pointer to an array with the names.\n                      E.g. `const char * days[7] = {\"Sun\", \"Mon\", ...}`\n                      Only the pointer will be saved so this variable can't be local which will be destroyed later."]
+                pub fn lv_calendar_set_day_names(
+                    obj: *mut lv_obj_t,
+                    day_names: *mut *const ::core::ffi::c_char,
+                );
+            }
+        };
+        let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
+
+        let calendar_set_day_names = cg.get(0).unwrap().clone();
+        let parent_widget = LvWidget {
+            name: "arc".to_string(),
+            methods: vec![],
+        };
+
+        let code = calendar_set_day_names.code(&parent_widget).unwrap();
+        let expected_code = quote! {
+            #[cfg_attr(
+                not(doctest),
+                doc = "Set the name of the days\n\n@param obj           pointer to a calendar object\n\n@param day_names     pointer to an array with the names.\n\n                     E.g. `const char * days[7] = {\\\"Sun\\\", \\\"Mon\\\", ...}`\n\n                     Only the pointer will be saved so this variable can't be local which will be destroyed later."
+            )]
+            pub fn lv_calendar_set_day_names(obj: &mut Wdg, day_names: &mut [*const ::core::ffi::c_char]) {
+                unsafe { lightvgl_sys::lv_calendar_set_day_names(obj.raw_mut(), day_names.as_mut_ptr()) }
+            }
+        };
 
         assert_eq!(code.to_string(), expected_code.to_string());
     }
@@ -943,7 +1071,7 @@ mod test {
     #[test]
     fn generate_method_wrapper_for_void_return() {
         let bindgen_code = quote! {
-            extern "C" {
+            unsafe extern "C" {
                 #[doc = " Set a new text for a label. Memory will be allocated to store the text by the label.\n @param obj           pointer to a label object\n @param text          '\\0' terminated character string. NULL to refresh with the current text.\n @note If `LV_USE_ARABIC_PERSIAN_CHARS` is enabled the text will be modified to have the correct Arabic\n characters in it."]
                 pub fn lv_label_set_text(label: *mut lv_obj_t, text: *const ::core::ffi::c_char);
             }
@@ -974,7 +1102,7 @@ mod test {
     #[test]
     fn generate_method_wrapper_for_boolean_return() {
         let bindgen_code = quote! {
-            extern "C" {
+            unsafe extern "C" {
                 pub fn lv_label_get_recolor(label: *mut lv_obj_t) -> bool;
             }
         };
@@ -1001,7 +1129,7 @@ mod test {
     #[test]
     fn generate_method_wrapper_for_uint32_return() {
         let bindgen_code = quote! {
-            extern "C" {
+            unsafe extern "C" {
                 pub fn lv_label_get_text_selection_start(label: *mut lv_obj_t) -> u32;
             }
         };
@@ -1074,6 +1202,72 @@ mod test {
                 unsafe {
                     let pointer = lightvgl_sys::lv_label_get_text(obj.raw());
                     CStr::from_ptr(pointer)
+                }
+            }
+        };
+
+        assert_eq!(code.to_string(), expected_code.to_string());
+    }
+
+    #[test]
+    fn generate_method_wrapper_for_const_pointer_return() {
+        let bindgen_code = quote! {
+            unsafe extern "C" {
+                #[doc = " Get the today's date\n @param calendar  pointer to a calendar object\n @return          return pointer to an `lv_calendar_date_t` variable containing the date of today."]
+                pub fn lv_calendar_get_today_date(calendar: *const lv_obj_t) -> *const lv_calendar_date_t;
+            }
+        };
+        let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
+
+        let calendar_get_today_date = cg.get(0).unwrap().clone();
+        let parent_widget = LvWidget {
+            name: "obj".to_string(),
+            methods: vec![],
+        };
+
+        let code = calendar_get_today_date.code(&parent_widget).unwrap();
+        let expected_code = quote! {
+            #[cfg_attr(
+                not(doctest),
+                doc = "Get the today's date\n\n@param calendar  pointer to a calendar object\n\n@return          return pointer to an `lv_calendar_date_t` variable containing the date of today."
+            )]
+            pub fn lv_calendar_get_today_date(calendar: &Wdg) -> Option<ConstPtr<lv_calendar_date_t>> {
+                unsafe {
+                    let pointer = lightvgl_sys::lv_calendar_get_today_date(calendar.raw());
+                    ConstPtr::new(pointer)
+                }
+            }
+        };
+
+        assert_eq!(code.to_string(), expected_code.to_string());
+    }
+
+    #[test]
+    fn generate_method_wrapper_for_mut_pointer_return() {
+        let bindgen_code = quote! {
+            unsafe extern "C" {
+                #[doc = " Get the highlighted dates\n @param calendar  pointer to a calendar object\n @return          pointer to an `lv_calendar_date_t` array containing the dates."]
+                pub fn lv_calendar_get_highlighted_dates(calendar: *const lv_obj_t) -> *mut lv_calendar_date_t;
+            }
+        };
+        let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
+
+        let calendar_get_highlighted_dates = cg.get(0).unwrap().clone();
+        let parent_widget = LvWidget {
+            name: "obj".to_string(),
+            methods: vec![],
+        };
+
+        let code = calendar_get_highlighted_dates.code(&parent_widget).unwrap();
+        let expected_code = quote! {
+            #[cfg_attr(
+                not(doctest),
+                doc = "Get the highlighted dates\n\n@param calendar  pointer to a calendar object\n\n@return          pointer to an `lv_calendar_date_t` array containing the dates."
+            )]
+            pub fn lv_calendar_get_highlighted_dates(calendar: &Wdg) -> Option<NonNull<lv_calendar_date_t>> {
+                unsafe {
+                    let pointer = lightvgl_sys::lv_calendar_get_highlighted_dates(calendar.raw());
+                    NonNull::new(pointer)
                 }
             }
         };
