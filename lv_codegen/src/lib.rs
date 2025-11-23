@@ -1,4 +1,5 @@
 use inflector::cases::pascalcase::to_pascal_case;
+use itertools::Itertools;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use quote::{ToTokens, format_ident};
@@ -96,11 +97,17 @@ pub struct LvFunc {
     name: String,
     args: Vec<LvArg>,
     ret: Option<LvType>,
+    doc: String,
 }
 
 impl LvFunc {
-    pub fn new(name: String, args: Vec<LvArg>, ret: Option<LvType>) -> Self {
-        Self { name, args, ret }
+    pub fn new(name: String, args: Vec<LvArg>, ret: Option<LvType>, doc: String) -> Self {
+        Self {
+            name,
+            args,
+            ret,
+            doc: doc,
+        }
     }
 
     pub fn is_method(&self) -> bool {
@@ -300,7 +307,10 @@ impl Rusty for LvFunc {
             }
         }
 
+        let doc = &self.doc;
+
         Ok(quote! {
+            #[doc = #doc]
             pub fn #func_name(#args_decl) #return_tokens {
                 unsafe {
                     #args_preprocessing
@@ -335,6 +345,23 @@ impl From<ForeignItemFn> for LvFunc {
                 .map(|a| a.clone().into())
                 .collect::<Vec<LvArg>>(),
             ret,
+            ffi.attrs
+                .iter()
+                .filter_map(|attr| {
+                    let path = attr.meta.path();
+                    if path.segments.len() > 0 && path.segments[0].ident.to_string() == "doc" {
+                        let name_value = attr.meta.require_name_value().unwrap();
+                        let docstring = name_value.value.to_token_stream().to_string();
+                        let formatted = docstring.strip_prefix('"').unwrap_or(&docstring);
+                        let formatted = formatted.strip_suffix('"').unwrap_or(formatted);
+                        Some(formatted.replace("\\n ", "\n\n"))
+                    } else {
+                        None
+                    }
+                })
+                .join("\n\n")
+                .trim()
+                .to_string(),
         )
     }
 }
@@ -715,6 +742,7 @@ mod test {
                     LvType::new("abc".to_string()),
                 )],
                 None,
+                String::new(),
             ),
             LvFunc::new(
                 "lv_btn_create".to_string(),
@@ -723,6 +751,7 @@ mod test {
                     LvType::new("abc".to_string()),
                 )],
                 None,
+                String::new(),
             ),
             LvFunc::new(
                 "lv_do_something".to_string(),
@@ -731,6 +760,7 @@ mod test {
                     LvType::new("abc".to_string()),
                 )],
                 None,
+                String::new(),
             ),
             LvFunc::new(
                 "lv_invalid_create".to_string(),
@@ -739,6 +769,7 @@ mod test {
                     LvArg::new("copy_from".to_string(), LvType::new("bcf".to_string())),
                 ],
                 None,
+                String::new(),
             ),
             LvFunc::new(
                 "lv_cb_create".to_string(),
@@ -747,6 +778,7 @@ mod test {
                     LvType::new("abc".to_string()),
                 )],
                 None,
+                String::new(),
             ),
             LvFunc::new(
                 "lv_style_init".to_string(),
@@ -755,6 +787,7 @@ mod test {
                     LvType::new("abc".to_string()),
                 )],
                 None,
+                String::new(),
             ),
         ];
 
@@ -774,6 +807,7 @@ mod test {
                 LvArg::new("end".to_string(), LvType::new("u16".to_string())),
             ],
             None,
+            String::new(),
         );
         let arc_widget = LvWidget {
             name: "arc".to_string(),
@@ -1072,6 +1106,7 @@ mod test {
                 ),
             ],
             Some(LvType::new("*mut lv_obj_t".to_string())),
+            String::new(),
         );
 
         let arc_widget = LvWidget {

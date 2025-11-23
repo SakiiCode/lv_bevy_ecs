@@ -99,6 +99,7 @@ Can be enabled with the feature `lvgl_alloc`. This will make all dynamic memory 
 
 - [x] Displays
 - [x] Widgets
+- [x] Widget functions
 - [x] Events
 - [x] Styles
 - [x] Input devices
@@ -110,12 +111,12 @@ Can be enabled with the feature `lvgl_alloc`. This will make all dynamic memory 
 - [x] LVGL allocator
 - [x] "no_ecs" mode
 - [x] #![no_std] compatibility
+- [x] LVGL docstrings
 - [ ] Auto-generated enums
-- [ ] Copy C docs to rustdoc
 - [ ] File system
 - [ ] Custom fonts
 - [ ] Snapshots
-- [ ] Some widget functions
+- [ ] Non-widget functions
 - [ ] Layouts
 - [ ] XML UI
 
