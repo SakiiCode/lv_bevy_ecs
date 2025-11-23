@@ -106,7 +106,7 @@ impl LvFunc {
             name,
             args,
             ret,
-            doc: doc,
+            doc,
         }
     }
 
@@ -307,10 +307,15 @@ impl Rusty for LvFunc {
             }
         }
 
-        let doc = &self.doc;
+        let doc_tokens = if self.doc.is_empty() {
+            quote!()
+        } else {
+            let doc = &self.doc;
+            quote!(#[cfg_attr(not(doctest), doc = #doc)])
+        };
 
         Ok(quote! {
-            #[doc = #doc]
+            #doc_tokens
             pub fn #func_name(#args_decl) #return_tokens {
                 unsafe {
                     #args_preprocessing
@@ -411,7 +416,7 @@ impl LvArg {
             let name = format_ident!("{}", &self.name);
             let name_raw = format_ident!("{}_raw", &self.name);
             quote! {
-                *#name = ::alloc::ffi::CString::from_raw(#name_raw);
+                *#name = CString::from_raw(#name_raw);
             }
         } else {
             quote! {}
@@ -518,11 +523,10 @@ impl LvType {
 
     pub fn is_const_str(&self) -> bool {
         self.literal_name == "* const :: core :: ffi :: c_char"
-            || self.literal_name == "* const c_char"
     }
 
     pub fn is_mut_str(&self) -> bool {
-        self.literal_name == "* mut :: core :: ffi :: c_char" || self.literal_name == "* mut c_char"
+        self.literal_name == "* mut :: core :: ffi :: c_char"
     }
 
     pub fn is_const_native_object(&self) -> bool {
@@ -573,7 +577,7 @@ impl Rusty for LvType {
         let val = if self.is_const_str() {
             quote!(&CStr)
         } else if self.is_mut_str() {
-            quote!(&mut ::alloc::ffi::CString)
+            quote!(&mut CString)
         } else if self.is_array() {
             let item_type = parse_str::<TokenStream>(&self.item_name()).unwrap();
             if self.is_mut_pointer() {
@@ -582,13 +586,13 @@ impl Rusty for LvType {
                 quote!(&[#item_type])
             }
         } else if self.is_const_native_object() {
-            quote!(&crate::widgets::Wdg)
+            quote!(&Wdg)
         } else if self.is_mut_native_object() {
-            quote!(&mut crate::widgets::Wdg)
+            quote!(&mut Wdg)
         } else if self.is_const_style() {
-            quote!(&crate::styles::Style)
+            quote!(&Style)
         } else if self.is_mut_style() {
-            quote!(&mut crate::styles::Style)
+            quote!(&mut Style)
         } else if self.is_mut_void() {
             quote!(&mut dyn Any)
         } else if self.is_const_void() {
@@ -816,7 +820,7 @@ mod test {
 
         let code = arc_set_bg_end_angle.code(&arc_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_arc_set_bg_end_angle(obj: &mut crate::widgets::Wdg, end: u16) {
+            pub fn lv_arc_set_bg_end_angle(obj: &mut Wdg, end: u16) {
                 unsafe {
                     lightvgl_sys::lv_arc_set_bg_end_angle(obj.raw_mut(), end)
                 }
@@ -830,10 +834,8 @@ mod test {
     fn generate_method_wrapper_for_str_types_as_argument() {
         let bindgen_code = quote! {
             extern "C" {
-                #[doc = " Set a new text for a label. Memory will be allocated to store the text by the label."]
-                #[doc = " @param label pointer to a label object"]
-                #[doc = " @param text '\\0' terminated character string. NULL to refresh with the current text."]
-                pub fn lv_label_set_text(label: *mut lv_obj_t, text: *const c_char);
+                #[doc = " Set a new text for a label. Memory will be allocated to store the text by the label.\n @param obj           pointer to a label object\n @param text          '\\0' terminated character string. NULL to refresh with the current text.\n @note If `LV_USE_ARABIC_PERSIAN_CHARS` is enabled the text will be modified to have the correct Arabic\n characters in it."]
+                pub fn lv_label_set_text(label: *mut lv_obj_t, text: *const ::core::ffi::c_char);
             }
         };
         let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
@@ -846,8 +848,8 @@ mod test {
 
         let code = label_set_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
-
-            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &CStr) {
+            #[cfg_attr(not(doctest), doc = "Set a new text for a label. Memory will be allocated to store the text by the label.\n\n@param obj           pointer to a label object\n\n@param text          '\\\\0' terminated character string. NULL to refresh with the current text.\n\n@note If `LV_USE_ARABIC_PERSIAN_CHARS` is enabled the text will be modified to have the correct Arabic\n\ncharacters in it.")]
+            pub fn lv_label_set_text(label: &mut Wdg, text: &CStr) {
                 unsafe {
                     lightvgl_sys::lv_label_set_text(
                         label.raw_mut(),
@@ -868,7 +870,7 @@ mod test {
                 pub fn lv_roller_get_option_str(
                     obj: *const lv_obj_t,
                     option: u32,
-                    buf: *mut c_char,
+                    buf: *mut ::core::ffi::c_char,
                     buf_size: u32,
                 ) -> lv_result_t;
             }
@@ -885,15 +887,15 @@ mod test {
         let expected_code = quote! {
 
             pub fn lv_roller_get_option_str(
-                obj: &crate::widgets::Wdg,
+                obj: &Wdg,
                 option: u32,
-                buf: &mut ::alloc::ffi::CString,
+                buf: &mut CString,
                 buf_size: u32
             ) -> lv_result_t {
                 unsafe {
                     let buf_raw = buf.clone().into_raw();
                     let rust_result = lightvgl_sys::lv_roller_get_option_str(obj.raw(), option, buf_raw, buf_size);
-                    *buf = ::alloc::ffi::CString::from_raw(buf_raw);
+                    *buf = CString::from_raw(buf_raw);
                     rust_result
                 }
             }
@@ -924,7 +926,7 @@ mod test {
 
         let code = arc_rotate_obj_to_angle.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_arc_rotate_obj_to_angle(obj: &crate::widgets::Wdg, obj_to_rotate: &mut crate::widgets::Wdg, r_offset: lv_coord_t) {
+            pub fn lv_arc_rotate_obj_to_angle(obj: &Wdg, obj_to_rotate: &mut Wdg, r_offset: lv_coord_t) {
                 unsafe {
                     lightvgl_sys::lv_arc_rotate_obj_to_angle(
                         obj.raw(),
@@ -942,10 +944,8 @@ mod test {
     fn generate_method_wrapper_for_void_return() {
         let bindgen_code = quote! {
             extern "C" {
-                #[doc = " Set a new text for a label. Memory will be allocated to store the text by the label."]
-                #[doc = " @param label pointer to a label object"]
-                #[doc = " @param text '\\0' terminated character string. NULL to refresh with the current text."]
-                pub fn lv_label_set_text(label: *mut lv_obj_t, text: *const c_char);
+                #[doc = " Set a new text for a label. Memory will be allocated to store the text by the label.\n @param obj           pointer to a label object\n @param text          '\\0' terminated character string. NULL to refresh with the current text.\n @note If `LV_USE_ARABIC_PERSIAN_CHARS` is enabled the text will be modified to have the correct Arabic\n characters in it."]
+                pub fn lv_label_set_text(label: *mut lv_obj_t, text: *const ::core::ffi::c_char);
             }
         };
         let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
@@ -958,7 +958,8 @@ mod test {
 
         let code = label_set_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_label_set_text(label: &mut crate::widgets::Wdg, text: &CStr) {
+            #[cfg_attr(not(doctest), doc = "Set a new text for a label. Memory will be allocated to store the text by the label.\n\n@param obj           pointer to a label object\n\n@param text          '\\\\0' terminated character string. NULL to refresh with the current text.\n\n@note If `LV_USE_ARABIC_PERSIAN_CHARS` is enabled the text will be modified to have the correct Arabic\n\ncharacters in it.")]
+            pub fn lv_label_set_text(label: &mut Wdg, text: &CStr) {
                 unsafe {
                     lightvgl_sys::lv_label_set_text(
                         label.raw_mut(),
@@ -987,7 +988,7 @@ mod test {
 
         let code = label_get_recolor.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_label_get_recolor(label: &mut crate::widgets::Wdg) -> bool {
+            pub fn lv_label_get_recolor(label: &mut Wdg) -> bool {
                 unsafe {
                     lightvgl_sys::lv_label_get_recolor(label.raw_mut())
                 }
@@ -1014,7 +1015,7 @@ mod test {
 
         let code = label_get_text_selection_start.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_label_get_text_selection_start(label: &mut crate::widgets::Wdg) -> u32 {
+            pub fn lv_label_get_text_selection_start(label: &mut Wdg) -> u32 {
                 unsafe {
                     lightvgl_sys::lv_label_get_text_selection_start(label.raw_mut())
                 }
@@ -1041,7 +1042,7 @@ mod test {
 
         let code = dropdown_get_list.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_dropdown_get_list(obj: &mut crate::widgets::Wdg) -> Option<Wdg> {
+            pub fn lv_dropdown_get_list(obj: &mut Wdg) -> Option<Wdg> {
                 unsafe {
                     let pointer = lightvgl_sys::lv_dropdown_get_list(obj.raw_mut());
                     Wdg::try_from_ptr(pointer)
@@ -1056,7 +1057,7 @@ mod test {
     fn generate_method_wrapper_for_str_return() {
         let bindgen_code = quote! {
             unsafe extern "C" {
-                pub fn lv_label_get_text(obj: *const lv_obj_t) -> *mut c_char;
+                pub fn lv_label_get_text(obj: *const lv_obj_t) -> *mut ::core::ffi::c_char;
             }
         };
         let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
@@ -1069,7 +1070,7 @@ mod test {
 
         let code = label_get_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_label_get_text(obj: &crate::widgets::Wdg) -> &CStr {
+            pub fn lv_label_get_text(obj: &Wdg) -> &CStr {
                 unsafe {
                     let pointer = lightvgl_sys::lv_label_get_text(obj.raw());
                     CStr::from_ptr(pointer)

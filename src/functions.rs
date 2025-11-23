@@ -1,5 +1,6 @@
 //! Auto-generated safe bindings to LVGL functions
 
+use ::alloc::ffi::CString;
 use ::core::{
     ffi::{CStr, c_void},
     time::Duration,
@@ -7,7 +8,6 @@ use ::core::{
 
 use log::Level;
 
-#[cfg(feature = "no_ecs")]
 use crate::styles::Style;
 use crate::{
     events::Event,
@@ -35,7 +35,7 @@ pub fn lv_color_make(r: u8, g: u8, b: u8) -> lightvgl_sys::lv_color_t {
 }
 
 #[rustfmt::skip]
-pub fn lv_log_add(level: Level, file: &core::ffi::CStr, line: u32, func: &core::ffi::CStr, message: &core::ffi::CStr) {
+pub fn lv_log_add(level: Level, file: &CStr, line: u32, func: &CStr, message: &CStr) {
     crate::logging::lv_log_add(level, file, line, func, message)
 }
 
