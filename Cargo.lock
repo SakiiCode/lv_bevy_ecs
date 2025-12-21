@@ -654,7 +654,7 @@ dependencies = [
 
 [[package]]
 name = "lightvgl-sys"
-version = "9.4.2"
+version = "9.4.3"
 dependencies = [
  "bindgen",
  "cc",
