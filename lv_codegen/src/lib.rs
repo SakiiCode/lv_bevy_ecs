@@ -14,7 +14,7 @@ type CGResult<T> = Result<T, Box<dyn Error>>;
 const LIB_PREFIX: &str = "lv_";
 
 #[cfg(feature = "no_ecs")]
-const FUNCTION_BLACKLIST: [&str; 9] = [
+const FUNCTION_BLACKLIST: [&str; 10] = [
     "lv_style_init",                   // use Style::default() instead
     "lv_obj_null_on_delete",           // can invalidate NonNull<>
     "lv_obj_add_style",                // use functions::lv_obj_add_style() instead
@@ -24,10 +24,11 @@ const FUNCTION_BLACKLIST: [&str; 9] = [
     "lv_event_get_target_obj",         // use functions::lv_event_get_target_obj() instead
     "lv_event_get_current_target_obj", // use functions::lv_event_get_current_target_obj() instead
     "lv_list_get_button_text",         // lifetime can't be elided
+    "lv_label_set_text_vfmt",          // cannot cross-compile
 ];
 
 #[cfg(not(feature = "no_ecs"))]
-const FUNCTION_BLACKLIST: [&str; 12] = [
+const FUNCTION_BLACKLIST: [&str; 13] = [
     "lv_obj_null_on_delete",           // can invalidate NonNull<>
     "lv_obj_add_style",                // add component instead
     "lv_obj_replace_style",            // replace component instead
@@ -40,6 +41,7 @@ const FUNCTION_BLACKLIST: [&str; 12] = [
     "lv_event_get_target_obj",         // use functions::lv_event_get_target_obj() instead
     "lv_event_get_current_target_obj", // use functions::lv_event_get_current_target_obj() instead
     "lv_list_get_button_text",         // lifetime can't be elided
+    "lv_label_set_text_vfmt",          // cannot cross-compile
 ];
 
 #[derive(Debug, Clone, Error)]
