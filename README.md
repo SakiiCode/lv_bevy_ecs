@@ -124,6 +124,7 @@ Can be enabled with the feature `lvgl_alloc`. This will make all dynamic memory 
 
 | lv_bevy_ecs | bevy_ecs | lightvgl-sys | LVGL  |
 | ----------- | -------- | ------------ | ----- |
+| 0.6.2       | 0.17.3   | 9.4.3        | 9.4.0 |
 | 0.6.1       | 0.17.3   | 9.4.2        | 9.4.0 |
 | 0.5.2       | 0.17.3   | 9.4.2        | 9.4.0 |
 | 0.5.0       | 0.17.2   | 9.4.0        | 9.4.0 |

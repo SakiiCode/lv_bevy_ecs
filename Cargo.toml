@@ -1,22 +1,21 @@
 [package]
 name = "lv_bevy_ecs"
-version = "0.6.1"
+version = "0.6.2"
 edition = "2024"
 description = "Safe Rust bindings to the LVGL graphics library using Bevy's ECS framework"
 readme = "README.md"
-authors = ["SakiiCode"]
 homepage = "https://github.com/SakiiCode/lv_bevy_ecs"
 repository = "https://github.com/SakiiCode/lv_bevy_ecs"
 categories = ["embedded", "gui", "graphics", "no-std"]
 keywords = ["lvgl", "ecs", "bevy", "embedded", "graphics"]
 license = "MIT"
 
+[package.metadata.docs.rs]
+features = ["use-vendored-config"]
+
 [lib]
 name = "lv_bevy_ecs"
 path = "src/lib.rs"
-
-[package.metadata.docs.rs]
-features = ["use-vendored-config"]
 
 [dependencies]
 bevy_ecs = { version = "0.17.0", default-features = false }

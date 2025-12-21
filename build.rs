@@ -23,6 +23,7 @@ fn main() {
     let code = quote! {
         use ::core::ptr::NonNull;
         use ::core::any::Any;
+        use ::alloc::ffi::CString;
         use constptr::ConstPtr;
         use lightvgl_sys::*;
 

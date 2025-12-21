@@ -1,6 +1,5 @@
 //! Auto-generated safe bindings to LVGL functions
 
-use ::alloc::ffi::CString;
 use ::core::{
     ffi::{CStr, c_void},
     time::Duration,
