@@ -1,6 +1,6 @@
 [package]
 name = "lv_bevy_ecs"
-version = "0.6.2"
+version = "0.6.3"
 edition = "2024"
 description = "Safe Rust bindings to the LVGL graphics library using Bevy's ECS framework"
 readme = "README.md"
