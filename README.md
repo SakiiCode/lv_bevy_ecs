@@ -1,6 +1,6 @@
 # lv_bevy_ecs
 
-Safe Rust bindings to the LVGL library using bevy_ecs. Compatible with `#![no_std]` environments by default.
+Safe Rust bindings to the LVGL library using bevy_ecs. Compatible with `#![no_std]` environments after setting `default-features = false`.
 
 [![Crates.io](https://img.shields.io/crates/v/lv_bevy_ecs.svg)](https://crates.io/crates/lv_bevy_ecs)
 [![Docs](https://docs.rs/lv_bevy_ecs/badge.svg)](https://docs.rs/lv_bevy_ecs/latest/lv_bevy_ecs/)
@@ -124,7 +124,7 @@ Can be enabled with the feature `lvgl_alloc`. This will make all dynamic memory 
 
 | lv_bevy_ecs | bevy_ecs | lightvgl-sys | LVGL  |
 | ----------- | -------- | ------------ | ----- |
-| 0.6.3       | 0.17.3   | 9.4.3        | 9.4.0 |
+| 0.6.2       | 0.17.3   | 9.4.3        | 9.4.0 |
 | 0.6.1       | 0.17.3   | 9.4.2        | 9.4.0 |
 | 0.5.2       | 0.17.3   | 9.4.2        | 9.4.0 |
 | 0.5.0       | 0.17.2   | 9.4.0        | 9.4.0 |
@@ -143,6 +143,18 @@ so open to API improvement ideas as well.
 
 You are probably on RISC-V. Please help your architecture get upstreamed into [rust-ctor](https://github.com/mmastrac/rust-ctor).
 Until then set `default-features = false` and manually call `lv_init();` in the main function.
+
+### Can't find crate for `std` required by `dtor` because it does not declare `#![no_std]`
+
+Set `default-features = false` and manually call `lv_init();` in the main function.
+
+### Unable to generate bindings: fatal error: 'inttypes.h' file not found
+
+Try adding this environment variable to `.cargo/config.toml`:
+
+```toml
+BINDGEN_EXTRA_CLANG_ARGS = "-I/usr/include"
+```
 
 ## Thanks
 
