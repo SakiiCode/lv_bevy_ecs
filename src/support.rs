@@ -1,9 +1,8 @@
 //! Utility structs and functions
 
 use embedded_graphics::pixelcolor::{BinaryColor, Gray8, Rgb565, Rgb888};
-use lightvgl_sys::lv_coord_t;
 
-pub const LV_SIZE_CONTENT: u32 = ((1 << (29u32)) - 1) | lightvgl_sys::LV_COORD_TYPE_SPEC;
+pub const LV_SIZE_CONTENT: u32 = lightvgl_sys::LV_COORD_MAX | lightvgl_sys::LV_COORD_TYPE_SPEC;
 
 #[macro_export]
 macro_rules! cstr {
@@ -13,7 +12,7 @@ macro_rules! cstr {
     }};
 }
 
-pub fn lv_pct(pct: lv_coord_t) -> lv_coord_t {
+pub fn lv_pct(pct: lightvgl_sys::lv_coord_t) -> lightvgl_sys::lv_coord_t {
     unsafe { lightvgl_sys::lv_pct(pct) }
 }
 
@@ -21,8 +20,13 @@ pub fn lv_dpx(n: i32) -> i32 {
     unsafe { lightvgl_sys::lv_dpx(n) }
 }
 
-pub(crate) fn lv_color_make(r: u8, g: u8, b: u8) -> lightvgl_sys::lv_color_t {
+pub fn lv_color_make(r: u8, g: u8, b: u8) -> lightvgl_sys::lv_color_t {
     unsafe { lightvgl_sys::lv_color_make(r, g, b) }
+}
+
+#[cfg(LV_USE_GRID)]
+pub fn lv_grid_fr(x: u8)->i32 {
+    unsafe { lightvgl_sys::lv_grid_fr(x) }
 }
 
 pub trait LvglColorFormat {

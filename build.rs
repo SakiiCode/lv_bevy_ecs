@@ -8,6 +8,8 @@ use std::path::PathBuf;
 use std::process::Command;
 
 fn main() {
+    println!("cargo::rustc-check-cfg=cfg(LV_USE_GRID)");
+
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     let rs = out_path.join("generated.rs");
 
@@ -76,6 +78,11 @@ fn main() {
                 .ok()
         })
         .and_then(|mut cmd| cmd.wait().ok());
+
+    // this check is needed to enable lv_grid_fr wrapper
+    if lightvgl_sys::LV_USE_GRID != 0 {
+        println!("cargo::rustc-cfg=LV_USE_GRID");
+    }
 }
 
 fn rustfmt_path() -> Option<PathBuf> {

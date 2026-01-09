@@ -10,10 +10,9 @@ use std::{
     time::{Duration, Instant},
 };
 
-use bevy_ecs::query::With;
 use lv_bevy_ecs::{
     animation::Animation,
-    bevy::{component::Component, entity::Entity, hierarchy::Children, world::World},
+    bevy::{component::Component, entity::Entity, hierarchy::Children, query::With, world::World},
     display::{Display, DrawBuffer},
     events::Event,
     functions::*,
@@ -21,7 +20,7 @@ use lv_bevy_ecs::{
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     subjects::Subject,
-    support::{OpacityLevel, lv_pct},
+    support::{LV_SIZE_CONTENT, OpacityLevel, lv_grid_fr, lv_pct},
     sys::{
         LV_ANIM_REPEAT_INFINITE, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST, LV_SYMBOL_FILE,
         lv_align_t_LV_ALIGN_BOTTOM_RIGHT, lv_anim_path_ease_out, lv_anim_set_path_cb,
@@ -51,12 +50,6 @@ use embedded_graphics::{
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
-
-macro_rules! lv_grid_fr {
-    ($x:literal) => {
-        lightvgl_sys::LV_COORD_MAX - 100 + $x
-    };
-}
 
 #[derive(Component)]
 #[component(storage = "SparseSet")]
@@ -123,13 +116,13 @@ fn create_ui(world: &mut World) {
 
     let grid_cols = [
         300 as i32,
-        lv_grid_fr!(3) as i32,
-        lv_grid_fr!(2) as i32,
+        lv_grid_fr(3) as i32,
+        lv_grid_fr(2) as i32,
         LV_GRID_TEMPLATE_LAST as i32,
     ];
     let grid_rows = [
         100 as i32,
-        lv_grid_fr!(1) as i32,
+        lv_grid_fr(1) as i32,
         LV_GRID_CONTENT as i32,
         LV_GRID_TEMPLATE_LAST as i32,
     ];
