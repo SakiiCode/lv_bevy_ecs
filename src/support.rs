@@ -17,6 +17,10 @@ pub fn lv_pct(pct: lv_coord_t) -> lv_coord_t {
     unsafe { lightvgl_sys::lv_pct(pct) }
 }
 
+pub fn lv_dpx(n: i32) -> i32 {
+    unsafe { lightvgl_sys::lv_dpx(n) }
+}
+
 pub(crate) fn lv_color_make(r: u8, g: u8, b: u8) -> lightvgl_sys::lv_color_t {
     unsafe { lightvgl_sys::lv_color_make(r, g, b) }
 }
