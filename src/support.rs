@@ -3,7 +3,7 @@
 use embedded_graphics::pixelcolor::{BinaryColor, Gray8, Rgb565, Rgb888};
 use lightvgl_sys::lv_coord_t;
 
-pub const LV_SIZE_CONTENT: u32 = 2001 | lightvgl_sys::LV_COORD_TYPE_SPEC;
+pub const LV_SIZE_CONTENT: u32 = ((1 << (29u32)) - 1) | lightvgl_sys::LV_COORD_TYPE_SPEC;
 
 #[macro_export]
 macro_rules! cstr {

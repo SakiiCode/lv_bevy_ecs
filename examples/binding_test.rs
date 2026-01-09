@@ -413,8 +413,7 @@ fn buttonmatrix_event_cb(world: &mut World, e: &mut lv_event_t) {
 
 fn list_button_create(world: &mut World, parent: Entity) -> Entity {
     let mut btn = Button::create_widget();
-    lv_obj_set_width(&mut btn, lv_pct(100));
-    //lv_obj_set_size(&mut btn, lv_pct(100), LV_SIZE_CONTENT as i32);
+    lv_obj_set_size(&mut btn, lv_pct(100), LV_SIZE_CONTENT as i32);
 
     let btn_id = world.spawn((Button, btn)).id();
     let mut parent = world.entity_mut(parent);
