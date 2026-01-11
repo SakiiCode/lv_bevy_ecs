@@ -41,6 +41,7 @@ macro_rules! func {
 /// Forward LVGL logging to the `log` crate
 ///
 /// Must not be used together with lv_log_init();
+#[cfg(LV_USE_LOG)]
 pub fn connect() {
     unsafe {
         lightvgl_sys::lv_log_register_print_cb(Some(lvgl_log));
@@ -82,6 +83,7 @@ pub unsafe extern "C" fn lvgl_log(
 /// Use LVGL as the backend for the `log` crate.
 ///
 /// Must not be used together with `lv_bevy_ecs::logging::connect()`
+#[cfg(LV_USE_LOG)]
 pub fn lv_log_init() {
     match log::set_logger(&LvglLogger) {
         Ok(_) => log::set_max_level(log::LevelFilter::Trace),
@@ -99,6 +101,7 @@ pub fn as_lv_log_level(level: Level) -> lightvgl_sys::lv_log_level_t {
     }) as lightvgl_sys::lv_log_level_t
 }
 
+#[cfg(LV_USE_LOG)]
 pub(crate) fn lv_log_add(
     level: Level,
     file: &core::ffi::CStr,
@@ -117,8 +120,10 @@ pub(crate) fn lv_log_add(
     }
 }
 
+#[cfg(LV_USE_LOG)]
 pub struct LvglLogger;
 
+#[cfg(LV_USE_LOG)]
 impl log::Log for LvglLogger {
     fn enabled(&self, _metadata: &log::Metadata) -> bool {
         true

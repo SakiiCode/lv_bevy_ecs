@@ -33,7 +33,7 @@ pub fn lv_color_make(r: u8, g: u8, b: u8) -> lightvgl_sys::lv_color_t {
     crate::support::lv_color_make(r,g,b)
 }
 
-#[rustfmt::skip]
+#[cfg(LV_USE_LOG)]
 pub fn lv_log_add(level: Level, file: &CStr, line: u32, func: &CStr, message: &CStr) {
     crate::logging::lv_log_add(level, file, line, func, message)
 }
