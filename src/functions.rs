@@ -29,7 +29,23 @@ pub fn lv_timer_handler() -> u32 {
 }
 
 pub fn lv_color_make(r: u8, g: u8, b: u8) -> lightvgl_sys::lv_color_t {
-    crate::support::lv_color_make(r, g, b)
+    unsafe { lightvgl_sys::lv_color_make(r, g, b) }
+}
+
+pub fn lv_color_hex(c: u32) -> lightvgl_sys::lv_color_t {
+    unsafe { lightvgl_sys::lv_color_hex(c) }
+}
+
+pub fn lv_color_hex3(c: u32) -> lightvgl_sys::lv_color_t {
+    unsafe { lightvgl_sys::lv_color_hex3(c) }
+}
+
+pub fn lv_color_mix(c1: lv_color_t, c2: lv_color_t, mix: u8) -> lightvgl_sys::lv_color_t {
+    unsafe { lightvgl_sys::lv_color_mix(c1, c2, mix) }
+}
+
+pub fn lv_palette_darken(p: lv_palette_t, lvl: u8) -> lightvgl_sys::lv_color_t {
+    unsafe { lightvgl_sys::lv_palette_darken(p, lvl) }
 }
 
 #[cfg(LV_USE_LOG)]

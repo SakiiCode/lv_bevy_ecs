@@ -20,12 +20,8 @@ pub fn lv_dpx(n: i32) -> i32 {
     unsafe { lightvgl_sys::lv_dpx(n) }
 }
 
-pub fn lv_color_make(r: u8, g: u8, b: u8) -> lightvgl_sys::lv_color_t {
-    unsafe { lightvgl_sys::lv_color_make(r, g, b) }
-}
-
 #[cfg(LV_USE_GRID)]
-pub fn lv_grid_fr(x: u8)->i32 {
+pub fn lv_grid_fr(x: u8) -> i32 {
     unsafe { lightvgl_sys::lv_grid_fr(x) }
 }
 

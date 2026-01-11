@@ -28,14 +28,13 @@ use lv_bevy_ecs::{
         lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED,
         lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X, lv_chart_set_type,
         lv_chart_type_t_LV_CHART_TYPE_BAR, lv_chart_type_t_LV_CHART_TYPE_LINE,
-        lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_color_hex, lv_color_hex3, lv_color_mix,
-        lv_color_t, lv_draw_buf_align, lv_draw_image_dsc_t, lv_draw_line_dsc_t, lv_event_t,
-        lv_flex_flow_t_LV_FLEX_FLOW_COLUMN, lv_font_montserrat_24,
-        lv_grid_align_t_LV_GRID_ALIGN_CENTER, lv_grid_align_t_LV_GRID_ALIGN_START,
-        lv_grid_align_t_LV_GRID_ALIGN_STRETCH, lv_layer_t, lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN,
-        lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT, lv_obj_t, lv_observer_get_target, lv_observer_t,
-        lv_palette_darken, lv_palette_t_LV_PALETTE_BLUE, lv_part_t_LV_PART_ITEMS,
-        lv_state_t_LV_STATE_CHECKED, lv_subject_get_int, lv_subject_t,
+        lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_color_t, lv_draw_buf_align,
+        lv_draw_image_dsc_t, lv_draw_line_dsc_t, lv_event_t, lv_flex_flow_t_LV_FLEX_FLOW_COLUMN,
+        lv_font_montserrat_24, lv_grid_align_t_LV_GRID_ALIGN_CENTER,
+        lv_grid_align_t_LV_GRID_ALIGN_START, lv_grid_align_t_LV_GRID_ALIGN_STRETCH, lv_layer_t,
+        lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT, lv_obj_t,
+        lv_observer_get_target, lv_observer_t, lv_palette_t_LV_PALETTE_BLUE,
+        lv_part_t_LV_PART_ITEMS, lv_state_t_LV_STATE_CHECKED, lv_subject_get_int, lv_subject_t,
     },
     widgets::{
         Button, Buttonmatrix, Canvas, Chart, Dropdown, Image, Label, LvglWorld, Wdg, Widget,
@@ -105,9 +104,9 @@ fn main() {
 }
 
 fn create_ui(world: &mut World) {
-    let c1: lv_color_t = unsafe { lv_color_hex(0xff0000) };
-    let c2: lv_color_t = unsafe { lv_palette_darken(lv_palette_t_LV_PALETTE_BLUE, 2) };
-    let c3: lv_color_t = unsafe { lv_color_mix(c1, c2, OpacityLevel::Percent60 as u8) };
+    let c1: lv_color_t = lv_color_hex(0xff0000);
+    let c2: lv_color_t = lv_palette_darken(lv_palette_t_LV_PALETTE_BLUE, 2);
+    let c3: lv_color_t = lv_color_mix(c1, c2, OpacityLevel::Percent60 as u8);
 
     let mut style_big_font = Style::default();
     unsafe {
@@ -193,6 +192,7 @@ fn create_ui(world: &mut World) {
     let mut label_entity = world.spawn((DynamicLabel, Label, label));
     label_entity.insert(style_big_font.clone());
 
+    // Converting [&str] to [*const i8] is a little complicated
     let btnmatrix_options = {
         let options = ["First", "Second", "\n", "Third", ""];
         let combined = options.map(|s| CString::from_str(s).unwrap());

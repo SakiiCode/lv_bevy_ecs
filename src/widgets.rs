@@ -186,6 +186,11 @@ impl Widget {
         ::core::mem::forget(self);
         wdg
     }
+
+    #[inline]
+    pub fn create_widget() -> Self {
+        Self::default()
+    }
 }
 
 impl Default for Widget {
@@ -221,6 +226,8 @@ impl Drop for Widget {
         }
     }
 }
+
+pub type Obj = Widget;
 
 macro_rules! impl_widget {
     ($t:ident, $func:path) => {
