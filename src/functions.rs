@@ -28,9 +28,8 @@ pub fn lv_timer_handler() -> u32 {
     unsafe { lightvgl_sys::lv_timer_handler() }
 }
 
-#[rustfmt::skip]
 pub fn lv_color_make(r: u8, g: u8, b: u8) -> lightvgl_sys::lv_color_t {
-    crate::support::lv_color_make(r,g,b)
+    crate::support::lv_color_make(r, g, b)
 }
 
 #[cfg(LV_USE_LOG)]
@@ -38,7 +37,6 @@ pub fn lv_log_add(level: Level, file: &CStr, line: u32, func: &CStr, message: &C
     crate::logging::lv_log_add(level, file, line, func, message)
 }
 
-#[rustfmt::skip]
 pub fn lv_obj_add_event_cb<'a, F>(widget: &'a mut Wdg, filter: Event, callback: F)
 where
     F: FnMut(lightvgl_sys::lv_event_t) + 'a,
@@ -46,10 +44,9 @@ where
     crate::events::lv_obj_add_event_cb(widget, filter, callback)
 }
 
-#[rustfmt::skip]
 pub fn lv_async_call<F>(callback: F)
 where
-    F: FnMut() + 'static
+    F: FnMut() + 'static,
 {
     crate::timers::lv_async_call(callback)
 }
@@ -58,18 +55,15 @@ pub fn lv_screen_active() -> Option<Wdg> {
     unsafe { Wdg::try_from_ptr(lightvgl_sys::lv_screen_active()) }
 }
 
-#[rustfmt::skip]
 pub fn lv_subject_set_int(subject: &mut Subject, value: i32) {
     unsafe { lightvgl_sys::lv_subject_set_int(subject.raw_mut(), value) }
 }
 
 #[rustfmt::skip]
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub fn lv_subject_set_string(subject: &mut Subject, value: *mut c_void) {
-    unsafe { lightvgl_sys::lv_subject_set_pointer(subject.raw_mut(), value) }
+pub fn lv_subject_set_string(subject: &mut Subject, value: &CStr) {
+    unsafe { lightvgl_sys::lv_subject_set_pointer(subject.raw_mut(), value.as_ptr().cast::<c_void>().cast_mut()) }
 }
 
-#[rustfmt::skip]
 pub fn lv_subject_set_color(subject: &mut Subject, value: lv_color_t) {
     unsafe { lightvgl_sys::lv_subject_set_color(subject.raw_mut(), value) }
 }
