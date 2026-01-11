@@ -120,3 +120,22 @@ where
         callback();
     }
 }
+
+// this is horrible but lv_tick_set_cb does not accept user data
+// could be replaced with StaticCell or OnceCell but not worth the extra dependency
+static mut TICK_CALLBACK: Option<Box<dyn FnMut() -> u32>> = None;
+
+pub(crate) fn lv_tick_set_cb<F>(callback: F)
+where
+    F: FnMut() -> u32 + 'static,
+{
+    unsafe {
+        TICK_CALLBACK = Some(Box::new(callback));
+        lightvgl_sys::lv_tick_set_cb(Some(tick_callback_trampoline));
+    }
+}
+
+#[allow(static_mut_refs)]
+unsafe extern "C" fn tick_callback_trampoline() -> u32 {
+    unsafe { (*TICK_CALLBACK.as_mut().unwrap())() }
+}

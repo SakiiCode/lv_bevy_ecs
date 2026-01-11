@@ -24,6 +24,13 @@ pub fn lv_tick_inc(diff: Duration) {
     unsafe { lightvgl_sys::lv_tick_inc(diff.as_millis() as u32) }
 }
 
+pub fn lv_tick_set_cb<F>(callback: F)
+where
+    F: FnMut() -> u32 + 'static,
+{
+    crate::timers::lv_tick_set_cb(callback);
+}
+
 pub fn lv_timer_handler() -> u32 {
     unsafe { lightvgl_sys::lv_timer_handler() }
 }

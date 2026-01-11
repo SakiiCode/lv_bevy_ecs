@@ -4,7 +4,7 @@ use std::{
         Mutex,
         atomic::{AtomicBool, Ordering},
     },
-    time::{Duration, Instant},
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
 use lv_bevy_ecs::{
@@ -71,6 +71,16 @@ fn main() {
     let _touch_screen = InputDevice::<Pointer>::create(|| get_touch_input(window.events()));
 
     info!("Input OK");
+
+    lv_tick_set_cb(|| {
+        let current_time = SystemTime::now();
+        let diff = current_time
+            .duration_since(UNIX_EPOCH)
+            .expect("Time should only go forward");
+        let ms = diff.as_millis() as u32;
+        println!("{ms}");
+        ms
+    });
 
     let mut world = LvglWorld::default();
 
@@ -141,17 +151,9 @@ fn main() {
 
     info!("Create OK");
 
-    let mut prev_time = Instant::now();
-
     window.update(&sim_display);
 
     loop {
-        let current_time = Instant::now();
-        let diff = current_time.duration_since(prev_time);
-        prev_time = current_time;
-
-        lv_tick_inc(diff);
-
         lv_timer_handler();
 
         window.update(&sim_display);

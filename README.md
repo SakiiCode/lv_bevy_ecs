@@ -43,7 +43,23 @@ It is highly recommended to read [Chapter 14 of the Unofficial Bevy Cheat Book](
 DEP_LV_CONFIG_PATH = { relative = true, value = "." }
 ```
 
-3. You have to obtain a World instance with `LvglWorld::default();`.
+3. Assign a tick callback that measures elapsed time in milliseconds. This must be done **before** creating the UI.
+   _For other frameworks (like FreeRTOS), you should [use its tick counter](https://docs.lvgl.io/9.4/details/integration/overview/connecting_lvgl.html#tick-interface) instead to get precise and constant framerate._
+
+```rust
+# use lv_bevy_ecs::functions::*;
+# use std::time::{SystemTime, UNIX_EPOCH, Duration};
+#
+lv_tick_set_cb(|| {
+    let current_time = SystemTime::now();
+    let diff = current_time
+        .duration_since(UNIX_EPOCH)
+        .expect("Time should only go forward");
+    diff.as_millis() as u32
+});
+```
+
+4. You have to obtain a World instance with `LvglWorld::default();`.
    This is a global variable, it can be stored in a LazyLock or passed around in an Arc<Mutex<>> if needed elsewhere than in main().
 
 ```rust
@@ -53,22 +69,11 @@ DEP_LV_CONFIG_PATH = { relative = true, value = "." }
 static WORLD: LazyLock<Mutex<LvglWorld>> = LazyLock::new(|| Mutex::new(LvglWorld::default()));
 ```
 
-4. Last thing is to calculate frametime and call these LVGL functions in every loop cycle
-
-   _If you are running this inside another framework (like FreeRTOS), you should [use its tick counter](https://docs.lvgl.io/9.4/details/integration/overview/connecting_lvgl.html#tick-interface) instead to get precise and constant framerate._
+4. Last thing is to call `lv_timer_handle()` in every loop cycle.
 
 ```rust
 # use lv_bevy_ecs::functions::*;
-# use std::time::{Instant, Duration};
-#
-let mut prev_time = Instant::now();
-// ...
 loop {
-    let current_time = Instant::now();
-    let diff = current_time.duration_since(prev_time);
-    prev_time = current_time;
-    // ...
-    lv_tick_inc(diff);
     lv_timer_handler();
 #    break;
 }
