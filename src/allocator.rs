@@ -2,15 +2,18 @@
 
 use ::core::alloc::{GlobalAlloc, Layout};
 use ::core::ffi::c_void;
+#[cfg(not(feature = "ctor"))]
+use ::core::sync::atomic::{AtomicBool, Ordering};
 
-// Register the global allocator
+// If ctor has run we can assume heap memory has been reserved
+#[cfg(feature = "ctor")]
 #[global_allocator]
-static ALLOCATOR: LvglAlloc = LvglAlloc;
+static ALLOCATOR: LvglAllocUnsafe = LvglAllocUnsafe;
 
 /// LVGL allocator. Enabled by toggling the `lvgl-alloc` feature.
-pub struct LvglAlloc;
+pub struct LvglAllocUnsafe;
 
-unsafe impl GlobalAlloc for LvglAlloc {
+unsafe impl GlobalAlloc for LvglAllocUnsafe {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         unsafe {
             const USIZE_BYTES: usize = (usize::BITS / u8::BITS) as usize;
@@ -61,5 +64,42 @@ unsafe impl GlobalAlloc for LvglAlloc {
             *((aligned.cast::<usize>()).sub(1)) = offset + USIZE_BYTES;
             aligned
         }
+    }
+}
+
+// If ctor is not enabled, we can't be sure if lv_init has been called
+#[cfg(not(feature = "ctor"))]
+#[global_allocator]
+static ALLOCATOR: LvglAllocSafe = LvglAllocSafe(LvglAllocUnsafe);
+
+#[cfg(not(feature = "ctor"))]
+static INITIALIZED: AtomicBool = AtomicBool::new(false);
+
+#[cfg(not(feature = "ctor"))]
+pub struct LvglAllocSafe(LvglAllocUnsafe);
+
+#[cfg(not(feature = "ctor"))]
+unsafe impl GlobalAlloc for LvglAllocSafe {
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+        if !INITIALIZED.load(Ordering::Acquire) {
+            crate::functions::lv_init();
+            INITIALIZED.store(true, Ordering::Release);
+        }
+        unsafe { self.0.alloc(layout) }
+    }
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+        unsafe { self.0.dealloc(ptr, layout) }
+    }
+
+    unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
+        if !INITIALIZED.load(Ordering::Acquire) {
+            crate::functions::lv_init();
+            INITIALIZED.store(true, Ordering::Release);
+        }
+        unsafe { self.0.alloc_zeroed(layout) }
+    }
+
+    unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
+        unsafe { self.0.realloc(ptr, layout, new_size) }
     }
 }
