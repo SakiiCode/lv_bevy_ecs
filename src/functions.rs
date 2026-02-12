@@ -35,6 +35,19 @@ pub fn lv_timer_handler() -> u32 {
     unsafe { lightvgl_sys::lv_timer_handler() }
 }
 
+pub fn lv_pct(pct: lightvgl_sys::lv_coord_t) -> lightvgl_sys::lv_coord_t {
+    unsafe { lightvgl_sys::lv_pct(pct) }
+}
+
+pub fn lv_dpx(n: i32) -> i32 {
+    unsafe { lightvgl_sys::lv_dpx(n) }
+}
+
+#[cfg(LV_USE_GRID)]
+pub fn lv_grid_fr(x: u8) -> i32 {
+    unsafe { lightvgl_sys::lv_grid_fr(x) }
+}
+
 pub fn lv_color_make(r: u8, g: u8, b: u8) -> lightvgl_sys::lv_color_t {
     unsafe { lightvgl_sys::lv_color_make(r, g, b) }
 }

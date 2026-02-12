@@ -12,19 +12,6 @@ macro_rules! cstr {
     }};
 }
 
-pub fn lv_pct(pct: lightvgl_sys::lv_coord_t) -> lightvgl_sys::lv_coord_t {
-    unsafe { lightvgl_sys::lv_pct(pct) }
-}
-
-pub fn lv_dpx(n: i32) -> i32 {
-    unsafe { lightvgl_sys::lv_dpx(n) }
-}
-
-#[cfg(LV_USE_GRID)]
-pub fn lv_grid_fr(x: u8) -> i32 {
-    unsafe { lightvgl_sys::lv_grid_fr(x) }
-}
-
 pub trait LvglColorFormat {
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t;
 }
