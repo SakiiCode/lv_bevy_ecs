@@ -1,6 +1,6 @@
 [package]
 name = "lv_bevy_ecs"
-version = "0.6.6"
+version = "0.7.0"
 edition = "2024"
 description = "Safe Rust bindings to the LVGL graphics library using Bevy's ECS framework"
 readme = "README.md"
@@ -22,7 +22,7 @@ name = "no_ecs"
 required-features = ["no_ecs"]
 
 [dependencies]
-bevy_ecs = { version = "0.17.0", default-features = false }
+bevy_ecs = { version = "0.18.0", default-features = false }
 constptr = { version = "0.3.1", default-features = false }
 ctor = { version = "0.6.0", optional = true }
 embedded-graphics = { version = "0.8.0" }
