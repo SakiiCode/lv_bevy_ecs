@@ -16,7 +16,10 @@ macro_rules! assert_lv_initialized {
     () => {
         #[cfg(not(feature = "ctor"))]
         unsafe {
-            assert!(lightvgl_sys::lv_is_initialized());
+            assert!(
+                lightvgl_sys::lv_is_initialized(),
+                "LVGL was not initialized! Add lv_init(); to the beginning of main()"
+            );
         }
     };
 }

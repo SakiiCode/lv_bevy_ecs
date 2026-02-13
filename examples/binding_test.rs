@@ -20,7 +20,7 @@ use lv_bevy_ecs::{
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     subjects::Subject,
-    support::{LV_SIZE_CONTENT, OpacityLevel, lv_grid_fr, lv_pct},
+    support::{LV_SIZE_CONTENT, OpacityLevel},
     sys::{
         LV_ANIM_REPEAT_INFINITE, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST, LV_SYMBOL_FILE,
         lv_align_t_LV_ALIGN_BOTTOM_RIGHT, lv_anim_path_ease_out, lv_anim_set_path_cb,
