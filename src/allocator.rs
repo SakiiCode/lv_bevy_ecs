@@ -8,12 +8,12 @@ use ::core::sync::atomic::{AtomicBool, Ordering};
 // If ctor has run we can assume heap memory has been reserved
 #[cfg(feature = "ctor")]
 #[global_allocator]
-static ALLOCATOR: LvglAllocUnsafe = LvglAllocUnsafe;
+static ALLOCATOR: LvglAllocUnchecked = LvglAllocUnchecked;
 
 /// LVGL allocator. Enabled by toggling the `lvgl-alloc` feature.
-pub struct LvglAllocUnsafe;
+pub struct LvglAllocUnchecked;
 
-unsafe impl GlobalAlloc for LvglAllocUnsafe {
+unsafe impl GlobalAlloc for LvglAllocUnchecked {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         unsafe {
             const USIZE_BYTES: usize = (usize::BITS / u8::BITS) as usize;
@@ -70,18 +70,19 @@ unsafe impl GlobalAlloc for LvglAllocUnsafe {
 // If ctor is not enabled, we can't be sure if lv_init has been called
 #[cfg(not(feature = "ctor"))]
 #[global_allocator]
-static ALLOCATOR: LvglAllocSafe = LvglAllocSafe(LvglAllocUnsafe);
+static ALLOCATOR: LvglAllocSafe = LvglAllocSafe(LvglAllocUnchecked);
 
 #[cfg(not(feature = "ctor"))]
 static INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 #[cfg(not(feature = "ctor"))]
-pub struct LvglAllocSafe(LvglAllocUnsafe);
+pub struct LvglAllocSafe(LvglAllocUnchecked);
 
 #[cfg(not(feature = "ctor"))]
 unsafe impl GlobalAlloc for LvglAllocSafe {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         if !INITIALIZED.load(Ordering::Acquire) {
+            log::warn!("LVGL was not initialized! Running lv_init() now");
             crate::functions::lv_init();
             INITIALIZED.store(true, Ordering::Release);
         }
@@ -93,6 +94,7 @@ unsafe impl GlobalAlloc for LvglAllocSafe {
 
     unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
         if !INITIALIZED.load(Ordering::Acquire) {
+            log::warn!("LVGL was not initialized! Running lv_init() now");
             crate::functions::lv_init();
             INITIALIZED.store(true, Ordering::Release);
         }
