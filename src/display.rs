@@ -57,6 +57,7 @@ pub struct Display {
 
 impl Display {
     pub fn create(hor_res: i32, ver_res: i32) -> Self {
+        crate::support::assert_lv_initialized!();
         unsafe {
             let raw = NonNull::new(lightvgl_sys::lv_display_create(hor_res, ver_res)).unwrap();
             Self { raw }

@@ -43,6 +43,7 @@ macro_rules! func {
 /// Must not be used together with lv_log_init();
 #[cfg(LV_USE_LOG)]
 pub fn connect() {
+    crate::support::assert_lv_initialized!();
     unsafe {
         lightvgl_sys::lv_log_register_print_cb(Some(lvgl_log));
     }
@@ -85,6 +86,7 @@ pub unsafe extern "C" fn lvgl_log(
 /// Must not be used together with `lv_bevy_ecs::logging::connect()`
 #[cfg(LV_USE_LOG)]
 pub fn lv_log_init() {
+    crate::support::assert_lv_initialized!();
     match log::set_logger(&LvglLogger) {
         Ok(_) => log::set_max_level(log::LevelFilter::Trace),
         Err(err) => error!("Could not initialize logging: {}", err),

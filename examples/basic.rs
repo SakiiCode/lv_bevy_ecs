@@ -78,7 +78,6 @@ fn main() {
             .duration_since(UNIX_EPOCH)
             .expect("Time should only go forward");
         let ms = diff.as_millis() as u32;
-        println!("{ms}");
         ms
     });
 
