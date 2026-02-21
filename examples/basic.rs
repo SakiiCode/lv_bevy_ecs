@@ -36,6 +36,7 @@ use embedded_graphics_simulator::{
 struct DynamicButton;
 
 fn main() {
+    lv_init();
     lv_bevy_ecs::logging::lv_log_init();
 
     const HOR_RES: u32 = 320;

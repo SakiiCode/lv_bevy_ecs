@@ -41,6 +41,7 @@ struct Objects {
 static OBJECTS: LazyLock<Mutex<Objects>> = LazyLock::new(|| Mutex::new(Objects::default()));
 
 fn main() {
+    lv_init();
     lv_bevy_ecs::logging::lv_log_init();
 
     const HOR_RES: u32 = 320;

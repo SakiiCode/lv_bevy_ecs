@@ -1,6 +1,11 @@
-use lv_bevy_ecs::{error, functions::lv_log_add, info, trace};
+use lv_bevy_ecs::{
+    error,
+    functions::{lv_init, lv_log_add},
+    info, trace,
+};
 
 fn main() {
+    lv_init();
     simple_logger::init().unwrap();
     lv_bevy_ecs::logging::connect();
 
