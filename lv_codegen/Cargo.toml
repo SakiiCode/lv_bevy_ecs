@@ -1,19 +1,19 @@
 [package]
 name = "lv_codegen"
-description = "Code generation companion to lightvgl-sys"
-version = "0.3.2"
+version = "0.3.3"
 edition = "2024"
+description = "Code generation companion to lightvgl-sys"
 license = "MIT"
 
 [dependencies]
+Inflector = "0.11.4"
+constptr = "0.3.1"
+itertools = "0.14.0"
 proc-macro2 = "1.0.95"
 quote = "1.0.40"
 regex = "1.11.1"
 syn = { version = "2.0.111", features = ["full"] }
-Inflector = "0.11.4"
-itertools = "0.14.0"
 thiserror = "2.0.17"
-constptr = "0.3.1"
 
 [features]
 no_ecs = []
