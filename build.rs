@@ -27,6 +27,7 @@ fn main() {
     let code = quote! {
         use ::core::ptr::NonNull;
         use ::core::any::Any;
+        #[allow(unused_imports)]
         use ::alloc::ffi::CString;
         use constptr::ConstPtr;
         use lightvgl_sys::*;
