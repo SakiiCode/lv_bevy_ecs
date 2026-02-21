@@ -45,8 +45,11 @@ quote = "1.0.40"
 which = "8.0.0"
 
 [features]
-default = ["ctor"]
-ctor = ["dep:ctor"]  # Automatically call lv_init() at startup
+# Automatically call lv_init() at startup
+ctor = ["dep:ctor"]
+# Set LVGL allocator as Rust global allocator
 lvgl_alloc = []
+# Enable functions that should not be used in the ECS environment
 no_ecs = ["lv_codegen/no_ecs"]
+# Used by the docs-rs generator
 use-vendored-config = ["lightvgl-sys/use-vendored-config"]

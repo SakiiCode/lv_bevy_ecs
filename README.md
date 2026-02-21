@@ -1,6 +1,6 @@
 # lv_bevy_ecs
 
-Safe Rust bindings to the LVGL library using bevy_ecs. Compatible with `#![no_std]` environments after setting `default-features = false`.
+Safe Rust bindings to the LVGL library using bevy_ecs. Compatible with `#![no_std]` environments by default.
 
 [![Crates.io](https://img.shields.io/crates/v/lv_bevy_ecs.svg)](https://crates.io/crates/lv_bevy_ecs)
 [![Docs](https://docs.rs/lv_bevy_ecs/badge.svg)](https://docs.rs/lv_bevy_ecs/latest/lv_bevy_ecs/)
@@ -144,15 +144,6 @@ Feel free to open issues for features you find important and missing. I am not c
 so open to API improvement ideas as well.
 
 ## Troubleshooting
-
-### #\[ctor\]/#\[dtor\] is not supported on the current target
-
-You are probably on RISC-V. Please help your architecture get upstreamed into [rust-ctor](https://github.com/mmastrac/rust-ctor).
-Until then set `default-features = false` and manually call `lv_init();` in the main function.
-
-### Can't find crate for `std` required by `dtor` because it does not declare `#![no_std]`
-
-Set `default-features = false` and manually call `lv_init();` in the main function.
 
 ### Unable to generate bindings: fatal error: 'inttypes.h' file not found
 
