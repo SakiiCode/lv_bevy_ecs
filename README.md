@@ -52,10 +52,10 @@ DEP_LV_CONFIG_PATH = { relative = true, value = "." }
 #
 lv_tick_set_cb(|| {
     let current_time = SystemTime::now();
-    let diff = current_time
+    let since_epoch = current_time
         .duration_since(UNIX_EPOCH)
         .expect("Time should only go forward");
-    diff.as_millis() as u32
+    since_epoch.as_millis() as u32
 });
 ```
 
