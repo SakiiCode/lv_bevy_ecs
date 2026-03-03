@@ -45,11 +45,15 @@ quote = "1.0.40"
 which = "8.0.0"
 
 [features]
+# Use critical-section instead of spin
+critical-section = ["bevy_ecs/critical-section"]
 # Automatically call lv_init() at startup
 ctor = ["dep:ctor"]
 # Set LVGL allocator as Rust global allocator
 lvgl_alloc = []
 # Enable functions that should not be used in the ECS environment
 no_ecs = ["lv_codegen/no_ecs"]
+# Enable serde support
+serde = ["bevy_ecs/serialize"]
 # Used by the docs-rs generator
 use-vendored-config = ["lightvgl-sys/use-vendored-config"]
