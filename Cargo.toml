@@ -45,6 +45,8 @@ quote = "1.0.40"
 which = "8.0.0"
 
 [features]
+# Export LVGL allocator as C allocator
+compat = ["lvgl_alloc"]
 # Use critical-section instead of spin
 critical-section = ["bevy_ecs/critical-section"]
 # Automatically call lv_init() at startup

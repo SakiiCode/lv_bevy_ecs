@@ -3,8 +3,6 @@
 
 extern crate alloc;
 
-#[macro_use]
-pub mod widgets;
 #[cfg(feature = "lvgl_alloc")]
 pub mod allocator;
 pub mod animation;
@@ -17,6 +15,8 @@ pub mod events;
 pub mod functions;
 pub mod input;
 pub mod logging;
+#[cfg(feature = "compat")]
+pub mod malloc;
 pub mod styles;
 pub mod subjects;
 pub mod support;
@@ -25,6 +25,8 @@ pub mod sys {
     pub use lightvgl_sys::*;
 }
 pub mod timers;
+#[macro_use]
+pub mod widgets;
 
 #[cfg(feature = "ctor")]
 #[ctor::ctor]

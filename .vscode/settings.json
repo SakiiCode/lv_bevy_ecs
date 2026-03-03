@@ -1,4 +1,4 @@
 {
-  "rust-analyzer.cargo.features": ["lvgl_alloc", "no_ecs", "ctor"],
+  "rust-analyzer.cargo.features": ["lvgl_alloc", "no_ecs", "ctor", "compat"],
   "editor.formatOnSave": true
 }
