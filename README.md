@@ -98,7 +98,7 @@ There is an example project targeting the Cheap Yellow Display (ESP32) with `std
 ### LVGL Global Allocator
 
 A [global allocator](https://github.com/SakiiCode/lv_bevy_ecs/blob/master/src/allocator.rs) for Rust leveraging the [LVGL memory allocator](https://docs.lvgl.io/9.4/API/stdlib/lv_mem_h.html) is provided, but not enabled by default.
-Can be enabled with the feature `lvgl_alloc`. This will make all dynamic memory to be allocated by LVGL internal memory manager.
+Can be enabled with the feature `lvgl-alloc`. This will make all dynamic memory to be allocated by LVGL internal memory manager.
 
 ## Features
 
