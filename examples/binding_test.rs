@@ -14,6 +14,7 @@ use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, hierarchy::Children, query::With, world::World},
     display::{Display, DrawBuffer},
+    error,
     events::Event,
     functions::*,
     info,
@@ -551,4 +552,18 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
         *lock = latest_touch_status;
     }
     return *lock;
+}
+
+#[unsafe(no_mangle)]
+pub fn get_memory_stats(monitor: &mut lv_bevy_ecs::sys::lv_mem_monitor_t) {
+    if let Some(stats) = memory_stats::memory_stats() {
+        let memory = stats.physical_mem;
+        let virtual_memory = stats.virtual_mem;
+        (*monitor).total_size = (virtual_memory) as usize;
+        (*monitor).free_size = (virtual_memory - memory) as usize;
+        (*monitor).max_used = usize::max((memory) as usize, (*monitor).max_used);
+        (*monitor).used_pct = (memory as f64 / virtual_memory as f64 * 100.0) as u8;
+    } else {
+        error!("Could not retrieve memory stats");
+    }
 }
