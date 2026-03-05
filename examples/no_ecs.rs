@@ -128,12 +128,13 @@ fn main() {
         objects.animation = Some(anim);
         objects.animation.as_mut().unwrap().start();
 
-        let mut style = Style::default();
-        lv_style_set_opa(&mut style, OpacityLevel::Percent50 as u8);
+        let mut style = Box::leak(Box::new(Style::default()));
+        lv_style_set_opa(&mut style, OpacityLevel::Transparent as u8);
         lv_style_set_align(&mut style, Align::TopLeft.into());
         lv_style_set_bg_color(&mut style, lv_color_make(255, 0, 0));
-
-        lv_obj_add_style(&mut button, style, lv_part_t_LV_PART_MAIN);
+        unsafe {
+            lv_obj_add_style(&mut button, &mut style, lv_part_t_LV_PART_MAIN);
+        }
 
         button.leak();
         label.leak();
