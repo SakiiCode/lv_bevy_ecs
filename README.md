@@ -21,7 +21,7 @@ Enabling the `no_ecs` feature unlocks some functions that allow you to bring you
 If you don't care about storage at all, and know in advance that a Widget will live for the rest of the program's execution,
 you can call `Widget::leak()` to leak memory and prevent calling the destructor.
 
-Check out [no_ecs.rs]() on how to use these.
+Check out [no_ecs.rs](https://github.com/SakiiCode/lv_bevy_ecs/blob/master/examples/no_ecs.rs) on how to use these.
 
 ## Usage
 
@@ -33,7 +33,7 @@ It is highly recommended to read [Chapter 14 of the Unofficial Bevy Cheat Book](
         cargo add lv_bevy_ecs
 ```
 
-2.  This package depends on [lightvgl-sys](https://github.com/SakiiCode/lightvgl-sys) to generate the raw unsafe bindings.
+2.  This package depends on [lightvgl-sys](https://crates.io/crates/lightvgl-sys) to generate the raw unsafe bindings.
     It needs an environment variable called `DEP_LV_CONFIG_PATH` that specifies the path to the folder containing `lv_conf.h` file.
 
     It is recommended to put it into `.cargo/config.toml`
