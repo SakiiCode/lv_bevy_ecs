@@ -18,7 +18,7 @@
 use ::alloc::{ffi::CString, format, vec::Vec};
 use ::core::ffi::CStr;
 
-use log::{Level, error};
+use log::Level;
 
 macro_rules! cstr {
     ($txt:expr) => {
@@ -38,10 +38,51 @@ macro_rules! func {
     }};
 }
 
+/// Forward LVGL logging to the `defmt` crate
+#[cfg(all(LV_USE_LOG, feature = "defmt"))]
+pub fn connect() {
+    crate::support::assert_lv_initialized!();
+    unsafe {
+        lightvgl_sys::lv_log_register_print_cb(Some(lvgl_defmt));
+    }
+}
+
+/// # Safety
+/// `buf` must be non-null, pointing to a null terminated valid C string
+#[cfg(feature = "defmt")]
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn lvgl_defmt(
+    level: lightvgl_sys::lv_log_level_t,
+    buf: *const core::ffi::c_char,
+) {
+    let message = unsafe { CStr::from_ptr(buf) };
+    let message = message.to_string_lossy();
+    let message = message.trim();
+    let parts = message.split(':').collect::<Vec<&str>>();
+    let message = parts[1..].join(":");
+    match level as u32 {
+        lightvgl_sys::LV_LOG_LEVEL_TRACE => {
+            defmt::trace!("{}", message.trim());
+        }
+        lightvgl_sys::LV_LOG_LEVEL_INFO => {
+            defmt::info!("{}", message.trim());
+        }
+        lightvgl_sys::LV_LOG_LEVEL_WARN => {
+            defmt::warn!("{}", message.trim());
+        }
+        lightvgl_sys::LV_LOG_LEVEL_ERROR => {
+            defmt::error!("{}", message.trim());
+        }
+        _ => {
+            log::error!("Invalid log level: {level}");
+        }
+    }
+}
+
 /// Forward LVGL logging to the `log` crate
 ///
 /// Must not be used together with lv_log_init();
-#[cfg(LV_USE_LOG)]
+#[cfg(all(LV_USE_LOG, not(feature = "defmt")))]
 pub fn connect() {
     crate::support::assert_lv_initialized!();
     unsafe {
@@ -89,7 +130,7 @@ pub fn lv_log_init() {
     crate::support::assert_lv_initialized!();
     match log::set_logger(&LvglLogger) {
         Ok(_) => log::set_max_level(log::LevelFilter::Trace),
-        Err(err) => error!("Could not initialize logging: {}", err),
+        Err(err) => log::error!("Could not initialize logging: {}", err),
     }
 }
 
@@ -143,30 +184,44 @@ impl log::Log for LvglLogger {
     fn flush(&self) {}
 }
 
-#[macro_export]
-macro_rules! trace {
-    ($($arg:tt)*) => {
-        log::trace!(target:$crate::func!(), $($arg)*);
-    };
-}
+cfg_if::cfg_if! {
+    if #[cfg(feature = "defmt")] {
+        pub use defmt::{trace as trace_, info as info_, warn as warn_, error as error_};
+    }else {
 
-#[macro_export]
-macro_rules! info {
-    ($($arg:tt)*) => {
-        log::info!(target:$crate::func!(), $($arg)*);
-    };
-}
+        #[macro_export]
+        macro_rules! trace_ {
+            ($($arg:tt)*) => {
+                log::trace!(target:$crate::func!(), $($arg)*);
+            };
+        }
 
-#[macro_export]
-macro_rules! warn {
-    ($($arg:tt)*) => {
-        log::warn!(target:$crate::func!(), $($arg)*);
-    };
-}
+        #[macro_export]
+        macro_rules! info_ {
+            ($($arg:tt)*) => {
+                log::info!(target:$crate::func!(), $($arg)*);
+            };
+        }
 
-#[macro_export]
-macro_rules! error {
-    ($($arg:tt)*) => {
-        log::error!(target:$crate::func!(), $($arg)*);
-    };
+        #[macro_export]
+        macro_rules! warn_ {
+            ($($arg:tt)*) => {
+                log::warn!(target:$crate::func!(), $($arg)*);
+            };
+        }
+
+        #[macro_export]
+        macro_rules! error_ {
+            ($($arg:tt)*) => {
+                log::error!(target:$crate::func!(), $($arg)*);
+            };
+        }
+
+        pub use info_;
+        pub use trace_;
+        pub use warn_;
+        pub use error_;
+
+
+    }
 }
