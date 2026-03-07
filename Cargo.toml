@@ -33,6 +33,7 @@ log = { version = "0.4" }
 
 [dev-dependencies]
 embedded-graphics-simulator = "0.8.0"
+memory-stats = "1.2.0"
 simple_logger = "5.1.0"
 
 [build-dependencies]
@@ -45,16 +46,16 @@ quote = "1.0.40"
 which = "8.0.0"
 
 [features]
-# Export LVGL allocator as C allocator
-compat = ["lvgl_alloc"]
 # Use critical-section instead of spin
 critical-section = ["bevy_ecs/critical-section"]
 # Automatically call lv_init() at startup
 ctor = ["dep:ctor"]
 # Set LVGL allocator as Rust global allocator
-lvgl_alloc = []
+lvgl-alloc = []
 # Enable functions that should not be used in the ECS environment
 no_ecs = ["lv_codegen/no_ecs"]
+# Export Rust allocator as LVGL allocator
+rust-alloc = []
 # Enable serde support
 serde = ["bevy_ecs/serialize"]
 # Used by the docs-rs generator

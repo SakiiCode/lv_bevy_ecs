@@ -167,9 +167,13 @@ pub fn lv_event_get_current_target_obj(event: &mut lightvgl_sys::lv_event_t) -> 
 }
 
 #[cfg(feature = "no_ecs")]
-pub fn lv_obj_add_style(widget: &mut Wdg, mut style: Style, selector: lv_style_selector_t) {
+/// ## Safety
+/// You need to make sure the given Style does not get deallocated, otherwise this will cause a
+/// use-after-free.
+///
+/// For example `Box::leak(Box::new(style))` can be used to prevent dropping it.
+pub unsafe fn lv_obj_add_style(widget: &mut Wdg, style: &mut Style, selector: lv_style_selector_t) {
     unsafe { lightvgl_sys::lv_obj_add_style(widget.raw_mut(), style.raw_mut(), selector) }
-    core::mem::forget(style);
 }
 
 #[cfg(feature = "no_ecs")]

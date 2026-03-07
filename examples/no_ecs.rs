@@ -128,12 +128,13 @@ fn main() {
         objects.animation = Some(anim);
         objects.animation.as_mut().unwrap().start();
 
-        let mut style = Style::default();
-        lv_style_set_opa(&mut style, OpacityLevel::Percent50 as u8);
+        let mut style = Box::leak(Box::new(Style::default()));
+        lv_style_set_opa(&mut style, OpacityLevel::Transparent as u8);
         lv_style_set_align(&mut style, Align::TopLeft.into());
         lv_style_set_bg_color(&mut style, lv_color_make(255, 0, 0));
-
-        lv_obj_add_style(&mut button, style, lv_part_t_LV_PART_MAIN);
+        unsafe {
+            lv_obj_add_style(&mut button, &mut style, lv_part_t_LV_PART_MAIN);
+        }
 
         button.leak();
         label.leak();
@@ -205,4 +206,18 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
         *lock = latest_touch_status;
     }
     return *lock;
+}
+
+#[unsafe(no_mangle)]
+pub fn get_memory_stats(monitor: &mut lv_bevy_ecs::sys::lv_mem_monitor_t) {
+    if let Some(stats) = memory_stats::memory_stats() {
+        let memory = stats.physical_mem;
+        let virtual_memory = stats.virtual_mem;
+        (*monitor).total_size = (virtual_memory) as usize;
+        (*monitor).free_size = (virtual_memory - memory) as usize;
+        (*monitor).max_used = usize::max((memory) as usize, (*monitor).max_used);
+        (*monitor).used_pct = (memory as f64 / virtual_memory as f64 * 100.0) as u8;
+    } else {
+        error!("Could not retrieve memory stats");
+    }
 }

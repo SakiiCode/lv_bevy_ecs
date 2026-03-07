@@ -10,7 +10,9 @@ use std::process::Command;
 fn main() {
     println!("cargo::rustc-check-cfg=cfg(LV_USE_GRID)");
     println!("cargo::rustc-check-cfg=cfg(LV_USE_LOG)");
-    println!("cargo::rustc-check-cfg=cfg(LV_USE_STDLIB_MALLOC, values(\"BUILTIN\", \"CLIB\"))");
+    println!(
+        "cargo::rustc-check-cfg=cfg(LV_USE_STDLIB_MALLOC, values(\"BUILTIN\", \"CLIB\", \"CUSTOM\"))"
+    );
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     let rs = out_path.join("generated.rs");
@@ -99,6 +101,9 @@ fn main() {
         }
         lightvgl_sys::LV_STDLIB_CLIB => {
             println!("cargo::rustc-cfg=LV_USE_STDLIB_MALLOC=\"CLIB\"");
+        }
+        lightvgl_sys::LV_STDLIB_CUSTOM => {
+            println!("cargo::rustc-cfg=LV_USE_STDLIB_MALLOC=\"CUSTOM\"");
         }
         _ => {}
     }

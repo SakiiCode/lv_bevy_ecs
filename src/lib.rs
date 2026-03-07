@@ -3,7 +3,7 @@
 
 extern crate alloc;
 
-#[cfg(feature = "lvgl_alloc")]
+#[cfg(feature = "lvgl-alloc")]
 pub mod allocator;
 pub mod animation;
 pub mod bevy {
@@ -15,7 +15,7 @@ pub mod events;
 pub mod functions;
 pub mod input;
 pub mod logging;
-#[cfg(feature = "compat")]
+#[cfg(feature = "rust-alloc")]
 pub mod malloc;
 pub mod styles;
 pub mod subjects;
