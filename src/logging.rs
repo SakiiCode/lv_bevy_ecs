@@ -18,7 +18,7 @@
 use ::alloc::{ffi::CString, format, vec::Vec};
 use ::core::ffi::CStr;
 
-use log::{Level, error};
+use log::Level;
 
 macro_rules! cstr {
     ($txt:expr) => {
@@ -89,7 +89,7 @@ pub fn lv_log_init() {
     crate::support::assert_lv_initialized!();
     match log::set_logger(&LvglLogger) {
         Ok(_) => log::set_max_level(log::LevelFilter::Trace),
-        Err(err) => error!("Could not initialize logging: {}", err),
+        Err(err) => log::error!("Could not initialize logging: {}", err),
     }
 }
 
@@ -143,30 +143,44 @@ impl log::Log for LvglLogger {
     fn flush(&self) {}
 }
 
-#[macro_export]
-macro_rules! trace {
-    ($($arg:tt)*) => {
-        log::trace!(target:$crate::func!(), $($arg)*);
-    };
-}
+cfg_if::cfg_if! {
+    if #[cfg(feature = "defmt")] {
+        pub use defmt::{trace as trace_, info as info_, warn as warn_, error as error_};
+    }else {
 
-#[macro_export]
-macro_rules! info {
-    ($($arg:tt)*) => {
-        log::info!(target:$crate::func!(), $($arg)*);
-    };
-}
+        #[macro_export]
+        macro_rules! trace_ {
+            ($($arg:tt)*) => {
+                log::trace!(target:$crate::func!(), $($arg)*);
+            };
+        }
 
-#[macro_export]
-macro_rules! warn {
-    ($($arg:tt)*) => {
-        log::warn!(target:$crate::func!(), $($arg)*);
-    };
-}
+        #[macro_export]
+        macro_rules! info_ {
+            ($($arg:tt)*) => {
+                log::info!(target:$crate::func!(), $($arg)*);
+            };
+        }
 
-#[macro_export]
-macro_rules! error {
-    ($($arg:tt)*) => {
-        log::error!(target:$crate::func!(), $($arg)*);
-    };
+        #[macro_export]
+        macro_rules! warn_ {
+            ($($arg:tt)*) => {
+                log::warn!(target:$crate::func!(), $($arg)*);
+            };
+        }
+
+        #[macro_export]
+        macro_rules! error_ {
+            ($($arg:tt)*) => {
+                log::error!(target:$crate::func!(), $($arg)*);
+            };
+        }
+
+        pub use info_;
+        pub use trace_;
+        pub use warn_;
+        pub use error_;
+
+
+    }
 }

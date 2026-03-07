@@ -33,3 +33,8 @@ pub mod widgets;
 fn init() {
     crate::functions::lv_init();
 }
+
+pub use logging::error_ as error;
+pub use logging::info_ as info;
+pub use logging::trace_ as trace;
+pub use logging::warn_ as warn;

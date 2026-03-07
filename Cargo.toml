@@ -23,8 +23,10 @@ required-features = ["no_ecs"]
 
 [dependencies]
 bevy_ecs = { version = "0.18.0", default-features = false }
+cfg-if = "1.0.4"
 constptr = { version = "0.3.1", default-features = false }
 ctor = { version = "0.6.0", optional = true }
+defmt = { version = "1.0.1", optional = true }
 embedded-graphics = { version = "0.8.0" }
 lightvgl-sys = { path = "../lightvgl-sys", version = "~9.5.0", default-features = false, features = [
   "library",
@@ -50,13 +52,15 @@ which = "8.0.0"
 critical-section = ["bevy_ecs/critical-section"]
 # Automatically call lv_init() at startup
 ctor = ["dep:ctor"]
+# Use defmt instead of log
+defmt = ["dep:defmt"]
 # Set LVGL allocator as Rust global allocator
-lvgl-alloc = []
+lvgl-alloc = ["defmt?/alloc"]
 # Enable functions that should not be used in the ECS environment
 no_ecs = ["lv_codegen/no_ecs"]
-# Export Rust allocator as LVGL allocator
-rust-alloc = []
+# Use Rust allocator as LVGL allocator (requires LV_USE_STDLIB_MALLOC = CUSTOM)
+rust-alloc = ["defmt?/alloc"]
 # Enable serde support
 serde = ["bevy_ecs/serialize"]
-# Used by the docs-rs generator
+# Needed for the docs-rs generator
 use-vendored-config = ["lightvgl-sys/use-vendored-config"]
