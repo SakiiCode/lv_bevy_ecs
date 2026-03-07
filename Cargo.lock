@@ -425,6 +425,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "defmt-stdout"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b1d3bbd005a59a26750202d7a221a41995780765ba403a84ed3ef9651f4ce12"
+dependencies = [
+ "defmt",
+]
+
+[[package]]
 name = "deranged"
 version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -801,6 +810,7 @@ dependencies = [
  "constptr",
  "ctor",
  "defmt",
+ "defmt-stdout",
  "embedded-graphics",
  "embedded-graphics-simulator",
  "lightvgl-sys",

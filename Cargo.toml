@@ -21,6 +21,10 @@ path = "src/lib.rs"
 name = "no_ecs"
 required-features = ["no_ecs"]
 
+[[example]]
+name = "defmt"
+required-features = ["defmt"]
+
 [dependencies]
 bevy_ecs = { version = "0.18.0", default-features = false }
 cfg-if = "1.0.4"
@@ -34,6 +38,7 @@ lightvgl-sys = { path = "../lightvgl-sys", version = "~9.5.0", default-features 
 log = { version = "0.4" }
 
 [dev-dependencies]
+defmt-stdout = "0.1.2"
 embedded-graphics-simulator = "0.8.0"
 memory-stats = "1.2.0"
 simple_logger = "5.1.0"

@@ -38,10 +38,51 @@ macro_rules! func {
     }};
 }
 
+/// Forward LVGL logging to the `defmt` crate
+#[cfg(all(LV_USE_LOG, feature = "defmt"))]
+pub fn connect() {
+    crate::support::assert_lv_initialized!();
+    unsafe {
+        lightvgl_sys::lv_log_register_print_cb(Some(lvgl_defmt));
+    }
+}
+
+/// # Safety
+/// `buf` must be non-null, pointing to a null terminated valid C string
+#[cfg(feature = "defmt")]
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn lvgl_defmt(
+    level: lightvgl_sys::lv_log_level_t,
+    buf: *const core::ffi::c_char,
+) {
+    let message = unsafe { CStr::from_ptr(buf) };
+    let message = message.to_string_lossy();
+    let message = message.trim();
+    let parts = message.split(':').collect::<Vec<&str>>();
+    let message = parts[1..].join(":");
+    match level as u32 {
+        lightvgl_sys::LV_LOG_LEVEL_TRACE => {
+            defmt::trace!("{}", message.trim());
+        }
+        lightvgl_sys::LV_LOG_LEVEL_INFO => {
+            defmt::info!("{}", message.trim());
+        }
+        lightvgl_sys::LV_LOG_LEVEL_WARN => {
+            defmt::warn!("{}", message.trim());
+        }
+        lightvgl_sys::LV_LOG_LEVEL_ERROR => {
+            defmt::error!("{}", message.trim());
+        }
+        _ => {
+            log::error!("Invalid log level: {level}");
+        }
+    }
+}
+
 /// Forward LVGL logging to the `log` crate
 ///
 /// Must not be used together with lv_log_init();
-#[cfg(LV_USE_LOG)]
+#[cfg(all(LV_USE_LOG, not(feature = "defmt")))]
 pub fn connect() {
     crate::support::assert_lv_initialized!();
     unsafe {
