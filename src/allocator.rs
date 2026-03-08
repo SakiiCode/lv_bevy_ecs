@@ -8,7 +8,7 @@ static ALLOCATOR: LvglAlloc = LvglAlloc;
 
 #[cfg(all(LV_USE_STDLIB_MALLOC = "BUILTIN", not(feature = "ctor")))]
 compile_error!(
-    "`lvgl_alloc` and `LV_USE_STDLIB_MALLOC = BUILTIN` without `ctor` gives instant segmentation fault"
+    "`lvgl-alloc` and `LV_USE_STDLIB_MALLOC = BUILTIN` without `ctor` gives instant segmentation fault"
 );
 
 /// LVGL allocator. Enabled by toggling the `lvgl-alloc` feature.

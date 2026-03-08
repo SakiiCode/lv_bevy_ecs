@@ -95,10 +95,17 @@ cargo run --example basic
 
 There is an example project targeting the Cheap Yellow Display (ESP32) with `std` enabled: [lvgl-bevy-demo](https://github.com/SakiiCode/lvgl-bevy-demo)
 
-### LVGL Global Allocator
+### Heap Allocation
 
-A [global allocator](https://github.com/SakiiCode/lv_bevy_ecs/blob/master/src/allocator.rs) for Rust leveraging the [LVGL memory allocator](https://docs.lvgl.io/9.4/API/stdlib/lv_mem_h.html) is provided, but not enabled by default.
+#### `lvgl-alloc` feature
+
+If you don't have an allocator, a [GlobalAlloc](https://github.com/SakiiCode/lv_bevy_ecs/blob/master/src/allocator.rs) for Rust leveraging the [LVGL memory allocator](https://docs.lvgl.io/9.5/API/stdlib/lv_mem_h.html) is provided, but not enabled by default.
 Can be enabled with the feature `lvgl-alloc`. This will make all dynamic memory to be allocated by LVGL internal memory manager.
+
+#### `rust-alloc` feature
+
+If you already have an allocator, you can enable the `rust-alloc` feature to forward the LVGL memory allocator functions to the Rust `alloc` crate.
+This needs `LV_USE_STDLIB_MALLOC` set to `LV_STDLIB_CUSTOM` in `lv_conf.h`.
 
 ## Features
 
@@ -109,14 +116,14 @@ Can be enabled with the feature `lvgl-alloc`. This will make all dynamic memory 
 - [x] Styles
 - [x] Input devices
 - [x] Animations
-- [x] Timers
-- [x] Async calls
+- [x] Timers, lv_async_call
 - [x] Subjects
 - [x] Logging
 - [x] LVGL allocator
 - [x] "no_ecs" mode
 - [x] #![no_std] compatibility
 - [x] LVGL docstrings
+- [x] Defmt support
 - [ ] Auto-generated enums
 - [ ] File system
 - [ ] Custom fonts
