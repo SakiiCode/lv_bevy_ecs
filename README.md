@@ -109,7 +109,8 @@ This needs `LV_USE_STDLIB_MALLOC` set to `LV_STDLIB_CUSTOM` in `lv_conf.h`.
 
 ### Minimizing binary size
 
-In order to remove more unused functions, the [Cross-language Link-Time Optimization](https://doc.rust-lang.org/rustc/linker-plugin-lto.html) functionality of LLVM must be enabled. Make sure to match your clang version with your rustc version.
+In order to remove even more unused functions, the [Cross-language Link-Time Optimization](https://doc.rust-lang.org/rustc/linker-plugin-lto.html) functionality of LLVM can be enabled. Unfortunately, this is not available on every platform, especially those that use gcc as the linker.
+Make sure to match your clang version with your rustc version.
 
 `.cargo/config.toml`
 
