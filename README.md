@@ -107,6 +107,31 @@ Can be enabled with the feature `lvgl-alloc`. This will make all dynamic memory 
 If you already have an allocator, you can enable the `rust-alloc` feature to forward the LVGL memory allocator functions to the Rust `alloc` crate.
 This needs `LV_USE_STDLIB_MALLOC` set to `LV_STDLIB_CUSTOM` in `lv_conf.h`.
 
+### Minimizing binary size
+
+In order to remove more unused functions, the [Cross-language Link-Time Optimization](https://doc.rust-lang.org/rustc/linker-plugin-lto.html) functionality of LLVM must be enabled. Make sure to match your clang version with your rustc version.
+
+`.cargo/config.toml`
+
+```toml
+[target.YOUR-TARGET-TRIPLE]
+rustflags = ["-C", "linker-plugin-lto", "-C", "link-arg=-fuse-ld=lld"]
+linker = "clang-21"
+
+[env]
+LV_COMPILE_ARGS = "-flto=full"
+CC = "clang-21"
+```
+
+`Cargo.toml`
+
+```
+[profile.dev]
+opt-level = "z"
+lto = "fat"
+codegen-units = 1
+```
+
 ## Features
 
 - [x] Displays
@@ -123,6 +148,7 @@ This needs `LV_USE_STDLIB_MALLOC` set to `LV_STDLIB_CUSTOM` in `lv_conf.h`.
 - [x] "no_ecs" mode
 - [x] #![no_std] compatibility
 - [x] LVGL docstrings
+- [x] Cross-language LTO
 - [x] Defmt support
 - [ ] Auto-generated enums
 - [ ] File system

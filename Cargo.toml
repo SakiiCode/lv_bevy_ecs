@@ -69,3 +69,8 @@ rust-alloc = ["defmt?/alloc"]
 serde = ["bevy_ecs/serialize"]
 # Needed for the docs-rs generator
 use-vendored-config = ["lightvgl-sys/use-vendored-config"]
+
+[profile.dev]
+opt-level = "z"
+lto = "fat"
+codegen-units = 1
