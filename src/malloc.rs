@@ -1,7 +1,10 @@
-use core::{alloc::Layout, ffi::c_void};
+use ::core::{alloc::Layout, ffi::c_void};
+
+use ::alloc::alloc::{alloc, dealloc, realloc};
 
 use lightvgl_sys::{lv_mem_monitor_t, lv_result_t, lv_result_t_LV_RESULT_OK};
 
+// void lv_mem_init(void);
 // void * lv_malloc_core(size_t size);
 // void * lv_realloc_core(void * p, size_t new_size);
 // void lv_free_core(void * p);
@@ -25,7 +28,7 @@ pub unsafe extern "C" fn lv_malloc_core(size: usize) -> *mut c_void {
         let new_size = size + USIZE_BYTES;
         let layout = Layout::array::<u8>(new_size).unwrap();
 
-        let raw = alloc::alloc::alloc(layout);
+        let raw = alloc(layout);
         let raw_shifted = raw.add(USIZE_BYTES);
         *((raw_shifted.cast::<usize>()).sub(1)) = new_size;
         raw_shifted.cast::<c_void>()
@@ -48,7 +51,7 @@ pub unsafe extern "C" fn lv_realloc_core(ptr: *mut c_void, new_size: usize) -> *
 
         let new_size = new_size + USIZE_BYTES;
 
-        let raw = alloc::alloc::realloc(old_raw, old_layout, new_size);
+        let raw = realloc(old_raw, old_layout, new_size);
         let raw_shifted = raw.add(USIZE_BYTES);
         *((raw_shifted.cast::<usize>()).sub(1)) = new_size;
         raw_shifted.cast::<c_void>()
@@ -65,7 +68,7 @@ pub unsafe extern "C" fn lv_free_core(ptr: *mut c_void) {
         let old_raw = ptr.sub(USIZE_BYTES);
         let old_layout = Layout::array::<u8>(old_size).unwrap();
 
-        alloc::alloc::dealloc(old_raw, old_layout);
+        dealloc(old_raw, old_layout);
     }
 }
 
