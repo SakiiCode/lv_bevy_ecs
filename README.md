@@ -126,7 +126,7 @@ CC = "clang-21"
 
 `Cargo.toml`
 
-```
+```toml
 [profile.dev]
 opt-level = "z"
 lto = "fat"
