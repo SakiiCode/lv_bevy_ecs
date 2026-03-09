@@ -41,7 +41,7 @@ use crate::{info, warn};
 #[component(on_insert = add_animation)]
 #[component(storage = "SparseSet")]
 pub struct Animation {
-    raw: Option<lightvgl_sys::lv_anim_t>,
+    raw: lightvgl_sys::lv_anim_t,
 }
 
 impl Animation {
@@ -61,7 +61,7 @@ impl Animation {
         raw.user_data = Box::<F>::into_raw(Box::new(animator)) as *mut _;
         raw.exec_cb = Some(animator_trampoline::<F>);
 
-        Self { raw: Some(raw) }
+        Self { raw }
     }
 
     #[cfg(feature = "no_ecs")]
@@ -71,16 +71,18 @@ impl Animation {
 
     pub fn start(&mut self) {
         unsafe {
-            self.raw = Some(*lightvgl_sys::lv_anim_start(&self.raw.take().unwrap()));
+            let old_ptr = &mut self.raw;
+            let new_ptr = lightvgl_sys::lv_anim_start(old_ptr);
+            self.raw = *new_ptr;
         }
     }
 
     pub fn raw(&self) -> &lightvgl_sys::lv_anim_t {
-        self.raw.as_ref().unwrap()
+        &self.raw
     }
 
     pub fn raw_mut(&mut self) -> &mut lightvgl_sys::lv_anim_t {
-        self.raw.as_mut().unwrap()
+        &mut self.raw
     }
 }
 
@@ -100,7 +102,7 @@ fn add_animation(mut world: DeferredWorld, ctx: HookContext) {
         .as_mut()
         .raw();
     let mut anim = world.get_mut::<Animation>(ctx.entity).unwrap();
-    anim.raw.as_mut().unwrap().var = obj as *mut _;
+    anim.raw.var = obj as *mut _;
     anim.start();
     info!("Added Animation");
 }
