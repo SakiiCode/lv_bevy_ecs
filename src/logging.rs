@@ -15,14 +15,15 @@
 //! See `examples/custom_logging.rs` for sample code.
 //!
 
-use ::alloc::{ffi::CString, format, vec::Vec};
+use ::alloc::vec::Vec;
 use ::core::ffi::CStr;
 
 use log::Level;
 
+#[allow(unused)]
 macro_rules! cstr {
     ($txt:expr) => {
-        CString::new($txt).unwrap().as_c_str()
+        ::alloc::ffi::CString::new($txt).unwrap().as_c_str()
     };
 }
 
@@ -178,7 +179,7 @@ impl log::Log for LvglLogger {
             cstr!(record.file().unwrap_or_default()),
             record.line().unwrap_or_default(),
             cstr!(record.target()),
-            cstr!(format!("{}", record.args())),
+            cstr!(::alloc::format!("{}", record.args())),
         );
     }
     fn flush(&self) {}

@@ -5,8 +5,6 @@ use ::core::{
     time::Duration,
 };
 
-use log::Level;
-
 use crate::styles::Style;
 use crate::{
     events::Event,
@@ -69,7 +67,7 @@ pub fn lv_palette_darken(p: lv_palette_t, lvl: u8) -> lightvgl_sys::lv_color_t {
 }
 
 #[cfg(LV_USE_LOG)]
-pub fn lv_log_add(level: Level, file: &CStr, line: u32, func: &CStr, message: &CStr) {
+pub fn lv_log_add(level: log::Level, file: &CStr, line: u32, func: &CStr, message: &CStr) {
     crate::logging::lv_log_add(level, file, line, func, message)
 }
 
