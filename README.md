@@ -133,6 +133,15 @@ lto = "fat"
 codegen-units = 1
 ```
 
+Additionally, an implementation of the `get_memory_stats(&mut lv_mem_monitor_t)` function must be provided.
+Check the examples for x86_64 implementation. It can be empty if not needed.
+
+```rust
+#[unsafe(no_mangle)]
+pub fn get_memory_stats(monitor: &mut lv_bevy_ecs::sys::lv_mem_monitor_t) {
+}
+```
+
 ## Features
 
 - [x] Displays
@@ -161,18 +170,16 @@ codegen-units = 1
 
 ## Compatibility table
 
-| lv_bevy_ecs | bevy_ecs | lightvgl-sys | LVGL  |
-| ----------- | -------- | ------------ | ----- |
-| 0.9.0       | 0.18.1   | 9.5.1        | 9.5.0 |
-| 0.8.0       | 0.18.0   | 9.5.0        | 9.5.0 |
-| 0.7.0       | 0.18.0   | 9.4.4        | 9.4.0 |
-| 0.6.2       | 0.17.3   | 9.4.3        | 9.4.0 |
-| 0.6.0       | 0.17.3   | 9.4.2        | 9.4.0 |
-| 0.5.2       | 0.17.3   | 9.4.2        | 9.4.0 |
-| 0.5.0       | 0.17.2   | 9.4.0        | 9.4.0 |
-| 0.4.0       | 0.17.2   | 9.3.0        | 9.3.0 |
-| 0.3.0       | 0.16.0   | 9.3.0        | 9.3.0 |
-| 0.2.0       | 0.16.0   | 9.2.0        | 9.2.2 |
+| lv_bevy_ecs | bevy_ecs | lightvgl-sys |
+| ----------- | -------- | ------------ |
+| 0.9.x       | 0.18.x   | 9.5.x        |
+| 0.8.x       | 0.18.x   | 9.5.x        |
+| 0.7.x       | 0.18.x   | 9.4.x        |
+| 0.6.x       | 0.17.x   | 9.4.x        |
+| 0.5.x       | 0.17.x   | 9.4.x        |
+| 0.4.x       | 0.17.x   | 9.3.x        |
+| 0.3.x       | 0.16.x   | 9.3.x        |
+| 0.2.x       | 0.16.x   | 9.2.x        |
 
 ## Contributing
 
