@@ -93,7 +93,7 @@ cargo run --example basic
 
 ## Building for embedded
 
-There is an example project targeting the Cheap Yellow Display (ESP32) with `std` enabled: [lvgl-bevy-demo](https://github.com/SakiiCode/lvgl-bevy-demo)
+Example projects are available targeting ESP32 and ESP32-P4 with `std` enabled: [lvgl-bevy-demo](https://github.com/SakiiCode/lvgl-bevy-demo), [lvgl-bevy-demo-dsi](https://github.com/SakiiCode/lvgl-bevy-demo-dsi)
 
 ### Heap Allocation
 
@@ -106,6 +106,15 @@ Can be enabled with the feature `lvgl-alloc`. This will make all dynamic memory 
 
 If you already have an allocator, you can enable the `rust-alloc` feature to forward the LVGL memory allocator functions to the Rust `alloc` crate.
 This needs `LV_USE_STDLIB_MALLOC` set to `LV_STDLIB_CUSTOM` in `lv_conf.h`.
+
+Additionally, an implementation of the `get_memory_stats(&mut lv_mem_monitor_t)` function must be provided.
+Check the examples for x86_64 version. It can be empty if not needed.
+
+```rust
+#[unsafe(no_mangle)]
+pub fn get_memory_stats(monitor: &mut lv_bevy_ecs::sys::lv_mem_monitor_t) {
+}
+```
 
 ### Minimizing binary size
 
@@ -131,15 +140,6 @@ CC = "clang-21"
 opt-level = "z"
 lto = "fat"
 codegen-units = 1
-```
-
-Additionally, an implementation of the `get_memory_stats(&mut lv_mem_monitor_t)` function must be provided.
-Check the examples for x86_64 implementation. It can be empty if not needed.
-
-```rust
-#[unsafe(no_mangle)]
-pub fn get_memory_stats(monitor: &mut lv_bevy_ecs::sys::lv_mem_monitor_t) {
-}
 ```
 
 ## Features
