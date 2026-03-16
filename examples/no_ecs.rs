@@ -15,6 +15,7 @@ use lv_bevy_ecs::{
     functions::*,
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
+    malloc::provide_mem_monitor_impl,
     styles::Style,
     support::{Align, OpacityLevel},
     sys::lv_part_t_LV_PART_MAIN,
@@ -43,6 +44,8 @@ static OBJECTS: LazyLock<Mutex<Objects>> = LazyLock::new(|| Mutex::new(Objects::
 fn main() {
     lv_init();
     lv_bevy_ecs::logging::lv_log_init();
+
+    provide_mem_monitor_impl(get_memory_stats);
 
     const HOR_RES: u32 = 320;
     const VER_RES: u32 = 240;
@@ -208,7 +211,6 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
     return *lock;
 }
 
-#[unsafe(no_mangle)]
 pub fn get_memory_stats(monitor: &mut lv_bevy_ecs::sys::lv_mem_monitor_t) {
     if let Some(stats) = memory_stats::memory_stats() {
         let memory = stats.physical_mem;

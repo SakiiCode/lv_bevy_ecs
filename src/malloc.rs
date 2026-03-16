@@ -72,18 +72,22 @@ pub unsafe extern "C" fn lv_free_core(ptr: *mut c_void) {
     }
 }
 
-pub trait MemoryStats {
-    fn get_memory_stats(monitor: &mut lv_mem_monitor_t);
-}
+type MemMonitorCallback = fn(&mut lv_mem_monitor_t);
+
+static mut MEM_MONITOR_IMPL: MemMonitorCallback = default_mem_monitor;
+
+fn default_mem_monitor(_monitor: &mut lv_mem_monitor_t) {}
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn lv_mem_monitor_core(monitor: *mut lv_mem_monitor_t) {
-    unsafe extern "Rust" {
-        fn get_memory_stats(monitor: &mut lv_mem_monitor_t);
-    }
-
     unsafe {
-        get_memory_stats(monitor.as_mut().unwrap());
+        (MEM_MONITOR_IMPL)(monitor.as_mut().unwrap());
+    }
+}
+
+pub fn provide_mem_monitor_impl(callback: fn(&mut lv_mem_monitor_t)) {
+    unsafe {
+        MEM_MONITOR_IMPL = callback;
     }
 }
 

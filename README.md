@@ -107,12 +107,17 @@ Can be enabled with the feature `lvgl-alloc`. This will make all dynamic memory 
 If you already have an allocator, you can enable the `rust-alloc` feature to forward the LVGL memory allocator functions to the Rust `alloc` crate.
 This needs `LV_USE_STDLIB_MALLOC` set to `LV_STDLIB_CUSTOM` in `lv_conf.h`.
 
-Additionally, an implementation of the `get_memory_stats(&mut lv_mem_monitor_t)` function must be provided.
-Check the examples for x86_64 version. It can be empty if not needed.
+Additionally, an optional implementation of the `get_memory_stats(&mut lv_mem_monitor_t)` function can be provided.
+Check the examples and sample projects for reference implementation.
 
 ```rust
-#[unsafe(no_mangle)]
 pub fn get_memory_stats(monitor: &mut lv_bevy_ecs::sys::lv_mem_monitor_t) {
+    // ...
+}
+
+fn main() {
+    // ...
+    provide_mem_monitor_impl(get_memory_stats);
 }
 ```
 
