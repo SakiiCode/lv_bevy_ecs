@@ -15,7 +15,6 @@ use lv_bevy_ecs::{
     functions::*,
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
-    malloc::provide_mem_monitor_impl,
     styles::Style,
     support::{Align, OpacityLevel},
     sys::lv_part_t_LV_PART_MAIN,
@@ -45,7 +44,8 @@ fn main() {
     lv_init();
     lv_bevy_ecs::logging::lv_log_init();
 
-    provide_mem_monitor_impl(get_memory_stats);
+    #[cfg(feature = "rust-alloc")]
+    lv_bevy_ecs::malloc::provide_mem_monitor_impl(get_memory_stats);
 
     const HOR_RES: u32 = 320;
     const VER_RES: u32 = 240;
