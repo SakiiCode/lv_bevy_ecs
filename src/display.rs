@@ -11,6 +11,7 @@
 //! # use lv_bevy_ecs::support::LvglColorFormat;
 //! # use lv_bevy_ecs::sys::*;
 //! #
+//! lv_bevy_ecs::functions::lv_init();
 //! const HOR_RES: u32 = 800;
 //! const VER_RES: u32 = 480;
 //! const LINE_HEIGHT: u32 = 10;
@@ -228,6 +229,8 @@ macro_rules! setup_test_display {
 
         let mut sim_display: SimulatorDisplay<Rgb565> =
             SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
+
+        lv_bevy_ecs::functions::lv_init();
 
         let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 

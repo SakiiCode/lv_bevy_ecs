@@ -110,14 +110,14 @@ This needs `LV_USE_STDLIB_MALLOC` set to `LV_STDLIB_CUSTOM` in `lv_conf.h`.
 Additionally, an optional implementation of the `get_memory_stats(&mut lv_mem_monitor_t)` function can be provided.
 Check the examples and sample projects for reference implementation.
 
-```rust
+```rust,ignore
 pub fn get_memory_stats(monitor: &mut lv_bevy_ecs::sys::lv_mem_monitor_t) {
     // ...
 }
 
 fn main() {
     // ...
-    provide_mem_monitor_impl(get_memory_stats);
+    lv_bevy_ecs::malloc::provide_mem_monitor_impl(get_memory_stats);
 }
 ```
 

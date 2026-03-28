@@ -9,14 +9,14 @@
 //! #
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
-//! let mut dropdown = Dropdown::create_widget();
+//! let mut dropdown = Dropdown::new();
 //! let mut chart_type_subject = Subject::new_int(0);
 //!
 //! unsafe {
 //!     lv_dropdown_bind_value(dropdown.raw_mut(), chart_type_subject.raw_mut());
 //! }
 //!
-//! let mut chart = Chart::create_widget();
+//! let mut chart = Chart::new();
 //! lv_subject_add_observer_obj(&mut chart_type_subject, &mut chart, |observer, subject| unsafe {
 //!        let v = lv_subject_get_int(subject);
 //!        let mut chart = Wdg::from_ptr(lv_observer_get_target(observer) as *mut lv_obj_t);

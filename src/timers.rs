@@ -6,7 +6,7 @@
 //! # use lv_bevy_ecs::timers::Timer;
 //! # use lv_bevy_ecs::sys::lv_timer_get_next;
 //! #
-//! #
+//! # lv_bevy_ecs::functions::lv_init();
 //! # let mut world = LvglWorld::default();
 //! #
 //! let mut timer = Timer::new(
@@ -30,8 +30,8 @@
 //!
 //! Closure will be executed on the next `lv_timer_handler()`. It needs `'static` lifetime.
 //! ```
-//! # use lv_bevy_ecs::functions::lv_async_call;
-//! #
+//! # use lv_bevy_ecs::functions::{lv_async_call, lv_init};
+//! # lv_init();
 //! lv_async_call(||{
 //!     // ...
 //! })

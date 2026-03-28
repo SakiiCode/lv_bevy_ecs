@@ -7,9 +7,9 @@
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
 //! let mut world = LvglWorld::default();
-//! let mut label: Widget = Label::create_widget();
+//! let mut label = Label::new();
 //! lv_label_set_text(&mut label, c"Example label");
-//! let mut label_entity = world.spawn((Label, label));
+//! let mut label_entity = world.spawn(label.into_inner());
 //! ```
 //!
 //! To create widgets, you have to use "zero-sized marker structs" (Arc, Label, Button, ...) that create `Widget` objects
@@ -33,9 +33,9 @@
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
 //! # let mut world = LvglWorld::default();
-//! # let mut label: Widget = Label::create_widget();
+//! # let mut label = Label::new();
 //! # lv_label_set_text(&mut label, c"Example label");
-//! # let mut label_entity = world.spawn((Label, label));
+//! # let mut label_entity = world.spawn(label.into_inner());
 //! #
 //! let mut label_widget = label_entity.get_mut::<Widget>().unwrap();
 //! unsafe {
@@ -52,28 +52,12 @@
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
 //! # let mut world = LvglWorld::default();
-//! # let mut label: Widget = Label::create_widget();
+//! # let mut label = Label::new();
 //! # lv_label_set_text(&mut label, c"Example label 1");
-//! # let mut label_entity = world.spawn((Label, label));
+//! # let mut label_entity = world.spawn(label.into_inner());
 //! #
-//! let mut labels = world.query_filtered::<&mut Widget, With<Label>>();
-//! assert_eq!(labels.iter(&world).count(),1);
-//! ```
-//!
-//! In case of a unique entity:
-//! ```
-//! # use lv_bevy_ecs::widgets::{Widget, Label, LvglWorld};
-//! # use lv_bevy_ecs::functions::*;
-//! # use lv_bevy_ecs::bevy::prelude::*;
-//! #
-//! # lv_bevy_ecs::setup_test_display!();
-//! #
-//! # let mut world = LvglWorld::default();
-//! # let mut label: Widget = Label::create_widget();
-//! # lv_label_set_text(&mut label, c"Example label");
-//! # let mut label_entity = world.spawn((Label, label));
-//! #
-//! let mut label = world.query_filtered::<&mut Widget, With<Label>>().single_mut(&mut world).unwrap();
+//! let mut widgets = world.query::<&mut Widget>();
+//! assert_eq!(widgets.iter(&world).count(),1);
 //! ```
 //!
 //! You are free to define any kind of custom component:
@@ -89,10 +73,10 @@
 //! struct DynamicLabel;
 //!
 //! # let mut world = LvglWorld::default();
-//! # let mut label: Widget = Label::create_widget();
+//! # let mut label = Label::new();
 //! # lv_label_set_text(&mut label, c"Example label");
 //! #
-//! world.spawn((Label, label, DynamicLabel));
+//! world.spawn((label.into_inner(), DynamicLabel));
 //! //...
 //! let mut label = world.query_filtered::<&mut Widget, With<DynamicLabel>>().single_mut(&mut world).unwrap();
 //! ```
@@ -106,12 +90,12 @@
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
 //! # let mut world = LvglWorld::default();
-//! let mut button: Widget = Button::create_widget();
-//! let mut label: Widget = Label::create_widget();
+//! let mut button = Button::new();
+//! let mut label = Label::new();
 //! lv_label_set_text(&mut label, c"Example label");
 //!
-//! let mut button_entity = world.spawn((Button, button));
-//! let mut label_entity = button_entity.with_child((Label, label));
+//! let mut button_entity = world.spawn(button.into_inner());
+//! let mut label_entity = button_entity.with_child(label.into_inner());
 //!
 //! let mut button_widget = button_entity.get::<Widget>().unwrap();
 //! assert_eq!(lv_obj_get_child_count(button_widget), 1)

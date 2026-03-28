@@ -13,7 +13,7 @@
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
 //! let mut world = LvglWorld::default();
-//! let button = Button::create_widget();
+//! let button = Button::new();
 //!
 //! let anim = Animation::new(
 //!     Duration::from_secs(5),
@@ -23,7 +23,7 @@
 //!         lv_obj_set_style_opa(obj, val as u8, lv_part_t_LV_PART_MAIN);
 //!     },
 //! );
-//! let mut button_entity = world.spawn((Button, button, anim));
+//! let mut button_entity = world.spawn((button.into_inner(), anim));
 //! unsafe {
 //!     assert_eq!(lv_anim_count_running(), 1);
 //! }

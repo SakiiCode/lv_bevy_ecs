@@ -14,8 +14,8 @@
 //! #
 //! # let mut world = LvglWorld::default();
 //! #
-//! # let mut button = Button::create_widget();
-//! # let mut button_entity = world.spawn((Button, button));
+//! # let mut button = Button::new();
+//! # let mut button_entity = world.spawn(button.into_inner());
 //! #
 //! let mut style = Style::default();
 //! let opacity = OpacityLevel::Percent50 as u8;
