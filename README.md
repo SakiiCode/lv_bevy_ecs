@@ -123,7 +123,7 @@ fn main() {
 
 ### Minimizing binary size
 
-In order to remove even more unused functions, the [Cross-language Link-Time Optimization](https://doc.rust-lang.org/rustc/linker-plugin-lto.html) functionality of LLVM can be enabled. Unfortunately, this is not available on every platform, especially those that use gcc as the linker.
+In order to remove even more unused functions, the [Cross-language Link-Time Optimization](https://doc.rust-lang.org/rustc/linker-plugin-lto.html) functionality of LLVM can be enabled. Unfortunately, this is not available on every platform, especially on those that use `gcc` as the linker.
 Make sure to match your clang version with your rustc version.
 
 `.cargo/config.toml`
