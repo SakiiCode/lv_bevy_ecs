@@ -1,3 +1,4 @@
+use inflector::Inflector;
 use inflector::cases::pascalcase::to_pascal_case;
 use itertools::Itertools;
 use proc_macro2::{Ident, TokenStream};
@@ -14,7 +15,7 @@ type CGResult<T> = Result<T, Box<dyn Error>>;
 const LIB_PREFIX: &str = "lv_";
 
 #[cfg(feature = "no_ecs")]
-const FUNCTION_BLACKLIST: [&str; 10] = [
+const FUNCTION_BLACKLIST: [&str; 12] = [
     "lv_style_init",                   // use Style::default() instead
     "lv_obj_null_on_delete",           // can invalidate NonNull<>
     "lv_obj_add_style",                // use functions::lv_obj_add_style() instead
@@ -25,10 +26,12 @@ const FUNCTION_BLACKLIST: [&str; 10] = [
     "lv_event_get_current_target_obj", // use functions::lv_event_get_current_target_obj() instead
     "lv_list_get_button_text",         // lifetime can't be elided
     "lv_label_set_text_vfmt",          // cannot cross-compile
+    "lv_obj_report_style_change",      // first parameter is not obj
+    "lv_style_transition_dsc_init",    // first parameter is not style
 ];
 
 #[cfg(not(feature = "no_ecs"))]
-const FUNCTION_BLACKLIST: [&str; 13] = [
+const FUNCTION_BLACKLIST: [&str; 15] = [
     "lv_obj_null_on_delete",           // can invalidate NonNull<>
     "lv_obj_add_style",                // add component instead
     "lv_obj_replace_style",            // replace component instead
@@ -42,6 +45,8 @@ const FUNCTION_BLACKLIST: [&str; 13] = [
     "lv_event_get_current_target_obj", // use functions::lv_event_get_current_target_obj() instead
     "lv_list_get_button_text",         // lifetime can't be elided
     "lv_label_set_text_vfmt",          // cannot cross-compile
+    "lv_obj_report_style_change",      // first parameter is not obj
+    "lv_style_transition_dsc_init",    // first parameter is not style
 ];
 
 #[derive(Debug, Clone, Error)]
@@ -129,7 +134,16 @@ impl Rusty for LvFunc {
     fn code(&self, parent: &Self::Parent) -> WrapperResult<TokenStream> {
         let templ = format!("{}{}_", LIB_PREFIX, parent.name.as_str());
         let new_name = self.name.replace(templ.as_str(), "");
-        let func_name = format_ident!("{}", self.name);
+        let impl_name = if parent.name == "obj" {
+            quote! {Wdg}
+        } else if parent.name == "style" {
+            quote! {Style}
+        } else {
+            let pascal_name = format_ident!("{}", parent.name.to_pascal_case());
+            quote! {#pascal_name<Wdg>}
+        };
+        let ext_func_name = format_ident!("{}", self.name);
+        let func_name = format_ident!("{}", new_name);
 
         // skip constructors and blacklisted functions
         if new_name.as_str().eq("create") && parent.name != "obj" {
@@ -174,22 +188,40 @@ impl Rusty for LvFunc {
 
         // Generate the arguments being passed into the Rust 'wrapper'
         //
-        // - Iif the first argument (of the C function) is const then we require a &self immutable reference, otherwise an &mut self reference
+        // - If the first argument (of the C function) is const then we require a &self immutable reference, otherwise an &mut self reference
         // - The arguments will be appended to the accumulator (args_accumulator) as they are generated in the closure
-        let args_decl = self.args.iter().fold(quote!(), |args_accumulator, arg| {
-            if let Ok(next_arg) = arg.code(self) {
-                // If the accummulator is empty then we call quote! only with the next_arg content
-                if args_accumulator.is_empty() {
-                    quote! {#next_arg}
-                }
-                // Otherwise we append next_arg at the end of the accumulator
-                else {
-                    quote! {#args_accumulator, #next_arg}
-                }
-            } else {
-                args_accumulator
-            }
-        });
+        let args_decl =
+            self.args
+                .iter()
+                .enumerate()
+                .fold(quote!(), |args_accumulator, (i, arg)| {
+                    if i == 0 {
+                        let arg_type = arg.get_type();
+                        if arg_type.is_const_pointer() {
+                            return quote! {&self};
+                        } else if arg_type.is_mut_pointer() {
+                            return quote! {&mut self};
+                        } else {
+                            panic!(
+                                "First parameter is not a pointer ({})",
+                                arg_type.literal_name
+                            );
+                        }
+                    }
+
+                    if let Ok(next_arg) = arg.code(self) {
+                        // If the accummulator is empty then we call quote! only with the next_arg content
+                        if args_accumulator.is_empty() {
+                            quote! {#next_arg}
+                        }
+                        // Otherwise we append next_arg at the end of the accumulator
+                        else {
+                            quote! {#args_accumulator, #next_arg}
+                        }
+                    } else {
+                        args_accumulator
+                    }
+                });
 
         let args_preprocessing = self
             .args
@@ -244,25 +276,37 @@ impl Rusty for LvFunc {
         // - The first argument will be always self.core.raw().as_mut() (see quote! when arg_idx == 0), it's most likely a pointer to lv_obj_t
         //   TODO: When handling getters this should be self.raw().as_ptr() instead, this also requires updating args_decl
         // - The arguments will be appended to the accumulator (args_accumulator) as they are generated in the closure
-        let ffi_args = self.args.iter().fold(quote!(), |args_accumulator, arg| {
-            let var = arg.get_value_usage();
-            let next_arg = if arg.typ.is_mut_native_object() {
-                quote! {#var.raw_mut()}
-            } else if arg.typ.is_const_native_object() {
-                quote! {#var.raw()}
-            } else {
-                quote!(#var)
-            };
+        let ffi_args = self
+            .args
+            .iter()
+            .enumerate()
+            .fold(quote!(), |args_accumulator, (i, arg)| {
+                let next_arg;
+                if i == 0 {
+                    let var = arg.get_value_usage();
 
-            // If the accummulator is empty then we call quote! only with the next_arg content
-            if args_accumulator.is_empty() {
-                quote! {#next_arg}
-            }
-            // Otherwise we append next_arg at the end of the accumulator
-            else {
-                quote! {#args_accumulator, #next_arg}
-            }
-        });
+                    next_arg = if arg.typ.is_mut_pointer() {
+                        quote! {self.raw_mut()}
+                    } else if arg.typ.is_const_pointer() {
+                        quote! {self.raw()}
+                    } else {
+                        quote!(#var)
+                    };
+                } else {
+                    let var = arg.get_value_usage();
+
+                    next_arg = quote!(#var);
+                };
+
+                // If the accummulator is empty then we call quote! only with the next_arg content
+                if args_accumulator.is_empty() {
+                    quote! {#next_arg}
+                }
+                // Otherwise we append next_arg at the end of the accumulator
+                else {
+                    quote! {#args_accumulator, #next_arg}
+                }
+            });
 
         let return_assignment;
         let return_expr;
@@ -318,13 +362,15 @@ impl Rusty for LvFunc {
         };
 
         Ok(quote! {
-            #doc_tokens
-            pub fn #func_name(#args_decl) #return_tokens {
-                unsafe {
-                    #args_preprocessing
-                    #return_assignment lightvgl_sys::#func_name(#ffi_args)#optional_semicolon
-                    #args_postprocessing
-                    #return_expr
+            impl #impl_name {
+                #doc_tokens
+                pub fn #func_name(#args_decl) #return_tokens {
+                    unsafe {
+                        #args_preprocessing
+                        #return_assignment lightvgl_sys::#ext_func_name(#ffi_args)#optional_semicolon
+                        #args_postprocessing
+                        #return_expr
+                    }
                 }
             }
         })
@@ -438,6 +484,14 @@ impl LvArg {
                 quote! {
                     #ident.as_mut_ptr()
                 }
+            }
+        } else if self.typ.is_const_native_object() {
+            quote! {
+                #ident.raw()
+            }
+        } else if self.typ.is_mut_native_object() {
+            quote! {
+                #ident.raw_mut()
             }
         } else if self.typ.is_const_str() {
             quote! {
@@ -823,9 +877,11 @@ mod test {
 
         let code = arc_set_bg_end_angle.code(&arc_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_arc_set_bg_end_angle(obj: &mut Wdg, end: u16) {
-                unsafe {
-                    lightvgl_sys::lv_arc_set_bg_end_angle(obj.raw_mut(), end)
+            impl Arc<Wdg>{
+                pub fn set_bg_end_angle(&mut self, end: u16) {
+                    unsafe {
+                        lightvgl_sys::lv_arc_set_bg_end_angle(self.raw_mut(), end)
+                    }
                 }
             }
         };
@@ -834,7 +890,7 @@ mod test {
     }
 
     #[test]
-    fn generate_method_wrapper_for_str_types_as_argument() {
+    fn generate_method_wrapper_for_ref_str_types_as_argument() {
         let bindgen_code = quote! {
             extern "C" {
                 #[doc = " Set a new text for a label. Memory will be allocated to store the text by the label.\n @param obj           pointer to a label object\n @param text          '\\0' terminated character string. NULL to refresh with the current text.\n @note If `LV_USE_ARABIC_PERSIAN_CHARS` is enabled the text will be modified to have the correct Arabic\n characters in it."]
@@ -851,16 +907,17 @@ mod test {
 
         let code = label_set_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            #[cfg_attr(not(doctest), doc = "Set a new text for a label. Memory will be allocated to store the text by the label.\n\n@param obj           pointer to a label object\n\n@param text          '\\\\0' terminated character string. NULL to refresh with the current text.\n\n@note If `LV_USE_ARABIC_PERSIAN_CHARS` is enabled the text will be modified to have the correct Arabic\n\ncharacters in it.")]
-            pub fn lv_label_set_text(label: &mut Wdg, text: &CStr) {
-                unsafe {
-                    lightvgl_sys::lv_label_set_text(
-                        label.raw_mut(),
-                        text.as_ptr()
-                    )
+            impl Label<Wdg> {
+                #[cfg_attr(not(doctest), doc = "Set a new text for a label. Memory will be allocated to store the text by the label.\n\n@param obj           pointer to a label object\n\n@param text          '\\\\0' terminated character string. NULL to refresh with the current text.\n\n@note If `LV_USE_ARABIC_PERSIAN_CHARS` is enabled the text will be modified to have the correct Arabic\n\ncharacters in it.")]
+                pub fn set_text(&mut self, text: &CStr) {
+                    unsafe {
+                        lightvgl_sys::lv_label_set_text(
+                            self.raw_mut(),
+                            text.as_ptr()
+                        )
+                    }
                 }
             }
-
         };
 
         assert_eq!(code.to_string(), expected_code.to_string());
@@ -882,24 +939,25 @@ mod test {
 
         let dropdown_get_selected_str = cg.get(0).unwrap().clone();
         let parent_widget = LvWidget {
-            name: "dropdown".to_string(),
+            name: "roller".to_string(),
             methods: vec![],
         };
 
         let code = dropdown_get_selected_str.code(&parent_widget).unwrap();
         let expected_code = quote! {
-
-            pub fn lv_roller_get_option_str(
-                obj: &Wdg,
-                option: u32,
-                buf: &mut CString,
-                buf_size: u32
-            ) -> lv_result_t {
-                unsafe {
-                    let buf_raw = buf.clone().into_raw();
-                    let rust_result = lightvgl_sys::lv_roller_get_option_str(obj.raw(), option, buf_raw, buf_size);
-                    *buf = CString::from_raw(buf_raw);
-                    rust_result
+            impl Roller<Wdg> {
+                pub fn get_option_str(
+                    &self,
+                    option: u32,
+                    buf: &mut CString,
+                    buf_size: u32
+                ) -> lv_result_t {
+                    unsafe {
+                        let buf_raw = buf.clone().into_raw();
+                        let rust_result = lightvgl_sys::lv_roller_get_option_str(self.raw(), option, buf_raw, buf_size);
+                        *buf = CString::from_raw(buf_raw);
+                        rust_result
+                    }
                 }
             }
 
@@ -929,13 +987,15 @@ mod test {
 
         let code = arc_rotate_obj_to_angle.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_arc_rotate_obj_to_angle(obj: &Wdg, obj_to_rotate: &mut Wdg, r_offset: lv_coord_t) {
-                unsafe {
-                    lightvgl_sys::lv_arc_rotate_obj_to_angle(
-                        obj.raw(),
-                        obj_to_rotate.raw_mut(),
-                        r_offset
-                    )
+            impl Arc<Wdg> {
+                pub fn rotate_obj_to_angle(&self, obj_to_rotate: &mut Wdg, r_offset: lv_coord_t) {
+                    unsafe {
+                        lightvgl_sys::lv_arc_rotate_obj_to_angle(
+                            self.raw(),
+                            obj_to_rotate.raw_mut(),
+                            r_offset
+                        )
+                    }
                 }
             }
         };
@@ -953,18 +1013,20 @@ mod test {
 
         let obj_set_user_data = cg.get(0).unwrap().clone();
         let parent_widget = LvWidget {
-            name: "arc".to_string(),
+            name: "obj".to_string(),
             methods: vec![],
         };
 
         let code = obj_set_user_data.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            #[cfg_attr(
-                not(doctest),
-                doc = "Set the user_data field of the object\n\n@param obj   pointer to an object\n\n@param user_data   pointer to the new user_data."
-            )]
-            pub fn lv_obj_set_user_data(obj: &mut Wdg, user_data: &mut dyn Any) {
-                unsafe { lightvgl_sys::lv_obj_set_user_data(obj.raw_mut(), user_data as *mut _ as *mut c_void) }
+            impl Wdg {
+                #[cfg_attr(
+                    not(doctest),
+                    doc = "Set the user_data field of the object\n\n@param obj   pointer to an object\n\n@param user_data   pointer to the new user_data."
+                )]
+                pub fn set_user_data(&mut self, user_data: &mut dyn Any) {
+                    unsafe { lightvgl_sys::lv_obj_set_user_data(self.raw_mut(), user_data as *mut _ as *mut c_void) }
+                }
             }
         };
 
@@ -987,20 +1049,22 @@ mod test {
 
         let obj_set_user_data = cg.get(0).unwrap().clone();
         let parent_widget = LvWidget {
-            name: "arc".to_string(),
+            name: "list".to_string(),
             methods: vec![],
         };
 
         let code = obj_set_user_data.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            #[cfg_attr(
-                not(doctest),
-                doc = "Add button to a list\n\n@param list      pointer to a list, it will be the parent of the new button\n\n@param icon      icon for the button, when NULL it will have no icon\n\n@param txt       text of the new button, when NULL no text will be added\n\n@return          pointer to the created button"
-            )]
-            pub fn lv_list_add_button(list: &mut Wdg, icon: &dyn Any, txt: &CStr) -> Option<Wdg> {
-                unsafe {
-                    let pointer = lightvgl_sys::lv_list_add_button(list.raw_mut(), icon as *const _ as *const c_void, txt.as_ptr());
-                    Wdg::try_from_ptr(pointer)
+            impl List<Wdg>{
+                #[cfg_attr(
+                    not(doctest),
+                    doc = "Add button to a list\n\n@param list      pointer to a list, it will be the parent of the new button\n\n@param icon      icon for the button, when NULL it will have no icon\n\n@param txt       text of the new button, when NULL no text will be added\n\n@return          pointer to the created button"
+                )]
+                pub fn add_button(&mut self, icon: &dyn Any, txt: &CStr) -> Option<Wdg> {
+                    unsafe {
+                        let pointer = lightvgl_sys::lv_list_add_button(self.raw_mut(), icon as *const _ as *const c_void, txt.as_ptr());
+                        Wdg::try_from_ptr(pointer)
+                    }
                 }
             }
         };
@@ -1020,18 +1084,20 @@ mod test {
 
         let buttonmatrix_set_map = cg.get(0).unwrap().clone();
         let parent_widget = LvWidget {
-            name: "arc".to_string(),
+            name: "buttonmatrix".to_string(),
             methods: vec![],
         };
 
         let code = buttonmatrix_set_map.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            #[cfg_attr(
-                not(doctest),
-                doc = "Set a new map. Buttons will be created/deleted according to the map. The\n\nbutton matrix keeps a reference to the map and so the string array must not\n\nbe deallocated during the life of the matrix.\n\n@param obj       pointer to a button matrix object\n\n@param map       pointer a string array. The last string has to be: \\\"\\\". Use \\\"\\\\n\\\" to make a line break."
-            )]
-            pub fn lv_buttonmatrix_set_map(obj: &mut Wdg, map: &[*const ::core::ffi::c_char]) {
-                unsafe { lightvgl_sys::lv_buttonmatrix_set_map(obj.raw_mut(), map.as_ptr()) }
+            impl Buttonmatrix<Wdg>{
+                #[cfg_attr(
+                    not(doctest),
+                    doc = "Set a new map. Buttons will be created/deleted according to the map. The\n\nbutton matrix keeps a reference to the map and so the string array must not\n\nbe deallocated during the life of the matrix.\n\n@param obj       pointer to a button matrix object\n\n@param map       pointer a string array. The last string has to be: \\\"\\\". Use \\\"\\\\n\\\" to make a line break."
+                )]
+                pub fn set_map(&mut self, map: &[*const ::core::ffi::c_char]) {
+                    unsafe { lightvgl_sys::lv_buttonmatrix_set_map(self.raw_mut(), map.as_ptr()) }
+                }
             }
         };
 
@@ -1053,18 +1119,20 @@ mod test {
 
         let calendar_set_day_names = cg.get(0).unwrap().clone();
         let parent_widget = LvWidget {
-            name: "arc".to_string(),
+            name: "calendar".to_string(),
             methods: vec![],
         };
 
         let code = calendar_set_day_names.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            #[cfg_attr(
-                not(doctest),
-                doc = "Set the name of the days\n\n@param obj           pointer to a calendar object\n\n@param day_names     pointer to an array with the names.\n\n                     E.g. `const char * days[7] = {\\\"Sun\\\", \\\"Mon\\\", ...}`\n\n                     Only the pointer will be saved so this variable can't be local which will be destroyed later."
-            )]
-            pub fn lv_calendar_set_day_names(obj: &mut Wdg, day_names: &mut [*const ::core::ffi::c_char]) {
-                unsafe { lightvgl_sys::lv_calendar_set_day_names(obj.raw_mut(), day_names.as_mut_ptr()) }
+            impl Calendar<Wdg> {
+                #[cfg_attr(
+                    not(doctest),
+                    doc = "Set the name of the days\n\n@param obj           pointer to a calendar object\n\n@param day_names     pointer to an array with the names.\n\n                     E.g. `const char * days[7] = {\\\"Sun\\\", \\\"Mon\\\", ...}`\n\n                     Only the pointer will be saved so this variable can't be local which will be destroyed later."
+                )]
+                pub fn set_day_names(&mut self, day_names: &mut [*const ::core::ffi::c_char]) {
+                    unsafe { lightvgl_sys::lv_calendar_set_day_names(self.raw_mut(), day_names.as_mut_ptr()) }
+                }
             }
         };
 
@@ -1089,13 +1157,15 @@ mod test {
 
         let code = label_set_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            #[cfg_attr(not(doctest), doc = "Set a new text for a label. Memory will be allocated to store the text by the label.\n\n@param obj           pointer to a label object\n\n@param text          '\\\\0' terminated character string. NULL to refresh with the current text.\n\n@note If `LV_USE_ARABIC_PERSIAN_CHARS` is enabled the text will be modified to have the correct Arabic\n\ncharacters in it.")]
-            pub fn lv_label_set_text(label: &mut Wdg, text: &CStr) {
-                unsafe {
-                    lightvgl_sys::lv_label_set_text(
-                        label.raw_mut(),
-                        text.as_ptr()
-                    )
+            impl Label<Wdg> {
+                #[cfg_attr(not(doctest), doc = "Set a new text for a label. Memory will be allocated to store the text by the label.\n\n@param obj           pointer to a label object\n\n@param text          '\\\\0' terminated character string. NULL to refresh with the current text.\n\n@note If `LV_USE_ARABIC_PERSIAN_CHARS` is enabled the text will be modified to have the correct Arabic\n\ncharacters in it.")]
+                pub fn set_text(&mut self, text: &CStr) {
+                    unsafe {
+                        lightvgl_sys::lv_label_set_text(
+                            self.raw_mut(),
+                            text.as_ptr()
+                        )
+                    }
                 }
             }
         };
@@ -1119,9 +1189,11 @@ mod test {
 
         let code = label_get_recolor.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_label_get_recolor(label: &mut Wdg) -> bool {
-                unsafe {
-                    lightvgl_sys::lv_label_get_recolor(label.raw_mut())
+            impl Label<Wdg>{
+                pub fn get_recolor(&mut self) -> bool {
+                    unsafe {
+                        lightvgl_sys::lv_label_get_recolor(self.raw_mut())
+                    }
                 }
             }
         };
@@ -1146,9 +1218,11 @@ mod test {
 
         let code = label_get_text_selection_start.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_label_get_text_selection_start(label: &mut Wdg) -> u32 {
-                unsafe {
-                    lightvgl_sys::lv_label_get_text_selection_start(label.raw_mut())
+            impl Label<Wdg>{
+                pub fn get_text_selection_start(&mut self) -> u32 {
+                    unsafe {
+                        lightvgl_sys::lv_label_get_text_selection_start(self.raw_mut())
+                    }
                 }
             }
         };
@@ -1167,16 +1241,18 @@ mod test {
 
         let dropdown_get_list = cg.get(0).unwrap().clone();
         let parent_widget = LvWidget {
-            name: "obj".to_string(),
+            name: "dropdown".to_string(),
             methods: vec![],
         };
 
         let code = dropdown_get_list.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_dropdown_get_list(obj: &mut Wdg) -> Option<Wdg> {
-                unsafe {
-                    let pointer = lightvgl_sys::lv_dropdown_get_list(obj.raw_mut());
-                    Wdg::try_from_ptr(pointer)
+            impl Dropdown<Wdg>{
+                pub fn get_list(&mut self) -> Option<Wdg> {
+                    unsafe {
+                        let pointer = lightvgl_sys::lv_dropdown_get_list(self.raw_mut());
+                        Wdg::try_from_ptr(pointer)
+                    }
                 }
             }
         };
@@ -1195,16 +1271,18 @@ mod test {
 
         let label_get_text = cg.get(0).unwrap().clone();
         let parent_widget = LvWidget {
-            name: "obj".to_string(),
+            name: "label".to_string(),
             methods: vec![],
         };
 
         let code = label_get_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            pub fn lv_label_get_text(obj: &Wdg) -> &CStr {
-                unsafe {
-                    let pointer = lightvgl_sys::lv_label_get_text(obj.raw());
-                    CStr::from_ptr(pointer)
+            impl Label<Wdg> {
+                pub fn get_text(&self) -> &CStr {
+                    unsafe {
+                        let pointer = lightvgl_sys::lv_label_get_text(self.raw());
+                        CStr::from_ptr(pointer)
+                    }
                 }
             }
         };
@@ -1224,20 +1302,22 @@ mod test {
 
         let calendar_get_today_date = cg.get(0).unwrap().clone();
         let parent_widget = LvWidget {
-            name: "obj".to_string(),
+            name: "calendar".to_string(),
             methods: vec![],
         };
 
         let code = calendar_get_today_date.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            #[cfg_attr(
-                not(doctest),
-                doc = "Get the today's date\n\n@param calendar  pointer to a calendar object\n\n@return          return pointer to an `lv_calendar_date_t` variable containing the date of today."
-            )]
-            pub fn lv_calendar_get_today_date(calendar: &Wdg) -> Option<ConstPtr<lv_calendar_date_t>> {
-                unsafe {
-                    let pointer = lightvgl_sys::lv_calendar_get_today_date(calendar.raw());
-                    ConstPtr::new(pointer)
+            impl Calendar<Wdg> {
+                #[cfg_attr(
+                    not(doctest),
+                    doc = "Get the today's date\n\n@param calendar  pointer to a calendar object\n\n@return          return pointer to an `lv_calendar_date_t` variable containing the date of today."
+                )]
+                pub fn get_today_date(&self) -> Option<ConstPtr<lv_calendar_date_t>> {
+                    unsafe {
+                        let pointer = lightvgl_sys::lv_calendar_get_today_date(self.raw());
+                        ConstPtr::new(pointer)
+                    }
                 }
             }
         };
@@ -1257,20 +1337,22 @@ mod test {
 
         let calendar_get_highlighted_dates = cg.get(0).unwrap().clone();
         let parent_widget = LvWidget {
-            name: "obj".to_string(),
+            name: "calendar".to_string(),
             methods: vec![],
         };
 
         let code = calendar_get_highlighted_dates.code(&parent_widget).unwrap();
         let expected_code = quote! {
-            #[cfg_attr(
-                not(doctest),
-                doc = "Get the highlighted dates\n\n@param calendar  pointer to a calendar object\n\n@return          pointer to an `lv_calendar_date_t` array containing the dates."
-            )]
-            pub fn lv_calendar_get_highlighted_dates(calendar: &Wdg) -> Option<NonNull<lv_calendar_date_t>> {
-                unsafe {
-                    let pointer = lightvgl_sys::lv_calendar_get_highlighted_dates(calendar.raw());
-                    NonNull::new(pointer)
+            impl Calendar<Wdg> {
+                #[cfg_attr(
+                    not(doctest),
+                    doc = "Get the highlighted dates\n\n@param calendar  pointer to a calendar object\n\n@return          pointer to an `lv_calendar_date_t` array containing the dates."
+                )]
+                pub fn get_highlighted_dates(&self) -> Option<NonNull<lv_calendar_date_t>> {
+                    unsafe {
+                        let pointer = lightvgl_sys::lv_calendar_get_highlighted_dates(self.raw());
+                        NonNull::new(pointer)
+                    }
                 }
             }
         };

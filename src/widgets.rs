@@ -117,7 +117,7 @@ use bevy_ecs::{
 };
 use lightvgl_sys::{lv_label_create, lv_obj_t};
 
-use crate::{functions::lv_obj_check_type, info};
+use crate::info;
 
 pub struct LvglWorld(World);
 
@@ -220,12 +220,6 @@ macro_rules! impl_widget {
                 self.0.raw_mut()
             }
 
-            pub fn set_text(&mut self, text: &CStr) {
-                unsafe {
-                    lightvgl_sys::lv_label_set_text(self.raw_mut(), text.as_ptr());
-                }
-            }
-
             pub fn into_inner(self) -> T {
                 self.0
             }
@@ -316,7 +310,7 @@ macro_rules! impl_widget {
             type Error = DowncastError;
             fn try_from(value: Widget) -> Result<Self, Self::Error> {
                 unsafe {
-                    if !lv_obj_check_type(&value, &$class) {
+                    if !value.check_type(&$class) {
                         return Err(DowncastError::NotMatching);
                     }
                 }
@@ -328,7 +322,7 @@ macro_rules! impl_widget {
             type Error = DowncastError;
             fn try_from(value: Wdg) -> Result<Self, Self::Error> {
                 unsafe {
-                    if !lv_obj_check_type(&value, &$class) {
+                    if !value.check_type(&$class) {
                         return Err(DowncastError::NotMatching);
                     }
                 }
@@ -517,7 +511,7 @@ impl TryFrom<Widget> for SimpleObject<Widget> {
     type Error = DowncastError;
     fn try_from(value: Widget) -> Result<Self, Self::Error> {
         unsafe {
-            if !lv_obj_check_type(&value, &lightvgl_sys::lv_label_class) {
+            if !value.check_type(&lightvgl_sys::lv_label_class) {
                 return Err(DowncastError::NotMatching);
             }
         }
@@ -529,7 +523,7 @@ impl TryFrom<Wdg> for SimpleObject<Wdg> {
     type Error = DowncastError;
     fn try_from(value: Wdg) -> Result<Self, Self::Error> {
         unsafe {
-            if !lv_obj_check_type(&value, &lightvgl_sys::lv_label_class) {
+            if !value.check_type(&lightvgl_sys::lv_label_class) {
                 return Err(DowncastError::NotMatching);
             }
         }
