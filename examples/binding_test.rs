@@ -351,7 +351,7 @@ fn create_ui(world: &mut World) {
 
     lv_canvas_fill_bg(&mut canvas, c2, OpacityLevel::Cover as u8);
 
-    draw_to_canvas(canvas.as_mut());
+    draw_to_canvas(&mut canvas);
 
     world.spawn(canvas.into_inner());
     let test_img_lvgl_logo_png_path = c"A:examples/assets/test_img_lvgl_logo.png";

@@ -6,11 +6,7 @@ use ::core::{
 };
 
 use crate::styles::Style;
-use crate::{
-    events::Event,
-    subjects::Subject,
-    widgets::{Wdg, Widget},
-};
+use crate::{events::Event, subjects::Subject, widgets::Wdg};
 
 pub fn lv_init() {
     unsafe {
@@ -138,7 +134,7 @@ pub fn lv_subject_get_previous_pointer(subject: &mut Subject) -> *const c_void {
 }
 
 #[rustfmt::skip]
-pub fn lv_subject_add_observer_obj<'a, F>(subject: &'a mut Subject, object: &mut Widget, callback: F)
+pub fn lv_subject_add_observer_obj<'a, F>(subject: &'a mut Subject, object: &mut Wdg, callback: F)
 where
     F: FnMut(*mut lightvgl_sys::lv_observer_t, *mut lightvgl_sys::lv_subject_t) + 'a,
 {

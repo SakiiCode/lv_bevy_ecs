@@ -202,18 +202,6 @@ impl Default for Widget {
     }
 }
 
-impl AsRef<Wdg> for Widget {
-    fn as_ref(&self) -> &Wdg {
-        Wdg::from_non_null(&self.raw)
-    }
-}
-
-impl AsMut<Wdg> for Widget {
-    fn as_mut(&mut self) -> &mut Wdg {
-        Wdg::from_non_null_mut(&mut self.raw)
-    }
-}
-
 unsafe impl Send for Widget {}
 unsafe impl Sync for Widget {}
 
@@ -290,27 +278,40 @@ macro_rules! impl_widget {
             }
         }
 
-        impl AsRef<$t<Wdg>> for $t<Widget> {
-            fn as_ref(&self) -> &$t<Wdg> {
-                $t::from_non_null(&self.raw)
-            }
-        }
-
-        impl AsMut<$t<Wdg>> for $t<Widget> {
-            fn as_mut(&mut self) -> &mut $t<Wdg> {
-                $t::from_non_null_mut(&mut self.raw)
-            }
-        }
-
-        impl<T: RawObj> Deref for $t<T> {
-            type Target = T;
+        impl Deref for $t<Widget> {
+            type Target = $t<Wdg>;
             fn deref(&self) -> &Self::Target {
+                $t::from_non_null(&self.0.raw)
+            }
+        }
+
+        impl DerefMut for $t<Widget> {
+            fn deref_mut(&mut self) -> &mut Self::Target {
+                $t::from_non_null_mut(&mut self.0.raw)
+            }
+        }
+
+        impl Deref for $t<Wdg> {
+            type Target = Wdg;
+            fn deref(&self) -> &Self::Target {
+                Wdg::from_non_null(&self.0.raw)
+            }
+        }
+
+        impl DerefMut for $t<Wdg> {
+            fn deref_mut(&mut self) -> &mut Self::Target {
+                Wdg::from_non_null_mut(&mut self.0.raw)
+            }
+        }
+
+        impl<T: RawObj> AsRef<T> for $t<T> {
+            fn as_ref(&self) -> &T {
                 &self.0
             }
         }
 
-        impl<T: RawObj> DerefMut for $t<T> {
-            fn deref_mut(&mut self) -> &mut Self::Target {
+        impl<T: RawObj> AsMut<T> for $t<T> {
+            fn as_mut(&mut self) -> &mut T {
                 &mut self.0
             }
         }
@@ -490,16 +491,29 @@ impl SimpleObject<Wdg> {
     }
 }
 
-impl<T: RawObj> Deref for SimpleObject<T> {
-    type Target = T;
+impl Deref for SimpleObject<Widget> {
+    type Target = SimpleObject<Wdg>;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        SimpleObject::<Wdg>::from_non_null(&self.0.raw)
     }
 }
 
-impl<T: RawObj> DerefMut for SimpleObject<T> {
+impl DerefMut for SimpleObject<Widget> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+        SimpleObject::<Wdg>::from_non_null_mut(&mut self.0.raw)
+    }
+}
+
+impl Deref for SimpleObject<Wdg> {
+    type Target = Wdg;
+    fn deref(&self) -> &Self::Target {
+        Wdg::from_non_null(&self.0.raw)
+    }
+}
+
+impl DerefMut for SimpleObject<Wdg> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        Wdg::from_non_null_mut(&mut self.0.raw)
     }
 }
 
@@ -552,16 +566,4 @@ fn asd() {
 
 impl Wdg {
     fn universal_func(&self) {}
-}
-
-impl AsRef<SimpleObject<Wdg>> for SimpleObject<Widget> {
-    fn as_ref(&self) -> &SimpleObject<Wdg> {
-        SimpleObject::from_non_null(&self.raw)
-    }
-}
-
-impl AsMut<SimpleObject<Wdg>> for SimpleObject<Widget> {
-    fn as_mut(&mut self) -> &mut SimpleObject<Wdg> {
-        SimpleObject::from_non_null_mut(&mut self.raw)
-    }
 }

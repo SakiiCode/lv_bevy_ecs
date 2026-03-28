@@ -41,7 +41,7 @@ use alloc::{boxed::Box, vec};
 use bevy_ecs::component::Component;
 use lightvgl_sys::lv_subject_t;
 
-use crate::{info, warn, widgets::Widget};
+use crate::{info, warn, widgets::Wdg};
 
 #[derive(Component)]
 #[component(storage = "SparseSet")]
@@ -113,7 +113,7 @@ impl Subject {
 // the order of parameters is not the same, but callback should come last for readability
 pub(crate) fn lv_subject_add_observer_obj<'a, F>(
     subject: &'a mut Subject,
-    object: &mut Widget,
+    object: &mut Wdg,
     callback: F,
 ) where
     F: FnMut(*mut lightvgl_sys::lv_observer_t, *mut lightvgl_sys::lv_subject_t) + 'a,
