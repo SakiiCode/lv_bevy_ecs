@@ -121,6 +121,7 @@ use ::core::{
     ops::{Deref, DerefMut},
     ptr::NonNull,
 };
+use core::ffi::CStr;
 
 use bevy_ecs::{
     component::Component,
@@ -130,9 +131,9 @@ use bevy_ecs::{
     system::{ParamSet, Query},
     world::World,
 };
-use lightvgl_sys::lv_obj_t;
+use lightvgl_sys::{lv_label_create, lv_obj_t};
 
-use crate::info;
+use crate::{functions::lv_obj_check_type, info};
 
 pub struct LvglWorld(World);
 
@@ -335,3 +336,120 @@ impl DerefMut for Widget {
 }
 
 include!(concat!(env!("OUT_DIR"), "/widgets.rs"));
+
+pub trait RawObj {
+    fn raw(&self) -> *const lv_obj_t;
+    fn raw_mut(&mut self) -> *mut lv_obj_t;
+}
+
+impl RawObj for Widget {
+    fn raw(&self) -> *const lv_obj_t {
+        self.raw.as_ptr().cast_const()
+    }
+    fn raw_mut(&mut self) -> *mut lv_obj_t {
+        self.raw.as_ptr()
+    }
+}
+
+impl RawObj for Wdg {
+    fn raw(&self) -> *const lv_obj_t {
+        self.raw.as_ptr().cast_const()
+    }
+    fn raw_mut(&mut self) -> *mut lv_obj_t {
+        self.raw.as_ptr()
+    }
+}
+
+pub struct SimpleObject<T: RawObj>(T);
+
+impl<T: RawObj> SimpleObject<T> {
+    pub fn raw(&self) -> *const lv_obj_t {
+        self.0.raw()
+    }
+
+    pub fn raw_mut(&mut self) -> *mut lv_obj_t {
+        self.0.raw_mut()
+    }
+
+    pub fn set_text(&mut self, text: &CStr) {
+        unsafe {
+            lightvgl_sys::lv_label_set_text(self.raw_mut(), text.as_ptr());
+        }
+    }
+}
+
+impl SimpleObject<Widget> {
+    pub fn new() -> Self {
+        unsafe { Self(Widget::from_ptr(lv_label_create(core::ptr::null_mut())).unwrap()) }
+    }
+}
+
+impl<T: RawObj> Deref for SimpleObject<T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T: RawObj> DerefMut for SimpleObject<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl From<SimpleObject<Widget>> for Widget {
+    fn from(value: SimpleObject<Widget>) -> Self {
+        value.0
+    }
+}
+
+impl From<SimpleObject<Wdg>> for Wdg {
+    fn from(value: SimpleObject<Wdg>) -> Self {
+        value.0
+    }
+}
+
+impl TryFrom<Widget> for SimpleObject<Widget> {
+    type Error = DowncastError;
+    fn try_from(value: Widget) -> Result<Self, Self::Error> {
+        unsafe {
+            if !lv_obj_check_type(&value, &lightvgl_sys::lv_label_class) {
+                return Err(DowncastError::NotMatching);
+            }
+        }
+        return Ok(SimpleObject(value));
+    }
+}
+
+impl TryFrom<Wdg> for SimpleObject<Wdg> {
+    type Error = DowncastError;
+    fn try_from(value: Wdg) -> Result<Self, Self::Error> {
+        unsafe {
+            if !lv_obj_check_type(&value, &lightvgl_sys::lv_label_class) {
+                return Err(DowncastError::NotMatching);
+            }
+        }
+        return Ok(SimpleObject(value));
+    }
+}
+
+#[derive(Debug)]
+pub enum DowncastError {
+    NotMatching,
+}
+
+fn asd() {
+    let mut a = SimpleObject::new();
+    a.set_text(c"asdsdad");
+    let mut world = World::new();
+    //lv_label_set_text(&mut *a, c"asdsad");
+    a.universal_func();
+    //let widget: Widget = a.into();
+    //world.spawn(a);
+    //let lbl: SimpleObject<Widget> = widget.try_into().unwrap();
+    //let lbl_borrow: SimpleObject<Wdg> = asdasd.try_into().unwrap();
+}
+
+impl Wdg {
+    fn universal_func(&self) {}
+}
