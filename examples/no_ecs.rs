@@ -33,8 +33,8 @@ use embedded_graphics_simulator::{
 
 #[derive(Default)]
 struct Objects {
-    dynamic_button: Option<Widget>,
-    dynamic_button_label: Option<Widget>,
+    dynamic_button: Option<Button<Widget>>,
+    dynamic_button_label: Option<Label<Widget>>,
     animation: Option<Animation>,
 }
 
@@ -93,8 +93,8 @@ fn main() {
 
     {
         let mut objects = OBJECTS.lock().unwrap();
-        let mut button = Button::create_widget();
-        let mut label = Label::create_widget();
+        let mut button = Button::new();
+        let mut label = Label::new();
         lv_label_set_text(&mut label, c"SPAWN");
         lv_obj_set_parent(&mut label, &mut button);
 
@@ -117,8 +117,8 @@ fn main() {
                     objects.dynamic_button_label = None;
                 }
                 None => {
-                    let mut dynamic_button = Button::create_widget();
-                    let mut dynamic_label = Label::create_widget();
+                    let mut dynamic_button = Button::new();
+                    let mut dynamic_label = Label::new();
                     lv_obj_set_align(&mut dynamic_button, Align::TopRight.into());
                     lv_label_set_text(&mut dynamic_label, c"This is dynamic");
                     lv_obj_set_parent(&mut dynamic_label, &mut dynamic_button);
@@ -142,7 +142,7 @@ fn main() {
         button.leak();
         label.leak();
 
-        let mut arc = Arc::create_widget();
+        let mut arc = Arc::new();
         lv_obj_set_align(&mut arc, Align::BottomMid.into());
         arc.leak();
     }

@@ -230,28 +230,124 @@ impl Drop for Widget {
 
 pub type Obj = Widget;
 
-macro_rules! impl_widget {
-    ($t:ident, $func:path) => {
-        #[derive(bevy_ecs::component::Component)]
-        #[component(storage = "SparseSet")]
-        pub struct $t;
+#[derive(Debug)]
+pub enum DowncastError {
+    NotMatching,
+}
 
-        impl $t {
-            #[allow(dead_code)]
-            /// Creates a widget or panics if LVGL returned a null pointer.
-            pub fn create_widget() -> crate::widgets::Widget {
-                Self::try_create_widget().expect("Could not create widget")
+macro_rules! impl_widget {
+    ($t:ident, $func:path, $class:path) => {
+        pub struct $t<T: RawObj>(T);
+
+        impl<T: RawObj> $t<T> {
+            pub fn raw(&self) -> *const lv_obj_t {
+                self.0.raw()
             }
 
-            /// Creates a widget or returns None if LVGL returned a null pointer.
-            pub fn try_create_widget() -> Option<crate::widgets::Widget> {
+            pub fn raw_mut(&mut self) -> *mut lv_obj_t {
+                self.0.raw_mut()
+            }
+
+            pub fn set_text(&mut self, text: &CStr) {
+                unsafe {
+                    lightvgl_sys::lv_label_set_text(self.raw_mut(), text.as_ptr());
+                }
+            }
+
+            pub fn into_inner(self) -> T {
+                self.0
+            }
+        }
+
+        impl $t<Widget> {
+            pub fn new() -> Self {
+                Self::try_new().expect("Could not create widget")
+            }
+
+            pub fn try_new() -> Option<Self> {
                 unsafe {
                     let default_screen = lightvgl_sys::lv_display_get_screen_active(
                         lightvgl_sys::lv_display_get_default(),
                     );
                     let ptr = $func(default_screen);
-                    crate::widgets::Widget::from_ptr(ptr)
+                    Some(Self(crate::widgets::Widget::from_ptr(ptr)?))
                 }
+            }
+
+            pub fn leak(self) -> Wdg {
+                self.0.leak()
+            }
+        }
+
+        // TODO check for class
+        impl $t<Wdg> {
+            fn from_non_null(ptr: &NonNull<lv_obj_t>) -> &Self {
+                unsafe { &*(ptr as *const _ as *const Self) }
+            }
+
+            fn from_non_null_mut(ptr: &mut NonNull<lv_obj_t>) -> &mut Self {
+                unsafe { &mut *(ptr as *mut _ as *mut Self) }
+            }
+        }
+
+        impl AsRef<$t<Wdg>> for $t<Widget> {
+            fn as_ref(&self) -> &$t<Wdg> {
+                $t::from_non_null(&self.raw)
+            }
+        }
+
+        impl AsMut<$t<Wdg>> for $t<Widget> {
+            fn as_mut(&mut self) -> &mut $t<Wdg> {
+                $t::from_non_null_mut(&mut self.raw)
+            }
+        }
+
+        impl<T: RawObj> Deref for $t<T> {
+            type Target = T;
+            fn deref(&self) -> &Self::Target {
+                &self.0
+            }
+        }
+
+        impl<T: RawObj> DerefMut for $t<T> {
+            fn deref_mut(&mut self) -> &mut Self::Target {
+                &mut self.0
+            }
+        }
+
+        impl From<$t<Widget>> for Widget {
+            fn from(value: $t<Widget>) -> Self {
+                value.0
+            }
+        }
+
+        impl From<$t<Wdg>> for Wdg {
+            fn from(value: $t<Wdg>) -> Self {
+                value.0
+            }
+        }
+
+        impl TryFrom<Widget> for $t<Widget> {
+            type Error = DowncastError;
+            fn try_from(value: Widget) -> Result<Self, Self::Error> {
+                unsafe {
+                    if !lv_obj_check_type(&value, &$class) {
+                        return Err(DowncastError::NotMatching);
+                    }
+                }
+                return Ok($t(value));
+            }
+        }
+
+        impl TryFrom<Wdg> for $t<Wdg> {
+            type Error = DowncastError;
+            fn try_from(value: Wdg) -> Result<Self, Self::Error> {
+                unsafe {
+                    if !lv_obj_check_type(&value, &$class) {
+                        return Err(DowncastError::NotMatching);
+                    }
+                }
+                return Ok($t(value));
             }
         }
     };
@@ -384,6 +480,16 @@ impl SimpleObject<Widget> {
     }
 }
 
+impl SimpleObject<Wdg> {
+    fn from_non_null(ptr: &NonNull<lv_obj_t>) -> &Self {
+        unsafe { &*(ptr as *const _ as *const Self) }
+    }
+
+    fn from_non_null_mut(ptr: &mut NonNull<lv_obj_t>) -> &mut Self {
+        unsafe { &mut *(ptr as *mut _ as *mut Self) }
+    }
+}
+
 impl<T: RawObj> Deref for SimpleObject<T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
@@ -432,12 +538,6 @@ impl TryFrom<Wdg> for SimpleObject<Wdg> {
         return Ok(SimpleObject(value));
     }
 }
-
-#[derive(Debug)]
-pub enum DowncastError {
-    NotMatching,
-}
-
 fn asd() {
     let mut a = SimpleObject::new();
     a.set_text(c"asdsdad");
@@ -452,4 +552,16 @@ fn asd() {
 
 impl Wdg {
     fn universal_func(&self) {}
+}
+
+impl AsRef<SimpleObject<Wdg>> for SimpleObject<Widget> {
+    fn as_ref(&self) -> &SimpleObject<Wdg> {
+        SimpleObject::from_non_null(&self.raw)
+    }
+}
+
+impl AsMut<SimpleObject<Wdg>> for SimpleObject<Widget> {
+    fn as_mut(&mut self) -> &mut SimpleObject<Wdg> {
+        SimpleObject::from_non_null_mut(&mut self.raw)
+    }
 }

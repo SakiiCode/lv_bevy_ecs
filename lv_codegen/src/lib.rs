@@ -83,12 +83,13 @@ impl LvWidget {
     pub fn gen_impl(&self) -> WrapperResult<TokenStream> {
         let pascal_name = format_ident!("{}", to_pascal_case(&self.name));
         let create_function = format_ident!("lv_{}_create", &self.name);
+        let widget_class = format_ident!("lv_{}_class", &self.name);
 
         if self.name == "obj" || self.name == "style" {
             Err(SkipReason::CustomStruct(self.name.clone()))
         } else {
             Ok(quote! {
-                impl_widget!(#pascal_name, lightvgl_sys::#create_function);
+                impl_widget!(#pascal_name, lightvgl_sys::#create_function, lightvgl_sys::#widget_class);
             })
         }
     }
