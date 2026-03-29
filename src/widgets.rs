@@ -210,6 +210,270 @@ pub enum DowncastError {
     NotMatching { actual: String, expected: String },
 }
 
+#[allow(clippy::type_complexity)]
+fn on_insert_parent(
+    trigger: On<Insert, ChildOf>,
+    mut set: ParamSet<(
+        /* widgets */ Query<&mut Widget>,
+        /* children */ Query<(&mut Widget, &ChildOf)>,
+    )>,
+) {
+    let event = trigger.event();
+    let parent_widget = set.p1().get_mut(event.entity).unwrap().1.0;
+    let parent_ptr = set.p0().get_mut(parent_widget).unwrap().raw_mut();
+    let child_ptr = set.p1().get_mut(event.entity).unwrap().0.raw_mut();
+    unsafe {
+        lightvgl_sys::lv_obj_set_parent(child_ptr, parent_ptr);
+    }
+    info!("On Insert Parent");
+}
+
+/// Represents a borrowed Widget
+#[derive(PartialEq)]
+pub struct Wdg {
+    raw: NonNull<lv_obj_t>,
+}
+
+impl Wdg {
+    /// Convert LVGL Obj pointer to Wdg or panic if null pointer was given
+    pub fn from_ptr(ptr: *mut lv_obj_t) -> Self {
+        Self {
+            raw: NonNull::new(ptr).unwrap(),
+        }
+    }
+
+    /// Convert LVGL Obj pointer to Some(Wdg) or None if null pointer was given
+    pub fn try_from_ptr(ptr: *mut lv_obj_t) -> Option<Self> {
+        Some(Self {
+            raw: NonNull::new(ptr)?,
+        })
+    }
+
+    /*pub fn from_ref<'a>(mut r#ref: &'a mut lv_obj_t) -> &'a mut Self {
+        // this works
+        /*Some(Self {
+            raw: NonNull::new(r#ref as *mut lv_obj_t)?,
+        })*/
+        // this does not
+        //unsafe { (&mut r#ref as *mut _ as *mut Self).as_mut().unwrap() }
+    }*/
+
+    pub fn from_non_null(ptr: &NonNull<lv_obj_t>) -> &Self {
+        unsafe { &*(ptr as *const _ as *const Self) }
+    }
+
+    pub fn from_non_null_mut(ptr: &mut NonNull<lv_obj_t>) -> &mut Self {
+        unsafe { &mut *(ptr as *mut _ as *mut Self) }
+    }
+
+    pub fn raw(&self) -> *const lv_obj_t {
+        self.raw.as_ptr()
+    }
+
+    pub fn raw_mut(&mut self) -> *mut lv_obj_t {
+        self.raw.as_ptr()
+    }
+}
+
+impl Deref for Widget {
+    type Target = Wdg;
+    fn deref(&self) -> &Self::Target {
+        Wdg::from_non_null(&self.raw)
+    }
+}
+
+impl DerefMut for Widget {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        Wdg::from_non_null_mut(&mut self.raw)
+    }
+}
+
+pub trait RawObj {
+    fn raw(&self) -> *const lv_obj_t;
+    fn raw_mut(&mut self) -> *mut lv_obj_t;
+}
+
+impl RawObj for Widget {
+    fn raw(&self) -> *const lv_obj_t {
+        self.raw.as_ptr().cast_const()
+    }
+    fn raw_mut(&mut self) -> *mut lv_obj_t {
+        self.raw.as_ptr()
+    }
+}
+
+impl RawObj for Wdg {
+    fn raw(&self) -> *const lv_obj_t {
+        self.raw.as_ptr().cast_const()
+    }
+    fn raw_mut(&mut self) -> *mut lv_obj_t {
+        self.raw.as_ptr()
+    }
+}
+
+pub struct SimpleObject<T: RawObj>(T);
+
+impl<T: RawObj> SimpleObject<T> {
+    pub fn raw(&self) -> *const lv_obj_t {
+        self.0.raw()
+    }
+
+    pub fn raw_mut(&mut self) -> *mut lv_obj_t {
+        self.0.raw_mut()
+    }
+
+    pub fn set_text(&mut self, text: &CStr) {
+        unsafe {
+            lightvgl_sys::lv_label_set_text(self.raw_mut(), text.as_ptr());
+        }
+    }
+}
+
+impl SimpleObject<Widget> {
+    pub fn new() -> Self {
+        unsafe { Self(Widget::from_ptr(lv_label_create(core::ptr::null_mut())).unwrap()) }
+    }
+}
+
+impl SimpleObject<Wdg> {
+    fn from_non_null(ptr: &NonNull<lv_obj_t>) -> &Self {
+        unsafe { &*(ptr as *const _ as *const Self) }
+    }
+
+    fn from_non_null_mut(ptr: &mut NonNull<lv_obj_t>) -> &mut Self {
+        unsafe { &mut *(ptr as *mut _ as *mut Self) }
+    }
+}
+
+impl Deref for SimpleObject<Widget> {
+    type Target = SimpleObject<Wdg>;
+    fn deref(&self) -> &Self::Target {
+        SimpleObject::<Wdg>::from_non_null(&self.0.raw)
+    }
+}
+
+impl DerefMut for SimpleObject<Widget> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        SimpleObject::<Wdg>::from_non_null_mut(&mut self.0.raw)
+    }
+}
+
+impl Deref for SimpleObject<Wdg> {
+    type Target = Wdg;
+    fn deref(&self) -> &Self::Target {
+        Wdg::from_non_null(&self.0.raw)
+    }
+}
+
+impl DerefMut for SimpleObject<Wdg> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        Wdg::from_non_null_mut(&mut self.0.raw)
+    }
+}
+
+impl From<SimpleObject<Widget>> for Widget {
+    fn from(value: SimpleObject<Widget>) -> Self {
+        value.0
+    }
+}
+
+impl From<SimpleObject<Wdg>> for Wdg {
+    fn from(value: SimpleObject<Wdg>) -> Self {
+        value.0
+    }
+}
+
+/*impl TryFrom<Widget> for SimpleObject<Widget> {
+    type Error = DowncastError;
+    fn try_from(value: Widget) -> Result<Self, Self::Error> {
+        unsafe {
+            if !value.check_type(&lightvgl_sys::lv_label_class) {
+                let current_cstr = CStr::from_ptr(value.get_class().unwrap().as_ref().name);
+                let current_string = current_cstr.to_string_lossy();
+                let expected_cstr = CStr::from_ptr(lightvgl_sys::lv_label_class.name);
+                let expected_string = expected_cstr.to_string_lossy();
+                return Err(DowncastError::NotMatching {
+                    actual: current_string.to_string(),
+                    expected: expected_string.to_string(),
+                });
+            }
+        }
+        return Ok(SimpleObject(value));
+    }
+}
+
+impl<'a> TryFrom<&'a mut Widget> for &'a SimpleObject<Wdg> {
+    type Error = DowncastError;
+    fn try_from(value: &'a mut Widget) -> Result<Self, Self::Error> {
+        unsafe {
+            if !value.check_type(&lightvgl_sys::lv_label_class) {
+                let current_cstr = CStr::from_ptr(value.get_class().unwrap().as_ref().name);
+                let current_string = current_cstr.to_string_lossy();
+                let expected_cstr = CStr::from_ptr(lightvgl_sys::lv_label_class.name);
+                let expected_string = expected_cstr.to_string_lossy();
+                return Err(DowncastError::NotMatching {
+                    actual: current_string.to_string(),
+                    expected: expected_string.to_string(),
+                });
+            }
+        }
+        return Ok(SimpleObject::from_non_null(&value.raw));
+    }
+}
+
+impl<'a> TryFrom<&'a Wdg> for &'a SimpleObject<Wdg> {
+    type Error = DowncastError;
+    fn try_from(value: &'a Wdg) -> Result<Self, Self::Error> {
+        unsafe {
+            if !value.check_type(&lightvgl_sys::lv_label_class) {
+                let current_cstr = CStr::from_ptr(value.get_class().unwrap().as_ref().name);
+                let current_string = current_cstr.to_string_lossy();
+                let expected_cstr = CStr::from_ptr(lightvgl_sys::lv_label_class.name);
+                let expected_string = expected_cstr.to_string_lossy();
+                return Err(DowncastError::NotMatching {
+                    actual: current_string.to_string(),
+                    expected: expected_string.to_string(),
+                });
+            }
+        }
+        return Ok(SimpleObject::from_non_null(&value.raw));
+    }
+}
+
+impl TryFrom<Wdg> for SimpleObject<Wdg> {
+    type Error = DowncastError;
+    fn try_from(value: Wdg) -> Result<Self, Self::Error> {
+        unsafe {
+            if !value.check_type(&lightvgl_sys::lv_label_class) {
+                let current_cstr = CStr::from_ptr(value.get_class().unwrap().as_ref().name);
+                let current_string = current_cstr.to_string_lossy();
+                let expected_cstr = CStr::from_ptr(lightvgl_sys::lv_label_class.name);
+                let expected_string = expected_cstr.to_string_lossy();
+                return Err(DowncastError::NotMatching {
+                    actual: current_string.to_string(),
+                    expected: expected_string.to_string(),
+                });
+            }
+        }
+        return Ok(SimpleObject(value));
+    }
+}*/
+fn asd() {
+    let mut a = SimpleObject::new();
+    a.set_text(c"asdsdad");
+    let mut world = World::new();
+    //lv_label_set_text(&mut *a, c"asdsad");
+    a.universal_func();
+    //let widget: Widget = a.into();
+    //world.spawn(a);
+    //let lbl: SimpleObject<Widget> = widget.try_into().unwrap();
+    //let lbl_borrow: SimpleObject<Wdg> = asdasd.try_into().unwrap();
+}
+
+impl Wdg {
+    fn universal_func(&self) {}
+}
+
 macro_rules! impl_widget {
     ($t:ident, $func:path, $class:path) => {
         pub struct $t<T: RawObj>(T);
@@ -406,277 +670,4 @@ macro_rules! impl_widget {
     };
 }
 
-#[allow(clippy::type_complexity)]
-fn on_insert_parent(
-    trigger: On<Insert, ChildOf>,
-    mut set: ParamSet<(
-        /* widgets */ Query<&mut Widget>,
-        /* children */ Query<(&mut Widget, &ChildOf)>,
-    )>,
-) {
-    let event = trigger.event();
-    let parent_widget = set.p1().get_mut(event.entity).unwrap().1.0;
-    let parent_ptr = set.p0().get_mut(parent_widget).unwrap().raw_mut();
-    let child_ptr = set.p1().get_mut(event.entity).unwrap().0.raw_mut();
-    unsafe {
-        lightvgl_sys::lv_obj_set_parent(child_ptr, parent_ptr);
-    }
-    info!("On Insert Parent");
-}
-
-/// Represents a borrowed Widget
-#[derive(PartialEq)]
-pub struct Wdg {
-    raw: NonNull<lv_obj_t>,
-}
-
-impl Wdg {
-    /// Convert LVGL Obj pointer to Wdg or panic if null pointer was given
-    pub fn from_ptr(ptr: *mut lv_obj_t) -> Self {
-        Self {
-            raw: NonNull::new(ptr).unwrap(),
-        }
-    }
-
-    /// Convert LVGL Obj pointer to Some(Wdg) or None if null pointer was given
-    pub fn try_from_ptr(ptr: *mut lv_obj_t) -> Option<Self> {
-        Some(Self {
-            raw: NonNull::new(ptr)?,
-        })
-    }
-
-    /*pub fn from_ref<'a>(mut r#ref: &'a mut lv_obj_t) -> &'a mut Self {
-        // this works
-        /*Some(Self {
-            raw: NonNull::new(r#ref as *mut lv_obj_t)?,
-        })*/
-        // this does not
-        //unsafe { (&mut r#ref as *mut _ as *mut Self).as_mut().unwrap() }
-    }*/
-
-    pub fn from_non_null(ptr: &NonNull<lv_obj_t>) -> &Self {
-        unsafe { &*(ptr as *const _ as *const Self) }
-    }
-
-    pub fn from_non_null_mut(ptr: &mut NonNull<lv_obj_t>) -> &mut Self {
-        unsafe { &mut *(ptr as *mut _ as *mut Self) }
-    }
-
-    pub fn raw(&self) -> *const lv_obj_t {
-        self.raw.as_ptr()
-    }
-
-    pub fn raw_mut(&mut self) -> *mut lv_obj_t {
-        self.raw.as_ptr()
-    }
-}
-
-impl Deref for Widget {
-    type Target = Wdg;
-    fn deref(&self) -> &Self::Target {
-        Wdg::from_non_null(&self.raw)
-    }
-}
-
-impl DerefMut for Widget {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        Wdg::from_non_null_mut(&mut self.raw)
-    }
-}
-
 include!(concat!(env!("OUT_DIR"), "/widgets.rs"));
-
-pub trait RawObj {
-    fn raw(&self) -> *const lv_obj_t;
-    fn raw_mut(&mut self) -> *mut lv_obj_t;
-}
-
-impl RawObj for Widget {
-    fn raw(&self) -> *const lv_obj_t {
-        self.raw.as_ptr().cast_const()
-    }
-    fn raw_mut(&mut self) -> *mut lv_obj_t {
-        self.raw.as_ptr()
-    }
-}
-
-impl RawObj for Wdg {
-    fn raw(&self) -> *const lv_obj_t {
-        self.raw.as_ptr().cast_const()
-    }
-    fn raw_mut(&mut self) -> *mut lv_obj_t {
-        self.raw.as_ptr()
-    }
-}
-
-impl RawObj for &Wdg {
-    fn raw(&self) -> *const lv_obj_t {
-        self.raw.as_ptr().cast_const()
-    }
-    fn raw_mut(&mut self) -> *mut lv_obj_t {
-        self.raw.as_ptr()
-    }
-}
-
-pub struct SimpleObject<T: RawObj>(T);
-
-impl<T: RawObj> SimpleObject<T> {
-    pub fn raw(&self) -> *const lv_obj_t {
-        self.0.raw()
-    }
-
-    pub fn raw_mut(&mut self) -> *mut lv_obj_t {
-        self.0.raw_mut()
-    }
-
-    pub fn set_text(&mut self, text: &CStr) {
-        unsafe {
-            lightvgl_sys::lv_label_set_text(self.raw_mut(), text.as_ptr());
-        }
-    }
-}
-
-impl SimpleObject<Widget> {
-    pub fn new() -> Self {
-        unsafe { Self(Widget::from_ptr(lv_label_create(core::ptr::null_mut())).unwrap()) }
-    }
-}
-
-impl SimpleObject<Wdg> {
-    fn from_non_null(ptr: &NonNull<lv_obj_t>) -> &Self {
-        unsafe { &*(ptr as *const _ as *const Self) }
-    }
-
-    fn from_non_null_mut(ptr: &mut NonNull<lv_obj_t>) -> &mut Self {
-        unsafe { &mut *(ptr as *mut _ as *mut Self) }
-    }
-}
-
-impl Deref for SimpleObject<Widget> {
-    type Target = SimpleObject<Wdg>;
-    fn deref(&self) -> &Self::Target {
-        SimpleObject::<Wdg>::from_non_null(&self.0.raw)
-    }
-}
-
-impl DerefMut for SimpleObject<Widget> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        SimpleObject::<Wdg>::from_non_null_mut(&mut self.0.raw)
-    }
-}
-
-impl Deref for SimpleObject<Wdg> {
-    type Target = Wdg;
-    fn deref(&self) -> &Self::Target {
-        Wdg::from_non_null(&self.0.raw)
-    }
-}
-
-impl DerefMut for SimpleObject<Wdg> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        Wdg::from_non_null_mut(&mut self.0.raw)
-    }
-}
-
-impl From<SimpleObject<Widget>> for Widget {
-    fn from(value: SimpleObject<Widget>) -> Self {
-        value.0
-    }
-}
-
-impl From<SimpleObject<Wdg>> for Wdg {
-    fn from(value: SimpleObject<Wdg>) -> Self {
-        value.0
-    }
-}
-
-impl TryFrom<Widget> for SimpleObject<Widget> {
-    type Error = DowncastError;
-    fn try_from(value: Widget) -> Result<Self, Self::Error> {
-        unsafe {
-            if !value.check_type(&lightvgl_sys::lv_label_class) {
-                let current_cstr = CStr::from_ptr(value.get_class().unwrap().as_ref().name);
-                let current_string = current_cstr.to_string_lossy();
-                let expected_cstr = CStr::from_ptr(lightvgl_sys::lv_label_class.name);
-                let expected_string = expected_cstr.to_string_lossy();
-                return Err(DowncastError::NotMatching {
-                    actual: current_string.to_string(),
-                    expected: expected_string.to_string(),
-                });
-            }
-        }
-        return Ok(SimpleObject(value));
-    }
-}
-
-impl<'a> TryFrom<&'a mut Widget> for &'a SimpleObject<Wdg> {
-    type Error = DowncastError;
-    fn try_from(value: &'a mut Widget) -> Result<Self, Self::Error> {
-        unsafe {
-            if !value.check_type(&lightvgl_sys::lv_label_class) {
-                let current_cstr = CStr::from_ptr(value.get_class().unwrap().as_ref().name);
-                let current_string = current_cstr.to_string_lossy();
-                let expected_cstr = CStr::from_ptr(lightvgl_sys::lv_label_class.name);
-                let expected_string = expected_cstr.to_string_lossy();
-                return Err(DowncastError::NotMatching {
-                    actual: current_string.to_string(),
-                    expected: expected_string.to_string(),
-                });
-            }
-        }
-        return Ok(SimpleObject::from_non_null(&value.raw));
-    }
-}
-
-impl<'a> TryFrom<&'a Wdg> for &'a SimpleObject<Wdg> {
-    type Error = DowncastError;
-    fn try_from(value: &'a Wdg) -> Result<Self, Self::Error> {
-        unsafe {
-            if !value.check_type(&lightvgl_sys::lv_label_class) {
-                let current_cstr = CStr::from_ptr(value.get_class().unwrap().as_ref().name);
-                let current_string = current_cstr.to_string_lossy();
-                let expected_cstr = CStr::from_ptr(lightvgl_sys::lv_label_class.name);
-                let expected_string = expected_cstr.to_string_lossy();
-                return Err(DowncastError::NotMatching {
-                    actual: current_string.to_string(),
-                    expected: expected_string.to_string(),
-                });
-            }
-        }
-        return Ok(SimpleObject::from_non_null(&value.raw));
-    }
-}
-
-impl TryFrom<Wdg> for SimpleObject<Wdg> {
-    type Error = DowncastError;
-    fn try_from(value: Wdg) -> Result<Self, Self::Error> {
-        unsafe {
-            if !value.check_type(&lightvgl_sys::lv_label_class) {
-                let current_cstr = CStr::from_ptr(value.get_class().unwrap().as_ref().name);
-                let current_string = current_cstr.to_string_lossy();
-                let expected_cstr = CStr::from_ptr(lightvgl_sys::lv_label_class.name);
-                let expected_string = expected_cstr.to_string_lossy();
-                return Err(DowncastError::NotMatching {
-                    actual: current_string.to_string(),
-                    expected: expected_string.to_string(),
-                });
-            }
-        }
-        return Ok(SimpleObject(value));
-    }
-}
-fn asd() {
-    let mut a = SimpleObject::new();
-    a.set_text(c"asdsdad");
-    let mut world = World::new();
-    //lv_label_set_text(&mut *a, c"asdsad");
-    a.universal_func();
-    //let widget: Widget = a.into();
-    //world.spawn(a);
-    //let lbl: SimpleObject<Widget> = widget.try_into().unwrap();
-    //let lbl_borrow: SimpleObject<Wdg> = asdasd.try_into().unwrap();
-}
-
-impl Wdg {
-    fn universal_func(&self) {}
-}
