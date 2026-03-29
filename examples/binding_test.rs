@@ -291,7 +291,7 @@ fn create_ui(world: &mut World) {
             };
             let mut btn_label_entity = world.get_entity_mut(label_id).unwrap();
             let mut btn_label_widget = btn_label_entity.get_mut::<Widget>().unwrap();
-            let btn_label: &mut Label<Wdg> = btn_label_widget.as_mut().try_into().unwrap();
+            let btn_label: &mut Label<Wdg> = btn_label_widget.downcast_mut().unwrap();
 
             btn_label.set_text(c"A multi-line text with a ° symbol");
             btn_label.set_width(lv_pct(100));
@@ -394,7 +394,7 @@ fn buttonmatrix_event_cb(world: &mut World, e: &mut lv_event_t) {
     // lv_event_get_user_data must not be used!
     // user data is reserved for the callback function
     let btnmatrix = Wdg::from_ptr(lv_event_get_target(e) as *mut lv_obj_t);
-    let buttonmatrix: Buttonmatrix<Wdg> = btnmatrix.try_into().unwrap();
+    let buttonmatrix: &Buttonmatrix<Wdg> = btnmatrix.downcast().unwrap();
 
     let idx = buttonmatrix.get_selected_button();
     let text = buttonmatrix.get_button_text(idx);
@@ -402,7 +402,7 @@ fn buttonmatrix_event_cb(world: &mut World, e: &mut lv_event_t) {
         .query_filtered::<&mut Widget, With<DynamicLabel>>()
         .single_mut(world)
         .unwrap();
-    let label: &mut Label<Wdg> = label_widget.as_mut().try_into().unwrap();
+    let label: &mut Label<Wdg> = label_widget.downcast_mut().unwrap();
 
     label.set_text(text);
 }
