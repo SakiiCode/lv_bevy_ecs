@@ -107,6 +107,7 @@ use ::core::{
 };
 use core::ffi::CStr;
 
+use alloc::string::{String, ToString};
 use bevy_ecs::{
     component::Component,
     hierarchy::ChildOf,
@@ -116,6 +117,7 @@ use bevy_ecs::{
     world::World,
 };
 use lightvgl_sys::{lv_label_create, lv_obj_t};
+use thiserror::Error;
 
 use crate::info;
 
@@ -173,7 +175,7 @@ impl Widget {
     }
 
     #[inline]
-    pub fn create_widget() -> Self {
+    pub fn new() -> Self {
         Self::default()
     }
 }
@@ -202,9 +204,10 @@ impl Drop for Widget {
 
 pub type Obj = Widget;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum DowncastError {
-    NotMatching,
+    #[error("lv_obj_class not compatible (actual:{actual}, expected:{expected})")]
+    NotMatching { actual: String, expected: String },
 }
 
 macro_rules! impl_widget {
@@ -311,10 +314,74 @@ macro_rules! impl_widget {
             fn try_from(value: Widget) -> Result<Self, Self::Error> {
                 unsafe {
                     if !value.check_type(&$class) {
-                        return Err(DowncastError::NotMatching);
+                        let current_cstr = CStr::from_ptr(value.get_class().unwrap().as_ref().name);
+                        let current_string = current_cstr.to_string_lossy();
+                        let expected_cstr = CStr::from_ptr($class.name);
+                        let expected_string = expected_cstr.to_string_lossy();
+                        return Err(DowncastError::NotMatching {
+                            actual: current_string.to_string(),
+                            expected: expected_string.to_string(),
+                        });
                     }
                 }
                 return Ok($t(value));
+            }
+        }
+
+        impl<'a> TryFrom<&'a mut Widget> for &'a mut $t<Wdg> {
+            type Error = DowncastError;
+            fn try_from(value: &'a mut Widget) -> Result<Self, Self::Error> {
+                unsafe {
+                    if !value.check_type(&$class) {
+                        let current_cstr = CStr::from_ptr(value.get_class().unwrap().as_ref().name);
+                        let current_string = current_cstr.to_string_lossy();
+                        let expected_cstr = CStr::from_ptr($class.name);
+                        let expected_string = expected_cstr.to_string_lossy();
+                        return Err(DowncastError::NotMatching {
+                            actual: current_string.to_string(),
+                            expected: expected_string.to_string(),
+                        });
+                    }
+                }
+                return Ok($t::from_non_null_mut(&mut value.raw));
+            }
+        }
+
+        impl<'a> TryFrom<&'a Wdg> for &'a $t<Wdg> {
+            type Error = DowncastError;
+            fn try_from(value: &'a Wdg) -> Result<Self, Self::Error> {
+                unsafe {
+                    if !value.check_type(&$class) {
+                        let current_cstr = CStr::from_ptr(value.get_class().unwrap().as_ref().name);
+                        let current_string = current_cstr.to_string_lossy();
+                        let expected_cstr = CStr::from_ptr($class.name);
+                        let expected_string = expected_cstr.to_string_lossy();
+                        return Err(DowncastError::NotMatching {
+                            actual: current_string.to_string(),
+                            expected: expected_string.to_string(),
+                        });
+                    }
+                }
+                return Ok($t::from_non_null(&value.raw));
+            }
+        }
+
+        impl<'a> TryFrom<&'a mut Wdg> for &'a mut $t<Wdg> {
+            type Error = DowncastError;
+            fn try_from(value: &'a mut Wdg) -> Result<Self, Self::Error> {
+                unsafe {
+                    if !value.check_type(&$class) {
+                        let current_cstr = CStr::from_ptr(value.get_class().unwrap().as_ref().name);
+                        let current_string = current_cstr.to_string_lossy();
+                        let expected_cstr = CStr::from_ptr($class.name);
+                        let expected_string = expected_cstr.to_string_lossy();
+                        return Err(DowncastError::NotMatching {
+                            actual: current_string.to_string(),
+                            expected: expected_string.to_string(),
+                        });
+                    }
+                }
+                return Ok($t::from_non_null_mut(&mut value.raw));
             }
         }
 
@@ -323,7 +390,14 @@ macro_rules! impl_widget {
             fn try_from(value: Wdg) -> Result<Self, Self::Error> {
                 unsafe {
                     if !value.check_type(&$class) {
-                        return Err(DowncastError::NotMatching);
+                        let current_cstr = CStr::from_ptr(value.get_class().unwrap().as_ref().name);
+                        let current_string = current_cstr.to_string_lossy();
+                        let expected_cstr = CStr::from_ptr($class.name);
+                        let expected_string = expected_cstr.to_string_lossy();
+                        return Err(DowncastError::NotMatching {
+                            actual: current_string.to_string(),
+                            expected: expected_string.to_string(),
+                        });
                     }
                 }
                 return Ok($t(value));
@@ -435,6 +509,15 @@ impl RawObj for Wdg {
     }
 }
 
+impl RawObj for &Wdg {
+    fn raw(&self) -> *const lv_obj_t {
+        self.raw.as_ptr().cast_const()
+    }
+    fn raw_mut(&mut self) -> *mut lv_obj_t {
+        self.raw.as_ptr()
+    }
+}
+
 pub struct SimpleObject<T: RawObj>(T);
 
 impl<T: RawObj> SimpleObject<T> {
@@ -512,10 +595,55 @@ impl TryFrom<Widget> for SimpleObject<Widget> {
     fn try_from(value: Widget) -> Result<Self, Self::Error> {
         unsafe {
             if !value.check_type(&lightvgl_sys::lv_label_class) {
-                return Err(DowncastError::NotMatching);
+                let current_cstr = CStr::from_ptr(value.get_class().unwrap().as_ref().name);
+                let current_string = current_cstr.to_string_lossy();
+                let expected_cstr = CStr::from_ptr(lightvgl_sys::lv_label_class.name);
+                let expected_string = expected_cstr.to_string_lossy();
+                return Err(DowncastError::NotMatching {
+                    actual: current_string.to_string(),
+                    expected: expected_string.to_string(),
+                });
             }
         }
         return Ok(SimpleObject(value));
+    }
+}
+
+impl<'a> TryFrom<&'a mut Widget> for &'a SimpleObject<Wdg> {
+    type Error = DowncastError;
+    fn try_from(value: &'a mut Widget) -> Result<Self, Self::Error> {
+        unsafe {
+            if !value.check_type(&lightvgl_sys::lv_label_class) {
+                let current_cstr = CStr::from_ptr(value.get_class().unwrap().as_ref().name);
+                let current_string = current_cstr.to_string_lossy();
+                let expected_cstr = CStr::from_ptr(lightvgl_sys::lv_label_class.name);
+                let expected_string = expected_cstr.to_string_lossy();
+                return Err(DowncastError::NotMatching {
+                    actual: current_string.to_string(),
+                    expected: expected_string.to_string(),
+                });
+            }
+        }
+        return Ok(SimpleObject::from_non_null(&value.raw));
+    }
+}
+
+impl<'a> TryFrom<&'a Wdg> for &'a SimpleObject<Wdg> {
+    type Error = DowncastError;
+    fn try_from(value: &'a Wdg) -> Result<Self, Self::Error> {
+        unsafe {
+            if !value.check_type(&lightvgl_sys::lv_label_class) {
+                let current_cstr = CStr::from_ptr(value.get_class().unwrap().as_ref().name);
+                let current_string = current_cstr.to_string_lossy();
+                let expected_cstr = CStr::from_ptr(lightvgl_sys::lv_label_class.name);
+                let expected_string = expected_cstr.to_string_lossy();
+                return Err(DowncastError::NotMatching {
+                    actual: current_string.to_string(),
+                    expected: expected_string.to_string(),
+                });
+            }
+        }
+        return Ok(SimpleObject::from_non_null(&value.raw));
     }
 }
 
@@ -524,7 +652,14 @@ impl TryFrom<Wdg> for SimpleObject<Wdg> {
     fn try_from(value: Wdg) -> Result<Self, Self::Error> {
         unsafe {
             if !value.check_type(&lightvgl_sys::lv_label_class) {
-                return Err(DowncastError::NotMatching);
+                let current_cstr = CStr::from_ptr(value.get_class().unwrap().as_ref().name);
+                let current_string = current_cstr.to_string_lossy();
+                let expected_cstr = CStr::from_ptr(lightvgl_sys::lv_label_class.name);
+                let expected_string = expected_cstr.to_string_lossy();
+                return Err(DowncastError::NotMatching {
+                    actual: current_string.to_string(),
+                    expected: expected_string.to_string(),
+                });
             }
         }
         return Ok(SimpleObject(value));

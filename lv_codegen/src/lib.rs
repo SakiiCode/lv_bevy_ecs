@@ -146,7 +146,7 @@ impl Rusty for LvFunc {
         let func_name = format_ident!("{}", new_name);
 
         // skip constructors and blacklisted functions
-        if new_name.as_str().eq("create") && parent.name != "obj" {
+        if new_name.as_str().eq("create") {
             return Err(SkipReason::Constructor(self.name.clone()));
         } else if FUNCTION_BLACKLIST.contains(&self.name.as_str()) {
             return Err(SkipReason::Blacklisted(self.name.clone()));
