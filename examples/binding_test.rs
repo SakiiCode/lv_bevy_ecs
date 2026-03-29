@@ -115,7 +115,7 @@ fn create_ui(world: &mut World) {
 
     let mut style_big_font = Style::default();
     unsafe {
-        lv_style_set_text_font(&mut style_big_font, &lv_font_montserrat_24);
+        style_big_font.set_text_font(&lv_font_montserrat_24);
     }
 
     let grid_cols = [
@@ -132,15 +132,14 @@ fn create_ui(world: &mut World) {
     ];
 
     let mut active_screen = lv_screen_active().unwrap();
-    lv_obj_set_grid_dsc_array(&mut active_screen, &grid_cols[0], &grid_rows[0]);
+    active_screen.set_grid_dsc_array(&grid_cols[0], &grid_rows[0]);
 
     let mut chart_type_subject = Subject::new_int(0);
 
     let mut dropdown = Dropdown::new();
-    lv_dropdown_set_options(&mut dropdown, c"Lines\nBars");
+    dropdown.set_options(c"Lines\nBars");
 
-    lv_obj_set_grid_cell(
-        &mut dropdown,
+    dropdown.set_grid_cell(
         lv_grid_align_t_LV_GRID_ALIGN_CENTER,
         0,
         1,
@@ -149,13 +148,12 @@ fn create_ui(world: &mut World) {
         1,
     );
 
-    lv_dropdown_bind_value(&mut dropdown, chart_type_subject.raw_mut());
+    dropdown.bind_value(chart_type_subject.raw_mut());
 
     world.spawn(dropdown.into_inner());
 
     let mut chart = Chart::new();
-    lv_obj_set_grid_cell(
-        &mut chart,
+    chart.set_grid_cell(
         lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
         0,
         1,
@@ -164,12 +162,12 @@ fn create_ui(world: &mut World) {
         1,
     );
 
-    let mut series =
-        lv_chart_add_series(&mut chart, c3, lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X).unwrap();
+    let mut series = chart
+        .add_series(c3, lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X)
+        .unwrap();
     let mut chart_y_array = [10, 25, 50, 40, 30, 35, 60, 65, 70, 75];
-
     unsafe {
-        lv_chart_set_series_ext_y_array(&mut chart, series.as_mut(), &mut chart_y_array[0]);
+        chart.set_series_ext_y_array(series.as_mut(), &mut chart_y_array[0]);
     }
 
     lv_subject_add_observer_obj(&mut chart_type_subject, &mut chart, chart_type_observer_cb);
@@ -181,8 +179,7 @@ fn create_ui(world: &mut World) {
 
     let mut label = Label::new();
 
-    lv_obj_set_grid_cell(
-        &mut label,
+    label.set_grid_cell(
         lv_grid_align_t_LV_GRID_ALIGN_START,
         1,
         1,
@@ -191,9 +188,9 @@ fn create_ui(world: &mut World) {
         1,
     );
 
-    lv_obj_set_style_bg_opa(&mut label, OpacityLevel::Percent70 as u8, 0);
-    lv_obj_set_style_bg_color(&mut label, c1, 0);
-    lv_obj_set_style_text_color(&mut label, c2, 0);
+    label.set_style_bg_opa(OpacityLevel::Percent70 as u8, 0);
+    label.set_style_bg_color(c1, 0);
+    label.set_style_text_color(c2, 0);
     let mut label_entity = world.spawn((DynamicLabel, label.into_inner()));
     label_entity.insert(style_big_font.clone());
 
@@ -216,8 +213,7 @@ fn create_ui(world: &mut World) {
     ]);
 
     let mut btnmatrix = Buttonmatrix::new();
-    lv_obj_set_grid_cell(
-        &mut btnmatrix,
+    btnmatrix.set_grid_cell(
         lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
         1,
         1,
@@ -226,11 +222,11 @@ fn create_ui(world: &mut World) {
         1,
     );
 
-    lv_buttonmatrix_set_map(&mut btnmatrix, &btnmatrix_options);
+    btnmatrix.set_map(&btnmatrix_options);
 
-    lv_buttonmatrix_set_ctrl_map(&mut btnmatrix, &Box::leak(btnmatrix_ctrl)[0]);
+    btnmatrix.set_ctrl_map(&Box::leak(btnmatrix_ctrl)[0]);
 
-    lv_buttonmatrix_set_selected_button(&mut btnmatrix, 1);
+    btnmatrix.set_selected_button(1);
     lv_obj_add_event_cb(&mut btnmatrix, Event::ValueChanged, |mut event| {
         buttonmatrix_event_cb(world, &mut event);
     });
@@ -238,15 +234,15 @@ fn create_ui(world: &mut World) {
     let mut btnmatrix_entity = world.spawn(btnmatrix.into_inner());
 
     let mut style_big_font_2 = Style::new(lv_part_t_LV_PART_ITEMS | lv_state_t_LV_STATE_CHECKED);
+
     unsafe {
-        lv_style_set_text_font(&mut style_big_font_2, &lv_font_montserrat_24);
+        style_big_font_2.set_text_font(&lv_font_montserrat_24);
     }
 
     btnmatrix_entity.insert(style_big_font_2);
 
-    let mut cont = Widget::default();
-    lv_obj_set_grid_cell(
-        &mut cont,
+    let mut cont = Widget::new();
+    cont.set_grid_cell(
         lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
         2,
         1,
@@ -254,7 +250,7 @@ fn create_ui(world: &mut World) {
         0,
         2,
     );
-    lv_obj_set_flex_flow(&mut cont, lv_flex_flow_t_LV_FLEX_FLOW_COLUMN);
+    cont.set_flex_flow(lv_flex_flow_t_LV_FLEX_FLOW_COLUMN);
     let cont_entity = world.spawn(cont);
     let cont_id = cont_entity.id();
 
@@ -271,7 +267,7 @@ fn create_ui(world: &mut World) {
                 OpacityLevel::Cover as i32,
                 OpacityLevel::Percent50 as i32,
                 |widget, value| {
-                    lv_obj_set_style_opa(widget, value as u8, 0);
+                    widget.set_style_opa(value as u8, 0);
                 },
             );
             unsafe {
@@ -284,7 +280,7 @@ fn create_ui(world: &mut World) {
             let mut btn_entity = world.get_entity_mut(btn_id).unwrap();
 
             let mut btn = btn_entity.get_mut::<Widget>().unwrap();
-            lv_obj_add_flag(&mut btn, lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN);
+            btn.add_flag(lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN);
         }
 
         if i == 2 {
@@ -294,10 +290,11 @@ fn create_ui(world: &mut World) {
                 children.first().unwrap().to_owned()
             };
             let mut btn_label_entity = world.get_entity_mut(label_id).unwrap();
-            let mut btn_label = btn_label_entity.get_mut::<Widget>().unwrap();
+            let mut btn_label_widget = btn_label_entity.get_mut::<Widget>().unwrap();
+            let btn_label: &mut Label<Wdg> = btn_label_widget.as_mut().try_into().unwrap();
 
-            lv_label_set_text(&mut btn_label, c"A multi-line text with a ° symbol");
-            lv_obj_set_width(&mut btn_label, lv_pct(100));
+            btn_label.set_text(c"A multi-line text with a ° symbol");
+            btn_label.set_width(lv_pct(100));
         }
 
         if i == 3 {
@@ -325,8 +322,7 @@ fn create_ui(world: &mut World) {
     let mut canvas_buf = [0u8; 400 * 100 * 4];
 
     let mut canvas = Canvas::new();
-    lv_obj_set_grid_cell(
-        &mut canvas,
+    canvas.set_grid_cell(
         lv_grid_align_t_LV_GRID_ALIGN_START,
         0,
         2,
@@ -340,8 +336,7 @@ fn create_ui(world: &mut World) {
             (canvas_buf.as_mut_ptr() as *mut c_void).as_mut().unwrap(),
             lv_color_format_t_LV_COLOR_FORMAT_RGB565,
         );
-        lv_canvas_set_buffer(
-            &mut canvas,
+        canvas.set_buffer(
             buf.as_mut().unwrap(),
             400,
             100,
@@ -349,7 +344,7 @@ fn create_ui(world: &mut World) {
         );
     }
 
-    lv_canvas_fill_bg(&mut canvas, c2, OpacityLevel::Cover as u8);
+    canvas.fill_bg(c2, OpacityLevel::Cover as u8);
 
     draw_to_canvas(&mut canvas);
 
@@ -361,24 +356,24 @@ fn create_ui(world: &mut World) {
     let test_img_lvgl_logo_jpg = unsafe { test_img_lvgl_logo_jpg_path.as_ptr().as_ref().unwrap() };
 
     let mut img = Image::new();
-    lv_image_set_src(&mut img, test_img_lvgl_logo_jpg);
+    img.set_src(test_img_lvgl_logo_jpg);
 
-    lv_obj_align(&mut img, lv_align_t_LV_ALIGN_BOTTOM_RIGHT, -20, -20);
-    lv_obj_add_flag(&mut img, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
+    img.align(lv_align_t_LV_ALIGN_BOTTOM_RIGHT, -20, -20);
+    img.add_flag(lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
     world.spawn(img.into_inner());
 
     let mut img = Image::new();
-    lv_image_set_src(&mut img, test_img_lvgl_logo_png);
+    img.set_src(test_img_lvgl_logo_png);
 
-    lv_obj_set_pos(&mut img, 500, 420);
-    lv_obj_add_flag(&mut img, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
-    lv_image_set_rotation(&mut img, 200);
-    lv_image_set_scale_x(&mut img, 400);
+    img.set_pos(500, 420);
+    img.add_flag(lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
+    img.set_rotation(200);
+    img.set_scale_x(400);
     world.spawn(img.into_inner());
 }
 
 fn opa_anim_cb(widget: &mut Wdg, value: i32) {
-    lv_obj_set_style_opa(widget, value as u8, 0);
+    widget.set_style_opa(value as u8, 0);
 }
 
 fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject_t) {
@@ -396,27 +391,32 @@ fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject
 }
 
 fn buttonmatrix_event_cb(world: &mut World, e: &mut lv_event_t) {
-    // lv_event_get_user_data must not be used! (user data is reserved for the callback function)
-    let buttonmatrix = Wdg::from_ptr(lv_event_get_target(e) as *mut lv_obj_t);
-    let idx = lv_buttonmatrix_get_selected_button(&buttonmatrix);
-    let text = lv_buttonmatrix_get_button_text(&buttonmatrix, idx);
-    let mut label = world
+    // lv_event_get_user_data must not be used!
+    // user data is reserved for the callback function
+    let btnmatrix = Wdg::from_ptr(lv_event_get_target(e) as *mut lv_obj_t);
+    let buttonmatrix: Buttonmatrix<Wdg> = btnmatrix.try_into().unwrap();
+
+    let idx = buttonmatrix.get_selected_button();
+    let text = buttonmatrix.get_button_text(idx);
+    let mut label_widget = world
         .query_filtered::<&mut Widget, With<DynamicLabel>>()
         .single_mut(world)
         .unwrap();
+    let label: &mut Label<Wdg> = label_widget.as_mut().try_into().unwrap();
 
-    lv_label_set_text(&mut label, text);
+    label.set_text(text);
 }
 
 fn list_button_create(world: &mut World, parent: Entity) -> Entity {
     let mut btn = Button::new();
-    lv_obj_set_size(&mut btn, lv_pct(100), LV_SIZE_CONTENT as i32);
+    btn.set_size(lv_pct(100), LV_SIZE_CONTENT as i32);
 
     let btn_id = world.spawn(btn.into_inner()).id();
     let mut parent = world.entity_mut(parent);
     parent.add_child(btn_id);
 
-    let idx = lv_obj_get_index(&mut world.get_mut::<Widget>(btn_id).unwrap());
+    let btn = world.get::<Widget>(btn_id).unwrap();
+    let idx = btn.get_index();
 
     info!("Spawning button {}", idx);
 
@@ -424,8 +424,7 @@ fn list_button_create(world: &mut World, parent: Entity) -> Entity {
     let file_icon_str = CStr::from_bytes_with_nul(LV_SYMBOL_FILE).unwrap();
     let file_icon = file_icon_str.to_string_lossy();
 
-    lv_label_set_text(
-        &mut label,
+    label.set_text(
         CString::new(format!("{} Item {}", file_icon, idx))
             .unwrap()
             .as_c_str(),

@@ -95,7 +95,7 @@ fn main() {
         let mut objects = OBJECTS.lock().unwrap();
         let mut button = Button::new();
         let mut label = Label::new();
-        lv_label_set_text(&mut label, c"SPAWN");
+        label.set_text(c"SPAWN");
         lv_obj_set_parent(&mut label, &mut button);
 
         let mut anim = Animation::new(
@@ -103,7 +103,7 @@ fn main() {
             OpacityLevel::Transparent as i32,
             OpacityLevel::Cover as i32,
             |obj, val| {
-                lv_obj_set_style_opa(obj, val as u8, lv_part_t_LV_PART_MAIN);
+                obj.set_style_opa(val as u8, lv_part_t_LV_PART_MAIN);
             },
         );
 
@@ -119,8 +119,8 @@ fn main() {
                 None => {
                     let mut dynamic_button = Button::new();
                     let mut dynamic_label = Label::new();
-                    lv_obj_set_align(&mut dynamic_button, Align::TopRight.into());
-                    lv_label_set_text(&mut dynamic_label, c"This is dynamic");
+                    dynamic_button.set_align(Align::TopRight.into());
+                    dynamic_label.set_text(c"This is dynamic");
                     lv_obj_set_parent(&mut dynamic_label, &mut dynamic_button);
                     objects.dynamic_button = Some(dynamic_button);
                     objects.dynamic_button_label = Some(dynamic_label);
@@ -132,9 +132,9 @@ fn main() {
         objects.animation.as_mut().unwrap().start();
 
         let mut style = Box::leak(Box::new(Style::default()));
-        lv_style_set_opa(&mut style, OpacityLevel::Transparent as u8);
-        lv_style_set_align(&mut style, Align::TopLeft.into());
-        lv_style_set_bg_color(&mut style, lv_color_make(255, 0, 0));
+        style.set_opa(OpacityLevel::Transparent as u8);
+        style.set_align(Align::TopLeft.into());
+        style.set_bg_color(lv_color_make(255, 0, 0));
         unsafe {
             lv_obj_add_style(&mut button, &mut style, lv_part_t_LV_PART_MAIN);
         }
@@ -143,7 +143,7 @@ fn main() {
         label.leak();
 
         let mut arc = Arc::new();
-        lv_obj_set_align(&mut arc, Align::BottomMid.into());
+        arc.set_align(Align::BottomMid.into());
         arc.leak();
     }
 

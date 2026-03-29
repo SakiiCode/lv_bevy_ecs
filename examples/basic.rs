@@ -92,7 +92,7 @@ fn main() {
     {
         let mut button = Button::new();
         let mut label = Label::new();
-        lv_label_set_text(&mut label, c"SPAWN");
+        label.set_text(c"SPAWN");
         //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
         let label_entity = world.spawn(label.into_inner()).id();
 
@@ -101,7 +101,7 @@ fn main() {
             OpacityLevel::Transparent as i32,
             OpacityLevel::Cover as i32,
             |obj, val| {
-                lv_obj_set_style_opa(obj, val as u8, lv_part_t_LV_PART_MAIN);
+                obj.set_style_opa(val as u8, lv_part_t_LV_PART_MAIN);
             },
         );
 
@@ -124,8 +124,8 @@ fn main() {
                 None => {
                     let mut dynamic_button = Button::new();
                     let mut label = Label::new();
-                    lv_obj_set_align(&mut dynamic_button, Align::TopRight.into());
-                    lv_label_set_text(&mut label, c"This is dynamic");
+                    dynamic_button.set_align(Align::TopRight.into());
+                    label.set_text(c"This is dynamic");
                     world
                         .spawn((DynamicButton, dynamic_button.into_inner()))
                         .with_child(label.into_inner());
@@ -138,16 +138,16 @@ fn main() {
         button_entity.add_child(label_entity);
 
         let mut style = Style::default();
-        lv_style_set_opa(&mut style, OpacityLevel::Percent50 as u8);
-        lv_style_set_align(&mut style, Align::TopLeft.into());
-        lv_style_set_bg_color(&mut style, lv_color_make(255, 0, 0));
+        style.set_opa(OpacityLevel::Percent50 as u8);
+        style.set_align(Align::TopLeft.into());
+        style.set_bg_color(lv_color_make(255, 0, 0));
 
         button_entity.insert(style);
         //button_entity.remove::<Style>();
         // button_entity.insert(style);
 
         let mut arc = Arc::new();
-        lv_obj_set_align(&mut arc, Align::BottomMid.into());
+        arc.set_align(Align::BottomMid.into());
 
         world.spawn(arc.into_inner());
     }
