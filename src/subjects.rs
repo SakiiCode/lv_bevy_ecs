@@ -1,5 +1,9 @@
 //! # Subjects
 //!
+//! Subjects don't yet have that `.shorthand()` methods that widgets have.
+//! The original LVGL function syntax need to be used.
+//! The `lv_bevy_ecs::functions::*` module contains some safe wrappers.
+//!
 //! ```rust
 //! # use lv_bevy_ecs::functions::*;
 //! # use lv_bevy_ecs::subjects::{Subject};

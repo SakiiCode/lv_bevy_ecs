@@ -37,8 +37,13 @@
 //!
 //! ## ESP32
 //!
-//! For code example on how to create a display on embedded,
+//! For code example on how to create a display on ESP32 with SPI display and touchscreen,
 //! check out [lvgl-bevy-demo](https://github.com/SakiiCode/lvgl-bevy-demo).
+//!
+//! ## ESP32-P4
+//!
+//! For code example on how to create a display on a DSI screen,
+//! check out [lvgl-bevy-demo-dsi](https://github.com/SakiiCode/lvgl-bevy-demo-dsi).
 
 use ::alloc::boxed::Box;
 use ::core::{ffi::c_void, marker::PhantomData, ptr::NonNull};
