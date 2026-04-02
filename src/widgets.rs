@@ -1,87 +1,104 @@
 //! # Widgets
 //!
+//! The most basic type is the `Widget` struct that represents an owned `lv_obj_t`. If it goes out of scope,
+//! the widget will be deleted. Its borrowed form is the `Wdg` struct, it does not delete the widget upon drop.
+//!
+//! `Widget` and `Wdg` can be mutable or immutable, exclusive access is not enforced. If you happen to have a
+//! `*mut lv_obj_t` you can turn it into a `Wdg` with `Wdg::from_ptr(*mut lv_obj_t)`. Alternatively, `Widget::from_ptr(*mut lv_obj_t)`
+//! can be used, but that will destroy the widget if goes out of scope.
+//!
+//! ## Using widgets
 //! ```
 //! # use lv_bevy_ecs::widgets::*;
-//! # use lv_bevy_ecs::functions::*;
 //! #
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
-//! let mut world = LvglWorld::default();
-//! let mut label = Label::new();
-//! lv_label_set_text(&mut label, c"Example label");
+//! let mut world: LvglWorld = LvglWorld::default();
+//! let mut label: Label<Widget> = Label::new();
+//! label.set_text(c"Example label");
 //! let mut label_entity = world.spawn(label.into_inner());
 //! ```
 //!
-//! To create widgets, you have to use "zero-sized marker structs" (Arc, Label, Button, ...) that create `Widget` objects
-//! using the `create_widget` function.
+//! To create widgets, you have to use the specific struct (Arc, Label, Button, ...) `new()` function that
+//! create `Something<Widget>` objects. These structs can be generic over `<Widget>` or `<Wdg>` depending on
+//! whether they are owned or borrowed.
 //!
-//! Most of the LVGL functions have been kept with original names and they will use this `Widget` as their first parameter.
+//! To convert a `Widget` or `Wdg` back to a specific type, the `.downcast()` or `.downcast_mut()` method can be used.
 //!
-//! If you need to know the type of the Widget later on, pass the marker struct next to it when spawning the entity.
-//! This is not mandatory but useful for queries. If marker structs are omitted, the storage will be slightly better optimized in memory.
+//! #### Widget functions
 //!
-//! ## Modifying Widgets
+//! You can acces both `lv_obj_some_function` and `lv_widgettype_other_function` using `yourwidget.some_function(params)`
+//! and `yourwidget.other_function(params)` respectively.
+//!
+//! They are usually attached to `&mut self` but `&self` is also common.
+//!
+//! #### Storing widgets
+//!
+//! As explained in the readme, widgets should be moved to a storage system so that they will be accessible from elsewhere and don't get deallocated.
+//!
+//! In case of `bevy_ecs`, this is done using the `LvglWorld.spawn(Widget)` function. Since you usually have a generic `Something<Widget>`, it
+//! needs to be converted to a `Widget` using the `.to_inner()` function.
+//!
+//! #### Modifying Widgets
 //!
 //! To access widgets after moving them to the World with the `spawn()` function, you have to store the created Entity ID or use queries.
 //!
 //! ```
 //! # use core::ffi::CStr;
-//! # use lv_bevy_ecs::widgets::{Widget, Label, LvglWorld};
-//! # use lv_bevy_ecs::functions::*;
-//! # use lv_bevy_ecs::sys::lv_label_get_text;
+//! # use lv_bevy_ecs::widgets::{Widget, Label, LvglWorld, Wdg};
 //! #
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
 //! # let mut world = LvglWorld::default();
 //! # let mut label = Label::new();
-//! # lv_label_set_text(&mut label, c"Example label");
+//! # label.set_text(c"Example label");
 //! # let mut label_entity = world.spawn(label.into_inner());
 //! #
-//! let mut label_widget = label_entity.get_mut::<Widget>().unwrap();
-//! unsafe {
-//!    let text = CStr::from_ptr(lv_label_get_text(label_widget.raw()));
-//!    assert_eq!(text, c"Example label");
-//! }
+//! let label_widget = label_entity.get::<Widget>().unwrap();
+//! let label: &Label<Wdg> = label_widget.downcast().unwrap();
+//!
+//! let text = label.get_text();
+//! assert_eq!(text, c"Example label");
 //! ```
 //!
 //! ```
 //! # use lv_bevy_ecs::widgets::{Widget, Label, LvglWorld};
-//! # use lv_bevy_ecs::functions::*;
 //! # use lv_bevy_ecs::bevy::prelude::*;
 //! #
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
 //! # let mut world = LvglWorld::default();
 //! # let mut label = Label::new();
-//! # lv_label_set_text(&mut label, c"Example label 1");
 //! # let mut label_entity = world.spawn(label.into_inner());
 //! #
 //! let mut widgets = world.query::<&mut Widget>();
 //! assert_eq!(widgets.iter(&world).count(),1);
 //! ```
 //!
-//! You are free to define any kind of custom component:
+//! You are free to define any kind of custom component for easier lookup:
 //!
 //! ```
 //! # use lv_bevy_ecs::widgets::{Widget, Label, LvglWorld};
-//! # use lv_bevy_ecs::functions::*;
 //! # use lv_bevy_ecs::bevy::prelude::*;
 //! #
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
 //! #[derive(Component)]
+//! #[component(storage = "SparseSet")] // optional
 //! struct DynamicLabel;
 //!
 //! # let mut world = LvglWorld::default();
 //! # let mut label = Label::new();
-//! # lv_label_set_text(&mut label, c"Example label");
 //! #
 //! world.spawn((label.into_inner(), DynamicLabel));
 //! //...
-//! let mut label = world.query_filtered::<&mut Widget, With<DynamicLabel>>().single_mut(&mut world).unwrap();
+//! let mut label = world
+//!     .query_filtered::<&mut Widget, With<DynamicLabel>>()
+//!     .single_mut(&mut world)
+//!     .unwrap();
 //! ```
 //!
-//! ## Child widgets
+//! #### Child widgets
 //! To add a widget as a child, set it as child entity
 //! ```
 //! # use lv_bevy_ecs::widgets::{Widget, Label, LvglWorld, Button};
@@ -92,13 +109,13 @@
 //! # let mut world = LvglWorld::default();
 //! let mut button = Button::new();
 //! let mut label = Label::new();
-//! lv_label_set_text(&mut label, c"Example label");
+//! label.set_text(c"Example label");
 //!
 //! let mut button_entity = world.spawn(button.into_inner());
 //! let mut label_entity = button_entity.with_child(label.into_inner());
 //!
 //! let mut button_widget = button_entity.get::<Widget>().unwrap();
-//! assert_eq!(lv_obj_get_child_count(button_widget), 1)
+//! assert_eq!(button_widget.get_child_count(), 1);
 //! ```
 
 use ::core::{

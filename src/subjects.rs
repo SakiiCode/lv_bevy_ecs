@@ -12,24 +12,23 @@
 //! let mut dropdown = Dropdown::new();
 //! let mut chart_type_subject = Subject::new_int(0);
 //!
-//! unsafe {
-//!     lv_dropdown_bind_value(dropdown.raw_mut(), chart_type_subject.raw_mut());
-//! }
+//! dropdown.bind_value(chart_type_subject.raw_mut());
 //!
 //! let mut chart = Chart::new();
 //! lv_subject_add_observer_obj(&mut chart_type_subject, &mut chart, |observer, subject| unsafe {
-//!        let v = lv_subject_get_int(subject);
-//!        let mut chart = Wdg::from_ptr(lv_observer_get_target(observer) as *mut lv_obj_t);
-//!        let type_ = if v == 0 {
-//!            lv_chart_type_t_LV_CHART_TYPE_LINE
-//!        } else {
-//!            lv_chart_type_t_LV_CHART_TYPE_BAR
-//!        };
-//!        lv_chart_set_type(&mut chart, type_);
+//!         let v = lv_subject_get_int(subject);
+//!         let mut chart_wdg = Wdg::from_ptr(lv_observer_get_target(observer) as *mut lv_obj_t);
+//!         let chart: &mut Chart<Wdg> = chart_wdg.downcast_mut().unwrap();
+//!         let chart_type = if v == 0 {
+//!             lv_chart_type_t_LV_CHART_TYPE_LINE
+//!         } else {
+//!             lv_chart_type_t_LV_CHART_TYPE_BAR
+//!         };
+//!         chart.set_type(chart_type);
 //! });
 //! lv_subject_set_int(&mut chart_type_subject, 1);
 //!
-//! assert_eq!(lv_chart_get_type(&mut chart), lv_chart_type_t_LV_CHART_TYPE_BAR);
+//! assert_eq!(chart.get_type(), lv_chart_type_t_LV_CHART_TYPE_BAR);
 //! ```
 
 use ::core::{

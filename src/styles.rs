@@ -19,11 +19,11 @@
 //! #
 //! let mut style = Style::default();
 //! let opacity = OpacityLevel::Percent50 as u8;
-//! lv_style_set_opa(&mut style, opacity);
+//! style.set_opa(opacity);
 //!
 //! button_entity.insert(style);
 //! let widget = button_entity.get_mut::<Widget>().unwrap();
-//! assert_eq!(lv_obj_get_style_opa_recursive(&*widget, lv_part_t_LV_PART_MAIN), opacity - 1);
+//! assert_eq!(widget.get_style_opa_recursive(lv_part_t_LV_PART_MAIN), opacity - 1);
 //! ```
 
 use ::core::mem::MaybeUninit;

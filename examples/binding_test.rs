@@ -27,15 +27,15 @@ use lv_bevy_ecs::{
         lv_align_t_LV_ALIGN_BOTTOM_RIGHT, lv_anim_path_ease_out, lv_anim_set_path_cb,
         lv_anim_set_repeat_count, lv_area_t, lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
         lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED,
-        lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X, lv_chart_set_type,
-        lv_chart_type_t_LV_CHART_TYPE_BAR, lv_chart_type_t_LV_CHART_TYPE_LINE,
-        lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_color_t, lv_draw_buf_align,
-        lv_draw_image_dsc_t, lv_draw_line_dsc_t, lv_event_t, lv_flex_flow_t_LV_FLEX_FLOW_COLUMN,
-        lv_font_montserrat_24, lv_grid_align_t_LV_GRID_ALIGN_CENTER,
-        lv_grid_align_t_LV_GRID_ALIGN_START, lv_grid_align_t_LV_GRID_ALIGN_STRETCH, lv_layer_t,
-        lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT, lv_obj_t,
-        lv_observer_get_target, lv_observer_t, lv_palette_t_LV_PALETTE_BLUE,
-        lv_part_t_LV_PART_ITEMS, lv_state_t_LV_STATE_CHECKED, lv_subject_get_int, lv_subject_t,
+        lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X, lv_chart_type_t_LV_CHART_TYPE_BAR,
+        lv_chart_type_t_LV_CHART_TYPE_LINE, lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_color_t,
+        lv_draw_buf_align, lv_draw_image_dsc_t, lv_draw_line_dsc_t, lv_event_t,
+        lv_flex_flow_t_LV_FLEX_FLOW_COLUMN, lv_font_montserrat_24,
+        lv_grid_align_t_LV_GRID_ALIGN_CENTER, lv_grid_align_t_LV_GRID_ALIGN_START,
+        lv_grid_align_t_LV_GRID_ALIGN_STRETCH, lv_layer_t, lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN,
+        lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT, lv_obj_t, lv_observer_get_target, lv_observer_t,
+        lv_palette_t_LV_PALETTE_BLUE, lv_part_t_LV_PART_ITEMS, lv_state_t_LV_STATE_CHECKED,
+        lv_subject_get_int, lv_subject_t,
     },
     widgets::{
         Button, Buttonmatrix, Canvas, Chart, Dropdown, Image, Label, LvglWorld, Wdg, Widget,
@@ -195,16 +195,13 @@ fn create_ui(world: &mut World) {
     label_entity.insert(style_big_font.clone());
 
     // Converting [&str] to [*const i8] is a little complicated
-    let btnmatrix_options = {
-        let options = ["First", "Second", "\n", "Third", ""];
-        let combined = options.map(|s| CString::from_str(s).unwrap());
-        let ptrs = combined.map(|cs| {
-            let ptr = cs.as_c_str().as_ptr();
-            core::mem::forget(cs);
-            ptr
-        });
-        ptrs
-    };
+    // This also leaks memory
+    let btnmatrix_options = ["First", "Second", "\n", "Third", ""].map(|s| {
+        let cs = CString::from_str(s).unwrap();
+        let ptr = cs.as_c_str().as_ptr();
+        core::mem::forget(cs);
+        ptr
+    });
 
     let btnmatrix_ctrl = Box::new([
         lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED,
@@ -380,13 +377,14 @@ fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject
     info!("chart_type_observer_cb");
     unsafe {
         let v = lv_subject_get_int(subject);
-        let chart = lv_observer_get_target(observer) as *mut lv_obj_t;
-        let type_ = if v == 0 {
+        let mut chart_wdg = Wdg::from_ptr(lv_observer_get_target(observer) as *mut lv_obj_t);
+        let chart: &mut Chart<Wdg> = chart_wdg.downcast_mut().unwrap();
+        let chart_type = if v == 0 {
             lv_chart_type_t_LV_CHART_TYPE_LINE
         } else {
             lv_chart_type_t_LV_CHART_TYPE_BAR
         };
-        lv_chart_set_type(chart, type_);
+        chart.set_type(chart_type);
     }
 }
 

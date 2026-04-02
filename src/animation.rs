@@ -8,7 +8,7 @@
 //! # use lv_bevy_ecs::functions::*;
 //! # use lv_bevy_ecs::support::OpacityLevel;
 //! # use lv_bevy_ecs::sys::{lv_part_t_LV_PART_MAIN, lv_anim_count_running};
-//! # use lv_bevy_ecs::widgets::{Button, LvglWorld};
+//! # use lv_bevy_ecs::widgets::{Button, LvglWorld, Wdg};
 //! #
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
@@ -20,7 +20,7 @@
 //!     OpacityLevel::Transparent as i32,
 //!     OpacityLevel::Cover as i32,
 //!     |obj, val| {
-//!         lv_obj_set_style_opa(obj, val as u8, lv_part_t_LV_PART_MAIN);
+//!         obj.set_style_opa(val as u8, lv_part_t_LV_PART_MAIN);
 //!     },
 //! );
 //! let mut button_entity = world.spawn((button.into_inner(), anim));
