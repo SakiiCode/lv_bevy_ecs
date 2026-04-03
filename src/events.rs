@@ -145,7 +145,7 @@ where
             obj,
             Some(event_callback::<F>),
             filter.into(),
-            Box::into_raw(Box::new(callback)) as *mut _,
+            Box::into_raw(Box::new(callback)).cast(),
         );
     }
 }
@@ -155,7 +155,8 @@ where
     F: FnMut(lightvgl_sys::lv_event_t),
 {
     unsafe {
-        let callback = &mut *((*event).user_data as *mut F);
+        let user_data = lightvgl_sys::lv_event_get_user_data(event);
+        let callback = &mut *(user_data.cast::<F>());
         callback(*event);
     }
 }

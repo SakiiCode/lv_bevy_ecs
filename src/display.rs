@@ -40,16 +40,16 @@
 //! check out [lvgl-bevy-demo](https://github.com/SakiiCode/lvgl-bevy-demo).
 
 use ::alloc::boxed::Box;
-use ::core::{ffi::c_void, marker::PhantomData, ptr::NonNull};
+use ::core::{marker::PhantomData, ptr::NonNull};
 
 use embedded_graphics::{
     Pixel,
     prelude::{PixelColor, Point, Size},
     primitives::Rectangle,
 };
-use lightvgl_sys::{lv_display_t, lv_draw_buf_t};
+use lightvgl_sys::{lv_display_get_user_data, lv_display_t, lv_draw_buf_t};
 
-use crate::{info, support::LvglColorFormat, warn};
+use crate::support::LvglColorFormat;
 
 pub struct Display {
     raw: NonNull<lv_display_t>,
@@ -64,12 +64,12 @@ impl Display {
         }
     }
 
-    pub fn register<F, const N: usize, C: LvglColorFormat>(
-        &mut self,
+    pub fn register<'a, F, const N: usize, C: LvglColorFormat>(
+        &'a mut self,
         buffer: DrawBuffer<N, C>,
         callback: F,
     ) where
-        F: FnMut(&mut DisplayRefresh<N, C>),
+        F: FnMut(&mut DisplayRefresh<N, C>) + 'a,
     {
         unsafe {
             lightvgl_sys::lv_display_set_draw_buffers(
@@ -79,7 +79,7 @@ impl Display {
             );
             register_display(self.raw.as_ptr(), callback);
         }
-        info!("Display Registered");
+        crate::info!("Display Registered");
     }
 
     pub fn raw(&self) -> *mut lv_display_t {
@@ -109,10 +109,7 @@ where
 {
     unsafe {
         lightvgl_sys::lv_display_set_flush_cb(display, Some(disp_flush_trampoline::<F, N, C>));
-        lightvgl_sys::lv_display_set_user_data(
-            display,
-            Box::into_raw(Box::new(callback)) as *mut _ as *mut c_void,
-        );
+        lightvgl_sys::lv_display_set_user_data(display, Box::into_raw(Box::new(callback)).cast());
     }
 }
 
@@ -124,11 +121,11 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
     F: FnMut(&mut DisplayRefresh<N, C>),
 {
     unsafe {
-        let display_driver = *display;
-        if !display_driver.user_data.is_null() {
-            let callback = &mut *(display_driver.user_data as *mut F);
+        let user_data = lv_display_get_user_data(display);
+        if !user_data.is_null() {
+            let callback = &mut *(user_data.cast::<F>());
 
-            let buf = color_p as *mut C;
+            let buf = color_p.cast::<C>();
 
             let w = (*area).x2 - (*area).x1 + 1;
             let h = (*area).y2 - (*area).y1 + 1;
@@ -151,7 +148,7 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
             };
             callback(&mut update);
         } else {
-            warn!("Display callback user data was null, this should never happen!");
+            crate::warn!("Display callback user data was null, this should never happen!");
         }
         // Indicate to LVGL that we are ready with the flushing
         lightvgl_sys::lv_display_flush_ready(display);

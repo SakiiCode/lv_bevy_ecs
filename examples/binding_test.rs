@@ -1,5 +1,5 @@
 use std::{
-    ffi::{CStr, CString, c_void},
+    ffi::{CStr, CString},
     process::exit,
     str::FromStr,
     sync::{
@@ -33,7 +33,7 @@ use lv_bevy_ecs::{
         lv_draw_image_dsc_t, lv_draw_line_dsc_t, lv_event_t, lv_flex_flow_t_LV_FLEX_FLOW_COLUMN,
         lv_font_montserrat_24, lv_grid_align_t_LV_GRID_ALIGN_CENTER,
         lv_grid_align_t_LV_GRID_ALIGN_START, lv_grid_align_t_LV_GRID_ALIGN_STRETCH, lv_layer_t,
-        lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT, lv_obj_t,
+        lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN, lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT,
         lv_observer_get_target, lv_observer_t, lv_palette_t_LV_PALETTE_BLUE,
         lv_part_t_LV_PART_ITEMS, lv_state_t_LV_STATE_CHECKED, lv_subject_get_int, lv_subject_t,
     },
@@ -334,7 +334,7 @@ fn create_ui(world: &mut World) {
 
     unsafe {
         let buf = lv_draw_buf_align(
-            (canvas_buf.as_mut_ptr() as *mut c_void).as_mut().unwrap(),
+            canvas_buf.as_mut_ptr().cast(),
             lv_color_format_t_LV_COLOR_FORMAT_RGB565,
         );
         lv_canvas_set_buffer(
@@ -383,7 +383,7 @@ fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject
     info!("chart_type_observer_cb");
     unsafe {
         let v = lv_subject_get_int(subject);
-        let chart = lv_observer_get_target(observer) as *mut lv_obj_t;
+        let chart = lv_observer_get_target(observer).cast();
         let type_ = if v == 0 {
             lv_chart_type_t_LV_CHART_TYPE_LINE
         } else {
@@ -395,7 +395,7 @@ fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject
 
 fn buttonmatrix_event_cb(world: &mut World, e: &mut lv_event_t) {
     // lv_event_get_user_data must not be used! (user data is reserved for the callback function)
-    let buttonmatrix = Wdg::from_ptr(lv_event_get_target(e) as *mut lv_obj_t);
+    let buttonmatrix = Wdg::from_ptr(lv_event_get_target(e).cast_mut().cast());
     let idx = lv_buttonmatrix_get_selected_button(&buttonmatrix);
     let text = lv_buttonmatrix_get_button_text(&buttonmatrix, idx);
     let mut label = world
@@ -445,11 +445,7 @@ fn draw_to_canvas(canvas: &mut Widget) {
 
     /*Use draw descriptors*/
     let test_img_lvgl_logo_png_path = c"A:examples/assets/test_img_lvgl_logo.png".as_ptr();
-    let test_img_lvgl_logo_png = unsafe {
-        (test_img_lvgl_logo_png_path as *mut c_void)
-            .as_mut()
-            .unwrap()
-    };
+    let test_img_lvgl_logo_png = test_img_lvgl_logo_png_path.cast();
     let mut image_draw_dsc = unsafe {
         let mut image_draw_dsc = std::mem::MaybeUninit::<lv_draw_image_dsc_t>::uninit();
         lightvgl_sys::lv_draw_image_dsc_init(image_draw_dsc.as_mut_ptr());

@@ -1,10 +1,9 @@
 //! Input
 use ::alloc::boxed::Box;
-use ::core::{ffi::c_void, marker::PhantomData, ptr::NonNull};
+use ::core::{marker::PhantomData, ptr::NonNull};
+use lightvgl_sys::lv_indev_get_user_data;
 
 use embedded_graphics::prelude::Point;
-
-use crate::warn;
 
 /// Boolean states for an input.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
@@ -132,7 +131,7 @@ impl<T: InputType> InputDevice<T> {
             lightvgl_sys::lv_indev_set_read_cb(raw.as_ptr(), Some(read_input::<F, T>));
             lightvgl_sys::lv_indev_set_user_data(
                 raw.as_ptr(),
-                Box::into_raw(Box::new(read_cb)) as *mut c_void,
+                Box::into_raw(Box::new(read_cb)).cast(),
             );
 
             Self {
@@ -151,8 +150,9 @@ unsafe extern "C" fn read_input<F, T>(
     F: FnMut() -> InputEvent<T>,
 {
     unsafe {
-        if !(*indev).user_data.is_null() {
-            let callback = &mut *((*indev).user_data as *mut F);
+        let user_data = lv_indev_get_user_data(indev);
+        if !user_data.is_null() {
+            let callback = &mut *(user_data.cast::<F>());
             let event = callback();
             match event.status {
                 BufferStatus::Once => {
@@ -165,7 +165,7 @@ unsafe extern "C" fn read_input<F, T>(
             T::set_lv_indev_data(&event.data, data.as_mut().unwrap());
             (*data).state = event.state.as_lv_indev_state();
         } else {
-            warn!("Input callback user data was null, this should never happen!");
+            crate::warn!("Input callback user data was null, this should never happen!");
         }
     }
 }

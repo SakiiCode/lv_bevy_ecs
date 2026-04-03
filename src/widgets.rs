@@ -295,15 +295,6 @@ impl Wdg {
         })
     }
 
-    /*pub fn from_ref<'a>(mut r#ref: &'a mut lv_obj_t) -> &'a mut Self {
-        // this works
-        /*Some(Self {
-            raw: NonNull::new(r#ref as *mut lv_obj_t)?,
-        })*/
-        // this does not
-        //unsafe { (&mut r#ref as *mut _ as *mut Self).as_mut().unwrap() }
-    }*/
-
     pub fn from_non_null(ptr: &NonNull<lv_obj_t>) -> &Self {
         unsafe { &*(ptr as *const _ as *const Self) }
     }
