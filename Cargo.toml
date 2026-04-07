@@ -25,6 +25,10 @@ required-features = ["no_ecs"]
 name = "defmt"
 required-features = ["defmt"]
 
+[[example]]
+name = "widgets_demo"
+required-features = ["demos"]
+
 [dependencies]
 bevy_ecs = { version = "0.18.0", default-features = false }
 cfg-if = "1.0.4"
@@ -61,6 +65,8 @@ critical-section = ["bevy_ecs/critical-section"]
 ctor = ["dep:ctor"]
 # Use defmt instead of log
 defmt = ["dep:defmt"]
+# Include LVGL demos (requires LV_BUILD_DEMOS)
+demos = ["lightvgl-sys/demos"]
 # Set LVGL allocator as Rust global allocator
 lvgl-alloc = ["defmt?/alloc"]
 # Enable functions that should not be used in the ECS environment
