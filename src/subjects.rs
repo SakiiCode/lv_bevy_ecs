@@ -21,7 +21,7 @@
 //! let mut chart = Chart::new();
 //! lv_subject_add_observer_obj(&mut chart_type_subject, &mut chart, |observer, subject| unsafe {
 //!         let v = lv_subject_get_int(subject);
-//!         let mut chart_wdg = Wdg::from_ptr(lv_observer_get_target(observer) as *mut lv_obj_t);
+//!         let mut chart_wdg = Wdg::from_ptr(lv_observer_get_target(observer).cast());
 //!         let chart: &mut Chart<Wdg> = chart_wdg.downcast_mut().unwrap();
 //!         let chart_type = if v == 0 {
 //!             lv_chart_type_t_LV_CHART_TYPE_LINE
@@ -42,9 +42,9 @@ use ::core::{
 use alloc::{boxed::Box, vec};
 
 use bevy_ecs::component::Component;
-use lightvgl_sys::lv_subject_t;
+use lightvgl_sys::{lv_observer_get_user_data, lv_subject_t};
 
-use crate::{info, warn, widgets::Wdg};
+use crate::widgets::Wdg;
 
 #[derive(Component)]
 #[component(storage = "SparseSet")]
@@ -55,7 +55,7 @@ pub struct Subject {
 impl Drop for Subject {
     fn drop(&mut self) {
         unsafe {
-            info!("Dropping Subject");
+            crate::info!("Dropping Subject");
             lightvgl_sys::lv_subject_deinit(&mut self.raw);
         }
     }
@@ -126,10 +126,10 @@ pub(crate) fn lv_subject_add_observer_obj<'a, F>(
             &mut subject.raw,
             Some(subject_callback::<F>),
             object.raw_mut(),
-            Box::into_raw(Box::new(callback)) as *mut c_void,
+            Box::into_raw(Box::new(callback)).cast(),
         );
     }
-    info!("Added Observer");
+    crate::info!("Added Observer");
 }
 
 unsafe extern "C" fn subject_callback<F>(
@@ -139,11 +139,12 @@ unsafe extern "C" fn subject_callback<F>(
     F: FnMut(*mut lightvgl_sys::lv_observer_t, *mut lightvgl_sys::lv_subject_t),
 {
     unsafe {
-        if !(*observer).user_data.is_null() {
-            let callback = &mut *((*observer).user_data as *mut F);
+        let user_data = lv_observer_get_user_data(observer);
+        if !user_data.is_null() {
+            let callback = &mut *(user_data.cast::<F>());
             callback(observer, subject);
         } else {
-            warn!("Subject callback user data was null, this should never happen!");
+            crate::warn!("Subject callback user data was null, this should never happen!");
         }
     }
 }

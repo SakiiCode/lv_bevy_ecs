@@ -91,7 +91,7 @@ pub fn lv_subject_set_int(subject: &mut Subject, value: i32) {
 
 #[rustfmt::skip]
 pub fn lv_subject_set_string(subject: &mut Subject, value: &CStr) {
-    unsafe { lightvgl_sys::lv_subject_set_pointer(subject.raw_mut(), value.as_ptr().cast::<c_void>().cast_mut()) }
+    unsafe { lightvgl_sys::lv_subject_set_pointer(subject.raw_mut(), value.as_ptr().cast_mut().cast()) }
 }
 
 pub fn lv_subject_set_color(subject: &mut Subject, value: lv_color_t) {
