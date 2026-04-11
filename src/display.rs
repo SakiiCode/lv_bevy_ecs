@@ -77,6 +77,59 @@ impl Display {
     ) where
         F: FnMut(&mut DisplayRefresh<N, C>) + 'a,
     {
+        let cf = C::as_lv_color_format_t();
+        // these are not checked by LVGL, just produce a black screen
+        match cf {
+            lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_L8 => {
+                assert_eq!(
+                    lightvgl_sys::LV_COLOR_DEPTH,
+                    8,
+                    "LV_COLOR_DEPTH must be set to 8"
+                );
+                assert_eq!(
+                    lightvgl_sys::LV_DRAW_SW_SUPPORT_L8,
+                    1,
+                    "LV_DRAW_SW_SUPPORT_L8 must be set to 1"
+                );
+            }
+            lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_I1 => {
+                assert_eq!(
+                    lightvgl_sys::LV_COLOR_DEPTH,
+                    1,
+                    "LV_COLOR_DEPTH must be set to 1"
+                );
+                assert_eq!(
+                    lightvgl_sys::LV_DRAW_SW_SUPPORT_I1,
+                    1,
+                    "LV_DRAW_SW_SUPPORT_I1 must be set to 1"
+                );
+            }
+            lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB565 => {
+                assert_eq!(
+                    lightvgl_sys::LV_COLOR_DEPTH,
+                    16,
+                    "LV_COLOR_DEPTH must be set to 16"
+                );
+                assert_eq!(
+                    lightvgl_sys::LV_DRAW_SW_SUPPORT_RGB565,
+                    1,
+                    "LV_DRAW_SW_SUPPORT_RGB565 must be set to 1"
+                );
+            }
+            lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB888 => {
+                assert_eq!(
+                    lightvgl_sys::LV_COLOR_DEPTH,
+                    24,
+                    "LV_COLOR_DEPTH must be set to 24"
+                );
+                assert_eq!(
+                    lightvgl_sys::LV_DRAW_SW_SUPPORT_RGB888,
+                    1,
+                    "LV_DRAW_SW_SUPPORT_RGB888 must be set to 1"
+                );
+            }
+            _ => unreachable!("unsupported color format"),
+        }
         unsafe {
             lightvgl_sys::lv_display_set_draw_buffers(
                 self.raw(),
