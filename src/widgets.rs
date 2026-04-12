@@ -212,8 +212,7 @@ impl Drop for Widget {
     fn drop(&mut self) {
         unsafe {
             info!("Dropping Obj");
-            // Small delay is needed to prevent double-freeing child objects
-            // TODO more safe solution
+            // Async is needed to prevent double-freeing child objects
             lightvgl_sys::lv_obj_delete_async(self.raw.as_ptr());
         }
     }

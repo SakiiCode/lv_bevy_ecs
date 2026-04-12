@@ -44,7 +44,7 @@ DEP_LV_CONFIG_PATH = { relative = true, value = "." }
 ```
 
 3. Assign a tick callback that measures elapsed time in milliseconds. This must be done **before** creating the UI.
-   _For other frameworks (like FreeRTOS), you should [use its tick counter](https://docs.lvgl.io/9.4/details/integration/overview/connecting_lvgl.html#tick-interface) instead to get precise and constant framerate._
+   _For other frameworks (like ESP-IDF or Embassy), you should [use its tick counter](https://docs.lvgl.io/9.5/integration/overview.html#tick-interface) instead to get precise and constant framerate._
 
 ```rust
 # use lv_bevy_ecs::functions::*;
@@ -69,7 +69,8 @@ lv_tick_set_cb(|| {
 static WORLD: LazyLock<Mutex<LvglWorld>> = LazyLock::new(|| Mutex::new(LvglWorld::default()));
 ```
 
-4. Last thing is to call `lv_timer_handle()` in every loop cycle.
+4. Last thing is to call `lv_timer_handle()` in every loop cycle. Ideally this should be protected by
+   the same mutex as LvglWorld, but this is not enforced by the borrow checker currently.
 
 ```rust
 # use lv_bevy_ecs::functions::*;
