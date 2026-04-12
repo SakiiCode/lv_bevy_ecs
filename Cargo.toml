@@ -52,7 +52,7 @@ simple_logger = "5.1.0"
 lightvgl-sys = { path = "../lightvgl-sys", version = "~9.5.0", default-features = false, features = [
   "raw-bindings",
 ] }
-lv_codegen = { path = "lv_codegen", version = "0.3.0" }
+lv_codegen = { path = "lv_codegen", version = "0.4.0" }
 prettyplease = "0.2.37"
 proc-macro2 = "1.0.95"
 quote = "1.0.40"

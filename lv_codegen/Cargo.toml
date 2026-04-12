@@ -1,6 +1,6 @@
 [package]
 name = "lv_codegen"
-version = "0.3.3"
+version = "0.4.0"
 edition = "2024"
 description = "Code generation companion to lightvgl-sys"
 license = "MIT"
