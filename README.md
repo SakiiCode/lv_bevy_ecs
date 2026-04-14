@@ -60,7 +60,7 @@ lv_tick_set_cb(|| {
 ```
 
 4. You have to obtain a World instance with `LvglWorld::default();`.
-   This is a global variable, it can be stored in a LazyLock or passed around in an Arc<Mutex<>> if needed elsewhere than in main().
+   This is a global variable, it can be stored in a `LazyLock` or passed around in an `Arc<Mutex<LvglWorld>>` if needed elsewhere than in main().
 
 ```rust
 # use lv_bevy_ecs::widgets::LvglWorld;
@@ -69,8 +69,7 @@ lv_tick_set_cb(|| {
 static WORLD: LazyLock<Mutex<LvglWorld>> = LazyLock::new(|| Mutex::new(LvglWorld::default()));
 ```
 
-4. Last thing is to call `lv_timer_handle()` in every loop cycle. Ideally this should be protected by
-   the same mutex as LvglWorld, but this is not enforced by the borrow checker currently.
+4. Last thing is to call `lv_timer_handler()` in every loop cycle. Ideally this should be protected by the same mutex as LvglWorld, but this is not enforced by the borrow checker currently.
 
 ```rust
 # use lv_bevy_ecs::functions::*;

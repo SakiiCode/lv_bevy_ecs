@@ -5,6 +5,7 @@
 //! The `lv_bevy_ecs::functions::*` module contains some safe wrappers.
 //!
 use ::alloc::boxed::Box;
+use lightvgl_sys::lv_event_code_t;
 
 use crate::widgets::Wdg;
 
@@ -71,28 +72,36 @@ pub enum Event {
     Focused,
 }
 
-impl TryFrom<lightvgl_sys::lv_event_code_t> for Event {
+impl TryFrom<lv_event_code_t> for Event {
     type Error = ();
 
-    fn try_from(value: lightvgl_sys::lv_event_code_t) -> Result<Self, Self::Error> {
-        const LV_EVENT_PRESSED: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_PRESSED;
-        const LV_EVENT_PRESSING: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_PRESSING;
-        const LV_EVENT_PRESS_LOST: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_PRESS_LOST;
-        const LV_EVENT_SHORT_CLICKED: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_SHORT_CLICKED;
-        const LV_EVENT_CLICKED: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_CLICKED;
-        const LV_EVENT_LONG_PRESSED: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_LONG_PRESSED;
-        const LV_EVENT_LONG_PRESSED_REPEAT: u32 =
+    fn try_from(value: lv_event_code_t) -> Result<Self, Self::Error> {
+        const LV_EVENT_PRESSED: lv_event_code_t = lightvgl_sys::lv_event_code_t_LV_EVENT_PRESSED;
+        const LV_EVENT_PRESSING: lv_event_code_t = lightvgl_sys::lv_event_code_t_LV_EVENT_PRESSING;
+        const LV_EVENT_PRESS_LOST: lv_event_code_t =
+            lightvgl_sys::lv_event_code_t_LV_EVENT_PRESS_LOST;
+        const LV_EVENT_SHORT_CLICKED: lv_event_code_t =
+            lightvgl_sys::lv_event_code_t_LV_EVENT_SHORT_CLICKED;
+        const LV_EVENT_CLICKED: lv_event_code_t = lightvgl_sys::lv_event_code_t_LV_EVENT_CLICKED;
+        const LV_EVENT_LONG_PRESSED: lv_event_code_t =
+            lightvgl_sys::lv_event_code_t_LV_EVENT_LONG_PRESSED;
+        const LV_EVENT_LONG_PRESSED_REPEAT: lv_event_code_t =
             lightvgl_sys::lv_event_code_t_LV_EVENT_LONG_PRESSED_REPEAT;
-        const LV_EVENT_RELEASED: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_RELEASED;
-        const LV_EVENT_VALUE_CHANGED: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_VALUE_CHANGED;
-        const LV_EVENT_DRAW_MAIN: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN;
-        const LV_EVENT_DRAW_MAIN_BEGIN: u32 =
+        const LV_EVENT_RELEASED: lv_event_code_t = lightvgl_sys::lv_event_code_t_LV_EVENT_RELEASED;
+        const LV_EVENT_VALUE_CHANGED: lv_event_code_t =
+            lightvgl_sys::lv_event_code_t_LV_EVENT_VALUE_CHANGED;
+        const LV_EVENT_DRAW_MAIN: lv_event_code_t =
+            lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN;
+        const LV_EVENT_DRAW_MAIN_BEGIN: lv_event_code_t =
             lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN_BEGIN;
-        const LV_EVENT_DRAW_MAIN_END: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN_END;
-        const LV_EVENT_DRAW_POST: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST;
-        const LV_EVENT_DRAW_POST_BEGIN: u32 =
+        const LV_EVENT_DRAW_MAIN_END: lv_event_code_t =
+            lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN_END;
+        const LV_EVENT_DRAW_POST: lv_event_code_t =
+            lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST;
+        const LV_EVENT_DRAW_POST_BEGIN: lv_event_code_t =
             lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST_BEGIN;
-        const LV_EVENT_DRAW_POST_END: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST_END;
+        const LV_EVENT_DRAW_POST_END: lv_event_code_t =
+            lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST_END;
 
         match value {
             LV_EVENT_PRESSED => Ok(Event::Pressed),

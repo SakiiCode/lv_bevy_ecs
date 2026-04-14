@@ -50,7 +50,7 @@ impl Default for Style {
         };
         Self {
             raw,
-            selector: lv_part_t_LV_PART_MAIN,
+            selector: lv_part_t_LV_PART_MAIN as lv_style_selector_t,
         }
     }
 }
