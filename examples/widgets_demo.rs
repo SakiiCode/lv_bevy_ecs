@@ -47,7 +47,7 @@ fn main() {
         SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
-    let mut window = Window::new("Button Example", &output_settings);
+    let mut window = Window::new("Widgets Demo", &output_settings);
 
     info!("SIMULATOR OK");
     error!("Random error");

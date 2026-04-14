@@ -35,7 +35,7 @@ use lv_bevy_ecs::{
         lv_grid_align_t_LV_GRID_ALIGN_STRETCH, lv_layer_t, lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN,
         lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT, lv_observer_get_target, lv_observer_t,
         lv_palette_t_LV_PALETTE_BLUE, lv_part_t_LV_PART_ITEMS, lv_state_t_LV_STATE_CHECKED,
-        lv_subject_get_int, lv_subject_t,
+        lv_style_selector_t, lv_subject_get_int, lv_subject_t,
     },
     widgets::{
         Button, Buttonmatrix, Canvas, Chart, Dropdown, Image, Label, LvglWorld, Wdg, Widget,
@@ -230,7 +230,8 @@ fn create_ui(world: &mut World) {
 
     let mut btnmatrix_entity = world.spawn(btnmatrix.into_inner());
 
-    let mut style_big_font_2 = Style::new(lv_part_t_LV_PART_ITEMS | lv_state_t_LV_STATE_CHECKED);
+    let mut style_big_font_2 =
+        Style::new((lv_part_t_LV_PART_ITEMS | lv_state_t_LV_STATE_CHECKED) as lv_style_selector_t);
 
     unsafe {
         style_big_font_2.set_text_font(&lv_font_montserrat_24);
