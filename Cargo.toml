@@ -40,8 +40,11 @@ log = { version = "0.4" }
 [dev-dependencies]
 defmt-stdout = "0.1.2"
 embedded-graphics-simulator = "0.8.0"
+macro_rules_attribute = "0.2.2"
 memory-stats = "1.2.0"
 simple_logger = "5.1.0"
+smol = "2.0.2"
+smol-macros = "0.1.1"
 
 [build-dependencies]
 lightvgl-sys = { path = "../lightvgl-sys", version = "~9.5.3-beta", default-features = false, features = [
