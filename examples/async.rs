@@ -3,6 +3,7 @@ use std::{
     sync::{
         Mutex,
         atomic::{AtomicBool, Ordering},
+        mpsc,
     },
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
@@ -30,17 +31,15 @@ use lv_bevy_ecs::{
     widgets::{Arc, Button, Label, LvglWorld},
 };
 use macro_rules_attribute::apply;
-use smol::{Executor, Timer, future::yield_now};
+use smol::{Timer, future::yield_now};
 use smol_macros::main;
 
 #[derive(Component)]
 #[component(storage = "SparseSet")]
 struct DynamicButton;
 
-static WINDOW_INIT: AtomicBool = AtomicBool::new(false);
-
 #[apply(main!)]
-async fn main(ex: &Executor<'_>) {
+async fn main() {
     lv_init();
     lv_bevy_ecs::logging::lv_log_init();
 
@@ -48,11 +47,9 @@ async fn main(ex: &Executor<'_>) {
     const VER_RES: u32 = 240;
     const LINE_HEIGHT: u32 = 16;
 
-    let mut sim_display: SimulatorDisplay<Rgb565> =
-        SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
-
-    info!("SIMULATOR OK");
     error!("Random error");
+
+    let mut sim_display = SimulatorDisplay::<Rgb565>::new(Size::new(HOR_RES, VER_RES));
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 
@@ -152,16 +149,23 @@ async fn main(ex: &Executor<'_>) {
 
     info!("Create OK");
 
-    let _timer_task = ex.spawn(async {
-        while !WINDOW_INIT.load(Ordering::Relaxed) {
-            yield_now().await;
-        }
-        loop {
-            let start = Instant::now();
-            let next_timer_ms = lv_timer_handler();
-            Timer::at(start + Duration::from_millis(next_timer_ms.into())).await;
-        }
-    });
+    // let _timer_task = ex.spawn(async {
+    //     while !WINDOW_INIT.load(Ordering::Relaxed) {
+    //         yield_now().await;
+    //     }
+    //     loop {
+    //         let start = Instant::now();
+    //         let next_timer_ms = lv_timer_handler();
+    //         Timer::at(start + Duration::from_millis(next_timer_ms.into())).await;
+    //     }
+    // });
+
+    static WINDOW_INIT: AtomicBool = AtomicBool::new(false);
+
+    let (events_sender, events_receiver) = mpsc::channel();
+
+    let _touch_screen =
+        InputDevice::<Pointer>::create(|| get_touch_input(events_receiver.try_iter()));
 
     // embedded-graphics-simulator uses a blocking fps limiter so async cannot be used
     // a separate thread must be spawned instead
@@ -169,19 +173,26 @@ async fn main(ex: &Executor<'_>) {
     let _window_thread = std::thread::spawn(move || {
         let output_settings = OutputSettingsBuilder::new().scale(1).build();
         let mut window = Window::new("Button Example", &output_settings);
-        // Register a new input device that's capable of reading the current state of the input
-        let _touch_screen = InputDevice::<Pointer>::create(|| get_touch_input(window.events()));
 
-        info!("Input OK");
         window.update(&sim_display);
         WINDOW_INIT.store(true, Ordering::Relaxed);
         loop {
+            // window.events() must be called from this thread on windows
+            for event in window.events() {
+                events_sender.send(event).unwrap();
+            }
             window.update(&sim_display);
         }
     });
 
-    loop {
+    while !WINDOW_INIT.load(Ordering::Relaxed) {
         yield_now().await;
+    }
+
+    loop {
+        let start = Instant::now();
+        let next_timer_ms = lv_timer_handler();
+        Timer::at(start + Duration::from_millis(next_timer_ms.into())).await;
     }
 }
 
