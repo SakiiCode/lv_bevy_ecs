@@ -17,7 +17,7 @@ use lv_bevy_ecs::{
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     support::{Align, OpacityLevel},
-    sys::lv_part_t_LV_PART_MAIN,
+    sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t},
     trace,
     widgets::{Arc, Button, Label, Widget},
 };
@@ -100,7 +100,11 @@ fn main() {
             OpacityLevel::Transparent as i32,
             OpacityLevel::Cover as i32,
             |obj, val| {
-                lv_obj_set_style_opa(obj, val as u8, lv_part_t_LV_PART_MAIN);
+                lv_obj_set_style_opa(
+                    obj,
+                    val as u8,
+                    lv_part_t_LV_PART_MAIN as lv_style_selector_t,
+                );
             },
         );
 
@@ -133,7 +137,11 @@ fn main() {
         lv_style_set_align(&mut style, Align::TopLeft.into());
         lv_style_set_bg_color(&mut style, lv_color_make(255, 0, 0));
         unsafe {
-            lv_obj_add_style(&mut button, &mut style, lv_part_t_LV_PART_MAIN);
+            lv_obj_add_style(
+                &mut button,
+                &mut style,
+                lv_part_t_LV_PART_MAIN as lv_style_selector_t,
+            );
         }
 
         button.leak();

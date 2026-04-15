@@ -18,7 +18,7 @@ use lv_bevy_ecs::{
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     support::{Align, OpacityLevel},
-    sys::lv_part_t_LV_PART_MAIN,
+    sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t},
     widgets::{Arc, Button, Label, LvglWorld},
 };
 
@@ -98,7 +98,11 @@ fn main() {
             OpacityLevel::Transparent as i32,
             OpacityLevel::Cover as i32,
             |obj, val| {
-                lv_obj_set_style_opa(obj, val as u8, lv_part_t_LV_PART_MAIN);
+                lv_obj_set_style_opa(
+                    obj,
+                    val as u8,
+                    lv_part_t_LV_PART_MAIN as lv_style_selector_t,
+                );
             },
         );
 

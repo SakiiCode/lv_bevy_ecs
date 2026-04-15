@@ -10,6 +10,7 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
+use lightvgl_sys::lv_style_selector_t;
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, hierarchy::Children, query::With, world::World},
@@ -234,7 +235,9 @@ fn create_ui(world: &mut World) {
 
     let mut btnmatrix_entity = world.spawn((Buttonmatrix, btnmatrix));
 
-    let mut style_big_font_2 = Style::new(lv_part_t_LV_PART_ITEMS | lv_state_t_LV_STATE_CHECKED);
+    let mut style_big_font_2 =
+        Style::new((lv_part_t_LV_PART_ITEMS | lv_state_t_LV_STATE_CHECKED) as lv_style_selector_t);
+
     unsafe {
         lv_style_set_text_font(&mut style_big_font_2, &lv_font_montserrat_24);
     }

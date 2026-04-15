@@ -128,7 +128,8 @@ impl From<TextAlign> for lightvgl_sys::lv_align_t {
     }
 }
 
-#[repr(u32)]
+#[cfg_attr(target_os = "windows", repr(i32))]
+#[cfg_attr(not(target_os = "windows"), repr(u32))]
 pub enum LabelLongMode {
     Clip = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_MODE_CLIP,
     Dots = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_MODE_DOTS,
@@ -143,7 +144,8 @@ impl From<LabelLongMode> for lightvgl_sys::lv_label_long_mode_t {
     }
 }
 
-#[repr(u32)]
+#[cfg_attr(target_os = "windows", repr(i32))]
+#[cfg_attr(not(target_os = "windows"), repr(u32))]
 pub enum OpacityLevel {
     Transparent = lightvgl_sys::_lv_opacity_level_t_LV_OPA_TRANSP,
     Percent10 = lightvgl_sys::_lv_opacity_level_t_LV_OPA_10,
