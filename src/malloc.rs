@@ -91,3 +91,6 @@ pub unsafe extern "C" fn lv_mem_monitor_core(monitor: *mut lv_mem_monitor_t) {
 pub unsafe extern "C" fn lv_mem_test_core() -> lv_result_t {
     lv_result_t_LV_RESULT_OK
 }
+
+#[unsafe(no_mangle)]
+unsafe extern "C" fn lv_mem_deinit() {}
