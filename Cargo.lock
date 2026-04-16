@@ -540,9 +540,9 @@ dependencies = [
 
 [[package]]
 name = "defmt-stdout"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b1d3bbd005a59a26750202d7a221a41995780765ba403a84ed3ef9651f4ce12"
+checksum = "06ae5512f2ed31606720af65e7af5a04dbb0812b3c0bcfcc5aef99f9e4a5734c"
 dependencies = [
  "defmt",
 ]
