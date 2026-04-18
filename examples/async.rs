@@ -15,7 +15,6 @@ use embedded_graphics::{
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
-use lightvgl_sys::{LV_DEF_REFR_PERIOD, LV_NO_TIMER_READY, lv_display_flush_is_last};
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, query::With},
@@ -27,7 +26,7 @@ use lv_bevy_ecs::{
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     support::{Align, OpacityLevel},
-    sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t},
+    sys::{LV_DEF_REFR_PERIOD, LV_NO_TIMER_READY, lv_part_t_LV_PART_MAIN, lv_style_selector_t},
     widgets::{Arc, Button, Label, LvglWorld},
 };
 use macro_rules_attribute::apply;
@@ -62,17 +61,13 @@ async fn main() {
 
     info!("Display OK");
 
-    let display_ptr = display.raw();
-
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
         sim_display
             .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
             .unwrap();
-        unsafe {
-            if lv_display_flush_is_last(display_ptr) {
-                window.update(&sim_display);
-            }
+        if refresh.display.flush_is_last() {
+            window.update(&sim_display);
         }
     });
 

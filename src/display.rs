@@ -53,7 +53,9 @@ use embedded_graphics::{
     prelude::{PixelColor, Point, Size},
     primitives::Rectangle,
 };
-use lightvgl_sys::{lv_display_get_user_data, lv_display_t, lv_draw_buf_t};
+use lightvgl_sys::{
+    lv_display_flush_is_last, lv_display_get_user_data, lv_display_t, lv_draw_buf_t,
+};
 
 use crate::support::LvglColorFormat;
 
@@ -132,7 +134,7 @@ impl Display {
         }
         unsafe {
             lightvgl_sys::lv_display_set_draw_buffers(
-                self.raw(),
+                self.raw_mut(),
                 buffer.raw.as_ptr(),
                 ::core::ptr::null_mut(),
             );
@@ -141,8 +143,38 @@ impl Display {
         crate::info!("Display Registered");
     }
 
-    pub fn raw(&self) -> *mut lv_display_t {
+    pub fn flush_is_last(&mut self) -> bool {
+        unsafe { lv_display_flush_is_last(self.raw_mut()) }
+    }
+
+    pub fn raw(&self) -> *const lv_display_t {
+        self.raw.as_ptr().cast_const()
+    }
+
+    pub fn raw_mut(&mut self) -> *mut lv_display_t {
         self.raw.as_ptr()
+    }
+
+    // pub fn from_non_null(ptr: &NonNull<lv_display_t>) -> &Self {
+    //     unsafe { &*(ptr as *const _ as *const Self) }
+    // }
+
+    // pub fn from_non_null_mut(ptr: &mut NonNull<lv_display_t>) -> &mut Self {
+    //     unsafe { &mut *(ptr as *mut _ as *mut Self) }
+    // }
+
+    pub fn from_ptr(ptr: *mut lv_display_t) -> Self {
+        Self {
+            raw: NonNull::new(ptr).unwrap(),
+        }
+    }
+
+    pub unsafe fn from_ptr_unchecked(ptr: *mut lv_display_t) -> Self {
+        unsafe {
+            Self {
+                raw: NonNull::new_unchecked(ptr),
+            }
+        }
     }
 }
 
@@ -160,6 +192,7 @@ pub struct Area {
 pub struct DisplayRefresh<'a, const N: usize, C> {
     pub rectangle: Rectangle,
     pub colors: &'a [C],
+    pub display: Display,
 }
 
 unsafe fn register_display<F, const N: usize, C>(display: *mut lv_display_t, callback: F)
@@ -204,6 +237,7 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
             let mut update = DisplayRefresh {
                 rectangle,
                 colors: slice,
+                display: Display::from_ptr_unchecked(display),
             };
             callback(&mut update);
         } else {

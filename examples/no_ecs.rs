@@ -8,7 +8,6 @@ use std::{
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
-use lightvgl_sys::{LV_DEF_REFR_PERIOD, LV_NO_TIMER_READY, lv_display_flush_is_last};
 use lv_bevy_ecs::{
     animation::Animation,
     display::{Display, DrawBuffer},
@@ -19,7 +18,7 @@ use lv_bevy_ecs::{
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     support::{Align, OpacityLevel},
-    sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t},
+    sys::{LV_DEF_REFR_PERIOD, LV_NO_TIMER_READY, lv_part_t_LV_PART_MAIN, lv_style_selector_t},
     trace,
     widgets::{Arc, Button, Label, Widget},
 };
@@ -70,8 +69,6 @@ fn main() {
 
     info!("Display OK");
 
-    let display_ptr = display.raw();
-
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
         trace!("Flushing to display");
@@ -79,10 +76,8 @@ fn main() {
         sim_display
             .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
             .unwrap();
-        unsafe {
-            if lv_display_flush_is_last(display_ptr) {
-                window.update(&sim_display);
-            }
+        if refresh.display.flush_is_last() {
+            window.update(&sim_display);
         }
     });
 

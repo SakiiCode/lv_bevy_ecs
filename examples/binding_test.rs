@@ -10,7 +10,6 @@ use std::{
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
-use lightvgl_sys::{LV_DEF_REFR_PERIOD, LV_NO_TIMER_READY, lv_display_flush_is_last};
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, hierarchy::Children, query::With, world::World},
@@ -24,9 +23,10 @@ use lv_bevy_ecs::{
     subjects::Subject,
     support::{LV_SIZE_CONTENT, OpacityLevel},
     sys::{
-        LV_ANIM_REPEAT_INFINITE, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST, LV_SYMBOL_FILE,
-        lv_align_t_LV_ALIGN_BOTTOM_RIGHT, lv_anim_path_ease_out, lv_anim_set_path_cb,
-        lv_anim_set_repeat_count, lv_area_t, lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
+        LV_ANIM_REPEAT_INFINITE, LV_DEF_REFR_PERIOD, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST,
+        LV_NO_TIMER_READY, LV_SYMBOL_FILE, lv_align_t_LV_ALIGN_BOTTOM_RIGHT, lv_anim_path_ease_out,
+        lv_anim_set_path_cb, lv_anim_set_repeat_count, lv_area_t,
+        lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
         lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED,
         lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X, lv_chart_type_t_LV_CHART_TYPE_BAR,
         lv_chart_type_t_LV_CHART_TYPE_LINE, lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_color_t,
@@ -79,17 +79,13 @@ fn main() {
     let buffer =
         DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(HOR_RES, LINE_HEIGHT);
 
-    let display_ptr = display.raw();
-
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
         sim_display
             .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
             .unwrap();
-        unsafe {
-            if lv_display_flush_is_last(display_ptr) {
-                window.update(&sim_display);
-            }
+        if refresh.display.flush_is_last() {
+            window.update(&sim_display);
         }
     });
 
