@@ -114,7 +114,7 @@ fn main() {
 
         anim.set_widget(&mut button);
 
-        lv_obj_add_event_cb(&mut button, EventCode::Clicked, |_| {
+        button.add_event_cb(EventCode::Clicked, |_| {
             let mut objects = OBJECTS.lock().unwrap();
             match &objects.dynamic_button {
                 Some(_widget) => {

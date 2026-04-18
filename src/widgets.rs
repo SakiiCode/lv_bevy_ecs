@@ -135,7 +135,10 @@ use bevy_ecs::{
 use lightvgl_sys::{lv_label_create, lv_obj_class_t, lv_obj_get_class, lv_obj_t};
 use thiserror::Error;
 
-use crate::info;
+use crate::{
+    events::{Event, EventCode},
+    info,
+};
 
 pub struct LvglWorld(World);
 
@@ -287,6 +290,13 @@ impl Wdg {
 
     pub fn downcast_mut<T: WidgetSpec>(&mut self) -> Result<&mut T, DowncastError> {
         T::from_non_null_mut(&mut self.raw)
+    }
+
+    pub fn add_event_cb<'a, F>(&mut self, filter: EventCode, callback: F)
+    where
+        F: FnMut(Event),
+    {
+        crate::events::lv_obj_add_event_cb(self, filter, callback)
     }
 }
 

@@ -15,7 +15,7 @@ use lv_bevy_ecs::{
     bevy::{component::Component, entity::Entity, hierarchy::Children, query::With, world::World},
     display::{Display, DrawBuffer},
     error,
-    events::EventCode,
+    events::{Event, EventCode},
     functions::*,
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
@@ -30,7 +30,7 @@ use lv_bevy_ecs::{
         lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED,
         lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X, lv_chart_type_t_LV_CHART_TYPE_BAR,
         lv_chart_type_t_LV_CHART_TYPE_LINE, lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_color_t,
-        lv_draw_buf_align, lv_draw_image_dsc_t, lv_draw_line_dsc_t, lv_event_t,
+        lv_draw_buf_align, lv_draw_image_dsc_t, lv_draw_line_dsc_t,
         lv_flex_flow_t_LV_FLEX_FLOW_COLUMN, lv_font_montserrat_24,
         lv_grid_align_t_LV_GRID_ALIGN_CENTER, lv_grid_align_t_LV_GRID_ALIGN_START,
         lv_grid_align_t_LV_GRID_ALIGN_STRETCH, lv_layer_t, lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN,
@@ -239,7 +239,7 @@ fn create_ui(world: &mut World) {
     btnmatrix.set_ctrl_map(&Box::leak(btnmatrix_ctrl)[0]);
 
     btnmatrix.set_selected_button(1);
-    lv_obj_add_event_cb(&mut btnmatrix, EventCode::ValueChanged, |mut event| {
+    btnmatrix.add_event_cb(EventCode::ValueChanged, |mut event| {
         buttonmatrix_event_cb(world, &mut event);
     });
 
@@ -404,10 +404,10 @@ fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject
     }
 }
 
-fn buttonmatrix_event_cb(world: &mut World, e: &mut lv_event_t) {
+fn buttonmatrix_event_cb(world: &mut World, event: &mut Event) {
     // lv_event_get_user_data must not be used!
     // user data is reserved for the callback function
-    let btnmatrix = Wdg::from_ptr(lv_event_get_target(e).cast_mut().cast());
+    let btnmatrix = event.get_target_obj().unwrap();
     let buttonmatrix: &Buttonmatrix<Wdg> = btnmatrix.downcast().unwrap();
 
     let idx = buttonmatrix.get_selected_button();

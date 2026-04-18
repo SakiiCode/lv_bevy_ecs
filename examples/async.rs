@@ -103,7 +103,7 @@ async fn main() {
             },
         );
 
-        lv_obj_add_event_cb(&mut button, EventCode::Clicked, |_| {
+        button.add_event_cb(EventCode::Clicked, |_| {
             match world
                 .query_filtered::<Entity, With<DynamicButton>>()
                 .single(&world)
