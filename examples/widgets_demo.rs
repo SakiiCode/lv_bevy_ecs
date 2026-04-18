@@ -13,7 +13,6 @@ use lv_bevy_ecs::{
     bevy::{component::Component, entity::Entity, query::With},
     display::{Display, DrawBuffer},
     error,
-    events::Event,
     functions::*,
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},

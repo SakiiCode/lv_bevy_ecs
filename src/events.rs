@@ -19,7 +19,7 @@ use crate::widgets::Wdg;
 /// regardless of their type.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 #[allow(clippy::empty_docs)]
-pub enum Event {
+pub enum EventCode {
     /// The object has been pressed
     Pressed,
 
@@ -72,7 +72,7 @@ pub enum Event {
     Focused,
 }
 
-impl TryFrom<lv_event_code_t> for Event {
+impl TryFrom<lv_event_code_t> for EventCode {
     type Error = ();
 
     fn try_from(value: lv_event_code_t) -> Result<Self, Self::Error> {
@@ -104,44 +104,46 @@ impl TryFrom<lv_event_code_t> for Event {
             lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST_END;
 
         match value {
-            LV_EVENT_PRESSED => Ok(Event::Pressed),
-            LV_EVENT_PRESSING => Ok(Event::Pressing),
-            LV_EVENT_PRESS_LOST => Ok(Event::PressLost),
-            LV_EVENT_SHORT_CLICKED => Ok(Event::ShortClicked),
-            LV_EVENT_CLICKED => Ok(Event::Clicked),
-            LV_EVENT_LONG_PRESSED => Ok(Event::LongPressed),
-            LV_EVENT_LONG_PRESSED_REPEAT => Ok(Event::LongPressedRepeat),
-            LV_EVENT_RELEASED => Ok(Event::Released),
-            LV_EVENT_VALUE_CHANGED => Ok(Event::ValueChanged),
-            LV_EVENT_DRAW_MAIN => Ok(Event::DrawMain),
-            LV_EVENT_DRAW_MAIN_BEGIN => Ok(Event::DrawMainBegin),
-            LV_EVENT_DRAW_MAIN_END => Ok(Event::DrawMainEnd),
-            LV_EVENT_DRAW_POST => Ok(Event::DrawPost),
-            LV_EVENT_DRAW_POST_BEGIN => Ok(Event::DrawPostBegin),
-            LV_EVENT_DRAW_POST_END => Ok(Event::DrawPostEnd),
+            LV_EVENT_PRESSED => Ok(EventCode::Pressed),
+            LV_EVENT_PRESSING => Ok(EventCode::Pressing),
+            LV_EVENT_PRESS_LOST => Ok(EventCode::PressLost),
+            LV_EVENT_SHORT_CLICKED => Ok(EventCode::ShortClicked),
+            LV_EVENT_CLICKED => Ok(EventCode::Clicked),
+            LV_EVENT_LONG_PRESSED => Ok(EventCode::LongPressed),
+            LV_EVENT_LONG_PRESSED_REPEAT => Ok(EventCode::LongPressedRepeat),
+            LV_EVENT_RELEASED => Ok(EventCode::Released),
+            LV_EVENT_VALUE_CHANGED => Ok(EventCode::ValueChanged),
+            LV_EVENT_DRAW_MAIN => Ok(EventCode::DrawMain),
+            LV_EVENT_DRAW_MAIN_BEGIN => Ok(EventCode::DrawMainBegin),
+            LV_EVENT_DRAW_MAIN_END => Ok(EventCode::DrawMainEnd),
+            LV_EVENT_DRAW_POST => Ok(EventCode::DrawPost),
+            LV_EVENT_DRAW_POST_BEGIN => Ok(EventCode::DrawPostBegin),
+            LV_EVENT_DRAW_POST_END => Ok(EventCode::DrawPostEnd),
             _ => Err(()),
         }
     }
 }
 
-impl From<Event> for lightvgl_sys::lv_event_code_t {
-    fn from(event: Event) -> Self {
+impl From<EventCode> for lightvgl_sys::lv_event_code_t {
+    fn from(event: EventCode) -> Self {
         let native_event = match event {
-            Event::Pressed => lightvgl_sys::lv_event_code_t_LV_EVENT_PRESSED,
-            Event::Pressing => lightvgl_sys::lv_event_code_t_LV_EVENT_PRESSING,
-            Event::PressLost => lightvgl_sys::lv_event_code_t_LV_EVENT_PRESS_LOST,
-            Event::ShortClicked => lightvgl_sys::lv_event_code_t_LV_EVENT_SHORT_CLICKED,
-            Event::Clicked => lightvgl_sys::lv_event_code_t_LV_EVENT_CLICKED,
-            Event::LongPressed => lightvgl_sys::lv_event_code_t_LV_EVENT_LONG_PRESSED,
-            Event::LongPressedRepeat => lightvgl_sys::lv_event_code_t_LV_EVENT_LONG_PRESSED_REPEAT,
-            Event::Released => lightvgl_sys::lv_event_code_t_LV_EVENT_RELEASED,
-            Event::ValueChanged => lightvgl_sys::lv_event_code_t_LV_EVENT_VALUE_CHANGED,
-            Event::DrawMain => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN,
-            Event::DrawMainBegin => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN_BEGIN,
-            Event::DrawMainEnd => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN_END,
-            Event::DrawPost => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST,
-            Event::DrawPostBegin => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST_BEGIN,
-            Event::DrawPostEnd => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST_END,
+            EventCode::Pressed => lightvgl_sys::lv_event_code_t_LV_EVENT_PRESSED,
+            EventCode::Pressing => lightvgl_sys::lv_event_code_t_LV_EVENT_PRESSING,
+            EventCode::PressLost => lightvgl_sys::lv_event_code_t_LV_EVENT_PRESS_LOST,
+            EventCode::ShortClicked => lightvgl_sys::lv_event_code_t_LV_EVENT_SHORT_CLICKED,
+            EventCode::Clicked => lightvgl_sys::lv_event_code_t_LV_EVENT_CLICKED,
+            EventCode::LongPressed => lightvgl_sys::lv_event_code_t_LV_EVENT_LONG_PRESSED,
+            EventCode::LongPressedRepeat => {
+                lightvgl_sys::lv_event_code_t_LV_EVENT_LONG_PRESSED_REPEAT
+            }
+            EventCode::Released => lightvgl_sys::lv_event_code_t_LV_EVENT_RELEASED,
+            EventCode::ValueChanged => lightvgl_sys::lv_event_code_t_LV_EVENT_VALUE_CHANGED,
+            EventCode::DrawMain => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN,
+            EventCode::DrawMainBegin => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN_BEGIN,
+            EventCode::DrawMainEnd => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN_END,
+            EventCode::DrawPost => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST,
+            EventCode::DrawPostBegin => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST_BEGIN,
+            EventCode::DrawPostEnd => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST_END,
             // TODO: handle all types...
             _ => lightvgl_sys::lv_event_code_t_LV_EVENT_CLICKED,
         };
@@ -149,7 +151,7 @@ impl From<Event> for lightvgl_sys::lv_event_code_t {
     }
 }
 
-pub(crate) fn lv_obj_add_event_cb<'a, F>(widget: &'a mut Wdg, filter: Event, callback: F)
+pub(crate) fn lv_obj_add_event_cb<'a, F>(widget: &'a mut Wdg, filter: EventCode, callback: F)
 where
     F: FnMut(lightvgl_sys::lv_event_t) + 'a,
 {

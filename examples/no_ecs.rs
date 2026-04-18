@@ -12,7 +12,7 @@ use lv_bevy_ecs::{
     animation::Animation,
     display::{Display, DrawBuffer},
     error,
-    events::Event,
+    events::EventCode,
     functions::*,
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
@@ -114,7 +114,7 @@ fn main() {
 
         anim.set_widget(&mut button);
 
-        lv_obj_add_event_cb(&mut button, Event::Clicked, |_| {
+        lv_obj_add_event_cb(&mut button, EventCode::Clicked, |_| {
             let mut objects = OBJECTS.lock().unwrap();
             match &objects.dynamic_button {
                 Some(_widget) => {

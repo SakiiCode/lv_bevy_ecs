@@ -13,7 +13,7 @@ use lv_bevy_ecs::{
     bevy::{component::Component, entity::Entity, query::With},
     display::{Display, DrawBuffer},
     error,
-    events::Event,
+    events::EventCode,
     functions::*,
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
@@ -109,7 +109,7 @@ fn main() {
             },
         );
 
-        lv_obj_add_event_cb(&mut button, Event::Clicked, |_| {
+        lv_obj_add_event_cb(&mut button, EventCode::Clicked, |_| {
             match world
                 .query_filtered::<Entity, With<DynamicButton>>()
                 .single(&world)

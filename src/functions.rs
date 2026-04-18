@@ -6,7 +6,7 @@ use ::core::{
 };
 
 use crate::styles::Style;
-use crate::{events::Event, widgets::Wdg};
+use crate::{events::EventCode, widgets::Wdg};
 
 pub fn lv_init() {
     unsafe {
@@ -67,7 +67,7 @@ pub fn lv_log_add(level: log::Level, file: &CStr, line: u32, func: &CStr, messag
     crate::logging::lv_log_add(level, file, line, func, message)
 }
 
-pub fn lv_obj_add_event_cb<'a, F>(widget: &'a mut Wdg, filter: Event, callback: F)
+pub fn lv_obj_add_event_cb<'a, F>(widget: &'a mut Wdg, filter: EventCode, callback: F)
 where
     F: FnMut(lightvgl_sys::lv_event_t) + 'a,
 {

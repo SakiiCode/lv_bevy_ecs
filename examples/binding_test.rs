@@ -15,7 +15,7 @@ use lv_bevy_ecs::{
     bevy::{component::Component, entity::Entity, hierarchy::Children, query::With, world::World},
     display::{Display, DrawBuffer},
     error,
-    events::Event,
+    events::EventCode,
     functions::*,
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
@@ -239,7 +239,7 @@ fn create_ui(world: &mut World) {
     btnmatrix.set_ctrl_map(&Box::leak(btnmatrix_ctrl)[0]);
 
     btnmatrix.set_selected_button(1);
-    lv_obj_add_event_cb(&mut btnmatrix, Event::ValueChanged, |mut event| {
+    lv_obj_add_event_cb(&mut btnmatrix, EventCode::ValueChanged, |mut event| {
         buttonmatrix_event_cb(world, &mut event);
     });
 
