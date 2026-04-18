@@ -173,14 +173,6 @@ impl Display {
         self.raw.as_ptr()
     }
 
-    // pub fn from_non_null(ptr: &NonNull<lv_display_t>) -> &Self {
-    //     unsafe { &*(ptr as *const _ as *const Self) }
-    // }
-
-    // pub fn from_non_null_mut(ptr: &mut NonNull<lv_display_t>) -> &mut Self {
-    //     unsafe { &mut *(ptr as *mut _ as *mut Self) }
-    // }
-
     pub fn from_ptr(ptr: *mut lv_display_t) -> Self {
         Self {
             raw: NonNull::new(ptr).unwrap(),

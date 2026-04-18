@@ -27,7 +27,7 @@
 //!
 //! #### Widget functions
 //!
-//! You can acces both `lv_obj_some_function` and `lv_widgettype_other_function` using `yourwidget.some_function(params)`
+//! You can access both `lv_obj_some_function` and `lv_widgettype_other_function` using `yourwidget.some_function(params)`
 //! and `yourwidget.other_function(params)` respectively.
 //!
 //! They are usually attached to `&mut self` but `&self` is also common.
@@ -36,8 +36,8 @@
 //!
 //! As explained in the readme, widgets should be moved to a storage system so that they will be accessible from elsewhere and don't get deallocated.
 //!
-//! In case of `bevy_ecs`, this is done using the `LvglWorld.spawn(Widget)` function. Since you usually have a generic `Something<Widget>`, it
-//! needs to be converted to a `Widget` using the `.to_inner()` function.
+//! In case of `bevy_ecs`, this is done using the `LvglWorld.spawn(Widget)` function. Since you usually have a generic `Something<Widget>`, which
+//! does not implement `Component`, it needs to be converted back to a `Widget` using the `.to_inner()` function.
 //!
 //! #### Modifying Widgets
 //!
@@ -84,7 +84,6 @@
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
 //! #[derive(Component)]
-//! #[component(storage = "SparseSet")] // optional
 //! struct DynamicLabel;
 //!
 //! # let mut world = LvglWorld::default();

@@ -9,22 +9,17 @@ use std::{
 };
 
 use lv_bevy_ecs::{
-    animation::Animation,
-    bevy::{component::Component, entity::Entity, query::With},
     display::{Display, DrawBuffer},
     error,
     functions::*,
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
-    styles::Style,
-    support::{Align, OpacityLevel},
-    sys::{LV_DEF_REFR_PERIOD, LV_NO_TIMER_READY, lv_part_t_LV_PART_MAIN},
-    widgets::{Arc, Button, Label, LvglWorld},
+    sys::{LV_DEF_REFR_PERIOD, LV_NO_TIMER_READY},
 };
 
 use embedded_graphics::{
     draw_target::DrawTarget,
-    pixelcolor::{Gray8, Rgb565},
+    pixelcolor::Rgb565,
     prelude::{Point, Size},
 };
 use embedded_graphics_simulator::{
