@@ -487,10 +487,8 @@ macro_rules! impl_widget {
 
             pub fn try_new() -> Option<Self> {
                 unsafe {
-                    let default_screen = lightvgl_sys::lv_display_get_screen_active(
-                        lightvgl_sys::lv_display_get_default(),
-                    );
-                    let ptr = $func(default_screen);
+                    let current_screen = lightvgl_sys::lv_screen_active();
+                    let ptr = $func(current_screen);
                     Some(Self(crate::widgets::Widget::from_ptr(ptr)?))
                 }
             }

@@ -28,10 +28,10 @@
 //! });
 //!
 //! unsafe {
-//!     let default_display = lv_display_get_default();
-//!     assert_eq!(lv_display_get_horizontal_resolution(default_display), HOR_RES as i32);
-//!     assert_eq!(lv_display_get_vertical_resolution(default_display), VER_RES as i32);
-//!     assert_eq!(lv_display_get_color_format(default_display), Rgb565::as_lv_color_format_t());
+//!     let mut default_display = Display::get_default();
+//!     assert_eq!(default_display.get_horizontal_resolution(), HOR_RES as i32);
+//!     assert_eq!(default_display.get_vertical_resolution(), VER_RES as i32);
+//!     assert_eq!(default_display.get_color_format(), Rgb565::as_lv_color_format_t());
 //! }
 //! ```
 //!
@@ -53,9 +53,7 @@ use embedded_graphics::{
     prelude::{PixelColor, Point, Size},
     primitives::Rectangle,
 };
-use lightvgl_sys::{
-    lv_display_flush_is_last, lv_display_get_user_data, lv_display_t, lv_draw_buf_t,
-};
+use lightvgl_sys::{lv_color_format_t, lv_display_get_user_data, lv_display_t, lv_draw_buf_t};
 
 use crate::support::LvglColorFormat;
 
@@ -144,7 +142,27 @@ impl Display {
     }
 
     pub fn flush_is_last(&mut self) -> bool {
-        unsafe { lv_display_flush_is_last(self.raw_mut()) }
+        unsafe { lightvgl_sys::lv_display_flush_is_last(self.raw_mut()) }
+    }
+
+    pub fn get_default() -> Self {
+        unsafe {
+            Self {
+                raw: NonNull::new(lightvgl_sys::lv_display_get_default()).unwrap(),
+            }
+        }
+    }
+
+    pub fn get_horizontal_resolution(&self) -> i32 {
+        unsafe { lightvgl_sys::lv_display_get_horizontal_resolution(self.raw()) }
+    }
+
+    pub fn get_vertical_resolution(&self) -> i32 {
+        unsafe { lightvgl_sys::lv_display_get_vertical_resolution(self.raw()) }
+    }
+
+    pub fn get_color_format(&mut self) -> lv_color_format_t {
+        unsafe { lightvgl_sys::lv_display_get_color_format(self.raw_mut()) }
     }
 
     pub fn raw(&self) -> *const lv_display_t {
