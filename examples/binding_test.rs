@@ -7,9 +7,10 @@ use std::{
         atomic::{AtomicBool, Ordering},
     },
     thread::sleep,
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
+use lightvgl_sys::{LV_DEF_REFR_PERIOD, LV_NO_TIMER_READY, lv_display_flush_is_last};
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, hierarchy::Children, query::With, world::World},
@@ -71,17 +72,25 @@ fn main() {
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
     let mut window = Window::new("Bindings Test Example", &output_settings);
+    window.set_max_fps(0);
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 
     let buffer =
         DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(HOR_RES, LINE_HEIGHT);
 
+    let display_ptr = display.raw();
+
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
         sim_display
             .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
             .unwrap();
+        unsafe {
+            if lv_display_flush_is_last(display_ptr) {
+                window.update(&sim_display);
+            }
+        }
     });
 
     // Register a new input device that's capable of reading the current state of the input
@@ -102,9 +111,20 @@ fn main() {
     window.update(&sim_display);
 
     loop {
-        lv_timer_handler();
-
-        window.update(&sim_display);
+        let start = Instant::now();
+        let next_timer_ms = lv_timer_handler();
+        match next_timer_ms {
+            0 => {
+                continue;
+            }
+            LV_NO_TIMER_READY => {
+                sleep(Duration::from_millis(LV_DEF_REFR_PERIOD.into()));
+            }
+            _ => {
+                let next_instant = start + Duration::from_millis(next_timer_ms.into());
+                sleep(next_instant - Instant::now());
+            }
+        }
     }
 }
 

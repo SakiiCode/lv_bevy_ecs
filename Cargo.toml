@@ -44,7 +44,7 @@ thiserror = { version = "2.0.18", default-features = false }
 
 [dev-dependencies]
 defmt-stdout = "0.1.2"
-embedded-graphics-simulator = "0.8.0"
+embedded-graphics-simulator = { git = "https://github.com/embedded-graphics/simulator.git", rev = "cb6825e4a2460dcc0c7c7600fc27a27ea96645ac" }
 macro_rules_attribute = "0.2.2"
 memory-stats = "1.2.0"
 simple_logger = "5.1.0"

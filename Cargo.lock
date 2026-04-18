@@ -636,8 +636,7 @@ dependencies = [
 [[package]]
 name = "embedded-graphics-simulator"
 version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98729c26f08b4d4cb805478064a475d6cddab72b4782023986b9ccc47a329008"
+source = "git+https://github.com/embedded-graphics/simulator.git?rev=cb6825e4a2460dcc0c7c7600fc27a27ea96645ac#cb6825e4a2460dcc0c7c7600fc27a27ea96645ac"
 dependencies = [
  "base64",
  "embedded-graphics",

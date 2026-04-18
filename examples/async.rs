@@ -3,7 +3,6 @@ use std::{
     sync::{
         Mutex,
         atomic::{AtomicBool, Ordering},
-        mpsc,
     },
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
@@ -16,6 +15,7 @@ use embedded_graphics::{
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
+use lightvgl_sys::{LV_DEF_REFR_PERIOD, LV_NO_TIMER_READY, lv_display_flush_is_last};
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, query::With},
@@ -47,9 +47,13 @@ async fn main() {
     const VER_RES: u32 = 240;
     const LINE_HEIGHT: u32 = 16;
 
-    error!("Random error");
-
     let mut sim_display = SimulatorDisplay::<Rgb565>::new(Size::new(HOR_RES, VER_RES));
+
+    let output_settings = OutputSettingsBuilder::new().scale(1).build();
+    let mut window = Window::new("Async Button Example", &output_settings);
+    window.set_max_fps(0);
+
+    info!("Simulator OK");
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 
@@ -58,14 +62,23 @@ async fn main() {
 
     info!("Display OK");
 
+    let display_ptr = display.raw();
+
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
         sim_display
             .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
             .unwrap();
+        unsafe {
+            if lv_display_flush_is_last(display_ptr) {
+                window.update(&sim_display);
+            }
+        }
     });
 
     info!("Display Driver OK");
+
+    let _touch_screen = InputDevice::<Pointer>::create(|| get_touch_input(window.events()));
 
     lv_tick_set_cb(|| {
         let current_time = SystemTime::now();
@@ -145,50 +158,22 @@ async fn main() {
 
     info!("Create OK");
 
-    // let _timer_task = ex.spawn(async {
-    //     while !WINDOW_INIT.load(Ordering::Relaxed) {
-    //         yield_now().await;
-    //     }
-    //     loop {
-    //         let start = Instant::now();
-    //         let next_timer_ms = lv_timer_handler();
-    //         Timer::at(start + Duration::from_millis(next_timer_ms.into())).await;
-    //     }
-    // });
-
-    static WINDOW_INIT: AtomicBool = AtomicBool::new(false);
-
-    let (events_sender, events_receiver) = mpsc::channel();
-
-    let _touch_screen =
-        InputDevice::<Pointer>::create(|| get_touch_input(events_receiver.try_iter()));
-
-    // embedded-graphics-simulator uses a blocking fps limiter so async cannot be used
-    // a separate thread must be spawned instead
-    // https://github.com/embedded-graphics/simulator/issues/70
-    let _window_thread = std::thread::spawn(move || {
-        let output_settings = OutputSettingsBuilder::new().scale(1).build();
-        let mut window = Window::new("Button Example", &output_settings);
-
-        window.update(&sim_display);
-        WINDOW_INIT.store(true, Ordering::Relaxed);
-        loop {
-            // window.events() must be called from this thread on windows
-            for event in window.events() {
-                events_sender.send(event).unwrap();
-            }
-            window.update(&sim_display);
-        }
-    });
-
-    while !WINDOW_INIT.load(Ordering::Relaxed) {
-        yield_now().await;
-    }
+    window.update(&sim_display);
 
     loop {
         let start = Instant::now();
         let next_timer_ms = lv_timer_handler();
-        Timer::at(start + Duration::from_millis(next_timer_ms.into())).await;
+        match next_timer_ms {
+            0 => {
+                yield_now().await;
+            }
+            LV_NO_TIMER_READY => {
+                Timer::after(Duration::from_millis(LV_DEF_REFR_PERIOD.into())).await;
+            }
+            _ => {
+                Timer::at(start + Duration::from_millis(next_timer_ms.into())).await;
+            }
+        }
     }
 }
 
