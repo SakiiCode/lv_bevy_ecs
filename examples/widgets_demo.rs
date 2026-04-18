@@ -32,10 +32,6 @@ use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
 
-#[derive(Component)]
-#[component(storage = "SparseSet")]
-struct DynamicButton;
-
 fn main() {
     lv_init();
     lv_bevy_ecs::logging::lv_log_init();

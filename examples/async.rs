@@ -34,7 +34,6 @@ use smol::{Timer, future::yield_now};
 use smol_macros::main;
 
 #[derive(Component)]
-#[component(storage = "SparseSet")]
 struct DynamicButton;
 
 #[apply(main!)]

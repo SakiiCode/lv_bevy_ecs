@@ -33,7 +33,6 @@ use embedded_graphics_simulator::{
 };
 
 #[derive(Component)]
-#[component(storage = "SparseSet")]
 struct DynamicButton;
 
 fn main() {
