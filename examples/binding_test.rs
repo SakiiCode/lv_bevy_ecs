@@ -185,8 +185,8 @@ fn create_ui(world: &mut World) {
         chart.set_series_ext_y_array(series.as_mut(), &mut chart_y_array[0]);
     }
 
-    lv_subject_add_observer_obj(&mut chart_type_subject, &mut chart, chart_type_observer_cb);
-    lv_subject_set_int(&mut chart_type_subject, 1);
+    chart_type_subject.add_observer_obj(&mut chart, chart_type_observer_cb);
+    chart_type_subject.set_int(1);
 
     world.spawn(chart_type_subject);
 
