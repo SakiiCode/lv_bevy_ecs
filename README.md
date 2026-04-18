@@ -69,7 +69,7 @@ lv_tick_set_cb(|| {
 static WORLD: LazyLock<Mutex<LvglWorld>> = LazyLock::new(|| Mutex::new(LvglWorld::default()));
 ```
 
-4. Last thing is to call `lv_timer_handler()` in every loop cycle. Ideally this should be protected by the same mutex as LvglWorld, but this is not enforced by the borrow checker currently.
+4. Last thing is to call `lv_timer_handler()` in every loop cycle.
 
 ```rust
 # use lv_bevy_ecs::functions::*;
