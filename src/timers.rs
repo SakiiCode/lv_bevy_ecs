@@ -6,7 +6,7 @@
 //! # use lv_bevy_ecs::timers::Timer;
 //! # use lv_bevy_ecs::sys::lv_timer_get_next;
 //! #
-//! #
+//! # lv_bevy_ecs::functions::lv_init();
 //! # let mut world = LvglWorld::default();
 //! #
 //! let mut timer = Timer::new(
@@ -30,8 +30,8 @@
 //!
 //! Closure will be executed on the next `lv_timer_handler()`. It needs `'static` lifetime.
 //! ```
-//! # use lv_bevy_ecs::functions::lv_async_call;
-//! #
+//! # use lv_bevy_ecs::functions::{lv_async_call, lv_init};
+//! # lv_init();
 //! lv_async_call(||{
 //!     // ...
 //! })
@@ -46,9 +46,7 @@ use bevy_ecs::{
     system::ScheduleSystem,
     world::World,
 };
-use lightvgl_sys::lv_timer_t;
-
-use crate::info;
+use lightvgl_sys::{lv_timer_get_user_data, lv_timer_t};
 
 #[allow(dead_code)]
 #[derive(Component)]
@@ -61,7 +59,7 @@ pub struct Timer {
 impl Drop for Timer {
     fn drop(&mut self) {
         unsafe {
-            info!("Dropping Timer");
+            crate::info!("Dropping Timer");
             lightvgl_sys::lv_timer_delete(self.raw.as_ptr());
         }
     }
@@ -77,7 +75,7 @@ impl Timer {
             let timer = lightvgl_sys::lv_timer_create(
                 Some(timer_trampoline),
                 period.as_millis() as u32,
-                Box::into_raw(Box::new((&mut schedule, world))) as *mut _,
+                Box::into_raw(Box::new((&mut schedule, world))).cast(),
             );
             let ptr = NonNull::new(timer);
             Some(Self {
@@ -94,8 +92,13 @@ impl Timer {
 
 unsafe extern "C" fn timer_trampoline(timer: *mut lv_timer_t) {
     unsafe {
-        let (schedule, world) = &mut *((*timer).user_data as *mut (&mut Schedule, &mut World));
-        schedule.run(world);
+        let user_data = lv_timer_get_user_data(timer);
+        if !user_data.is_null() {
+            let (schedule, world) = &mut *(user_data.cast::<(&mut Schedule, &mut World)>());
+            schedule.run(world);
+        } else {
+            crate::warn!("Timer callback user data was null, this should never happen!");
+        }
     }
 }
 
@@ -106,7 +109,7 @@ where
     unsafe {
         lightvgl_sys::lv_async_call(
             Some(async_call_trampoline::<F>),
-            Box::into_raw(Box::new(callback)) as *mut _,
+            Box::into_raw(Box::new(callback)).cast(),
         );
     }
 }
@@ -116,8 +119,12 @@ where
     F: FnMut() + 'static,
 {
     unsafe {
-        let callback = &mut *((obj) as *mut F);
-        callback();
+        if !obj.is_null() {
+            let callback = &mut *(obj.cast::<F>());
+            callback();
+        } else {
+            crate::warn!("Async call object was null, this should never happen!");
+        }
     }
 }
 

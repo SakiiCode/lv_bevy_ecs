@@ -11,6 +11,7 @@
 //! # use lv_bevy_ecs::support::LvglColorFormat;
 //! # use lv_bevy_ecs::sys::*;
 //! #
+//! lv_bevy_ecs::functions::lv_init();
 //! const HOR_RES: u32 = 800;
 //! const VER_RES: u32 = 480;
 //! const LINE_HEIGHT: u32 = 10;
@@ -27,29 +28,34 @@
 //! });
 //!
 //! unsafe {
-//!     let default_display = lv_display_get_default();
-//!     assert_eq!(lv_display_get_horizontal_resolution(default_display), HOR_RES as i32);
-//!     assert_eq!(lv_display_get_vertical_resolution(default_display), VER_RES as i32);
-//!     assert_eq!(lv_display_get_color_format(default_display), Rgb565::as_lv_color_format_t());
+//!     let mut default_display = Display::get_default();
+//!     assert_eq!(default_display.get_horizontal_resolution(), HOR_RES as i32);
+//!     assert_eq!(default_display.get_vertical_resolution(), VER_RES as i32);
+//!     assert_eq!(default_display.get_color_format(), Rgb565::as_lv_color_format_t());
 //! }
 //! ```
 //!
 //! ## ESP32
 //!
-//! For code example on how to create a display on embedded,
+//! For code example on how to create a display on ESP32 with SPI display and touchscreen,
 //! check out [lvgl-bevy-demo](https://github.com/SakiiCode/lvgl-bevy-demo).
+//!
+//! ## ESP32-P4
+//!
+//! For code example on how to create a display on a DSI screen,
+//! check out [lvgl-bevy-demo-dsi](https://github.com/SakiiCode/lvgl-bevy-demo-dsi).
 
 use ::alloc::boxed::Box;
-use ::core::{ffi::c_void, marker::PhantomData, ptr::NonNull};
+use ::core::{marker::PhantomData, ptr::NonNull};
 
 use embedded_graphics::{
     Pixel,
     prelude::{PixelColor, Point, Size},
     primitives::Rectangle,
 };
-use lightvgl_sys::{lv_display_t, lv_draw_buf_t};
+use lightvgl_sys::{lv_color_format_t, lv_display_get_user_data, lv_display_t, lv_draw_buf_t};
 
-use crate::{info, support::LvglColorFormat, warn};
+use crate::support::LvglColorFormat;
 
 pub struct Display {
     raw: NonNull<lv_display_t>,
@@ -64,26 +70,121 @@ impl Display {
         }
     }
 
-    pub fn register<F, const N: usize, C: LvglColorFormat>(
-        &mut self,
+    pub fn register<'a, F, const N: usize, C: LvglColorFormat>(
+        &'a mut self,
         buffer: DrawBuffer<N, C>,
         callback: F,
     ) where
-        F: FnMut(&mut DisplayRefresh<N, C>),
+        F: FnMut(&mut DisplayRefresh<N, C>) + 'a,
     {
+        let cf = C::as_lv_color_format_t();
+        // these are not checked by LVGL, just produce a black screen
+        match cf {
+            lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_L8 => {
+                assert_eq!(
+                    lightvgl_sys::LV_COLOR_DEPTH,
+                    8,
+                    "LV_COLOR_DEPTH must be set to 8"
+                );
+                assert_eq!(
+                    lightvgl_sys::LV_DRAW_SW_SUPPORT_L8,
+                    1,
+                    "LV_DRAW_SW_SUPPORT_L8 must be set to 1"
+                );
+            }
+            lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_I1 => {
+                assert_eq!(
+                    lightvgl_sys::LV_COLOR_DEPTH,
+                    1,
+                    "LV_COLOR_DEPTH must be set to 1"
+                );
+                assert_eq!(
+                    lightvgl_sys::LV_DRAW_SW_SUPPORT_I1,
+                    1,
+                    "LV_DRAW_SW_SUPPORT_I1 must be set to 1"
+                );
+            }
+            lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB565 => {
+                assert_eq!(
+                    lightvgl_sys::LV_COLOR_DEPTH,
+                    16,
+                    "LV_COLOR_DEPTH must be set to 16"
+                );
+                assert_eq!(
+                    lightvgl_sys::LV_DRAW_SW_SUPPORT_RGB565,
+                    1,
+                    "LV_DRAW_SW_SUPPORT_RGB565 must be set to 1"
+                );
+            }
+            lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB888 => {
+                assert_eq!(
+                    lightvgl_sys::LV_COLOR_DEPTH,
+                    24,
+                    "LV_COLOR_DEPTH must be set to 24"
+                );
+                assert_eq!(
+                    lightvgl_sys::LV_DRAW_SW_SUPPORT_RGB888,
+                    1,
+                    "LV_DRAW_SW_SUPPORT_RGB888 must be set to 1"
+                );
+            }
+            _ => unreachable!("unsupported color format"),
+        }
         unsafe {
             lightvgl_sys::lv_display_set_draw_buffers(
-                self.raw(),
+                self.raw_mut(),
                 buffer.raw.as_ptr(),
                 ::core::ptr::null_mut(),
             );
             register_display(self.raw.as_ptr(), callback);
         }
-        info!("Display Registered");
+        crate::info!("Display Registered");
     }
 
-    pub fn raw(&self) -> *mut lv_display_t {
+    pub fn flush_is_last(&mut self) -> bool {
+        unsafe { lightvgl_sys::lv_display_flush_is_last(self.raw_mut()) }
+    }
+
+    pub fn get_default() -> Self {
+        unsafe {
+            Self {
+                raw: NonNull::new(lightvgl_sys::lv_display_get_default()).unwrap(),
+            }
+        }
+    }
+
+    pub fn get_horizontal_resolution(&self) -> i32 {
+        unsafe { lightvgl_sys::lv_display_get_horizontal_resolution(self.raw()) }
+    }
+
+    pub fn get_vertical_resolution(&self) -> i32 {
+        unsafe { lightvgl_sys::lv_display_get_vertical_resolution(self.raw()) }
+    }
+
+    pub fn get_color_format(&mut self) -> lv_color_format_t {
+        unsafe { lightvgl_sys::lv_display_get_color_format(self.raw_mut()) }
+    }
+
+    pub fn raw(&self) -> *const lv_display_t {
+        self.raw.as_ptr().cast_const()
+    }
+
+    pub fn raw_mut(&mut self) -> *mut lv_display_t {
         self.raw.as_ptr()
+    }
+
+    pub fn from_ptr(ptr: *mut lv_display_t) -> Self {
+        Self {
+            raw: NonNull::new(ptr).unwrap(),
+        }
+    }
+
+    pub unsafe fn from_ptr_unchecked(ptr: *mut lv_display_t) -> Self {
+        unsafe {
+            Self {
+                raw: NonNull::new_unchecked(ptr),
+            }
+        }
     }
 }
 
@@ -101,6 +202,7 @@ pub struct Area {
 pub struct DisplayRefresh<'a, const N: usize, C> {
     pub rectangle: Rectangle,
     pub colors: &'a [C],
+    pub display: Display,
 }
 
 unsafe fn register_display<F, const N: usize, C>(display: *mut lv_display_t, callback: F)
@@ -109,10 +211,7 @@ where
 {
     unsafe {
         lightvgl_sys::lv_display_set_flush_cb(display, Some(disp_flush_trampoline::<F, N, C>));
-        lightvgl_sys::lv_display_set_user_data(
-            display,
-            Box::into_raw(Box::new(callback)) as *mut _ as *mut c_void,
-        );
+        lightvgl_sys::lv_display_set_user_data(display, Box::into_raw(Box::new(callback)).cast());
     }
 }
 
@@ -124,11 +223,11 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
     F: FnMut(&mut DisplayRefresh<N, C>),
 {
     unsafe {
-        let display_driver = *display;
-        if !display_driver.user_data.is_null() {
-            let callback = &mut *(display_driver.user_data as *mut F);
+        let user_data = lv_display_get_user_data(display);
+        if !user_data.is_null() {
+            let callback = &mut *(user_data.cast::<F>());
 
-            let buf = color_p as *mut C;
+            let buf = color_p.cast::<C>();
 
             let w = (*area).x2 - (*area).x1 + 1;
             let h = (*area).y2 - (*area).y1 + 1;
@@ -148,10 +247,11 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
             let mut update = DisplayRefresh {
                 rectangle,
                 colors: slice,
+                display: Display::from_ptr_unchecked(display),
             };
             callback(&mut update);
         } else {
-            warn!("Display callback user data was null, this should never happen!");
+            crate::warn!("Display callback user data was null, this should never happen!");
         }
         // Indicate to LVGL that we are ready with the flushing
         lightvgl_sys::lv_display_flush_ready(display);
@@ -228,6 +328,8 @@ macro_rules! setup_test_display {
 
         let mut sim_display: SimulatorDisplay<Rgb565> =
             SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
+
+        lv_bevy_ecs::functions::lv_init();
 
         let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 

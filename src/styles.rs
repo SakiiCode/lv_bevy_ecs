@@ -14,16 +14,16 @@
 //! #
 //! # let mut world = LvglWorld::default();
 //! #
-//! # let mut button = Button::create_widget();
-//! # let mut button_entity = world.spawn((Button, button));
+//! # let mut button = Button::new();
+//! # let mut button_entity = world.spawn(button.into_inner());
 //! #
 //! let mut style = Style::default();
 //! let opacity = OpacityLevel::Percent50 as u8;
-//! lv_style_set_opa(&mut style, opacity);
+//! style.set_opa(opacity);
 //!
 //! button_entity.insert(style);
 //! let widget = button_entity.get_mut::<Widget>().unwrap();
-//! assert_eq!(lv_obj_get_style_opa_recursive(&*widget, lv_part_t_LV_PART_MAIN), opacity - 1);
+//! assert_eq!(widget.get_style_opa_recursive(lv_part_t_LV_PART_MAIN), opacity - 1);
 //! ```
 
 use ::core::mem::MaybeUninit;
@@ -31,11 +31,12 @@ use ::core::mem::MaybeUninit;
 use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};
 use lightvgl_sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t};
 
-use crate::{functions::lv_style_copy, info, widgets::Widget};
+use crate::{info, widgets::Widget};
 
 #[derive(Component)]
 #[component(on_insert=add_style)]
 #[component(on_replace=remove_style)]
+#[component(storage = "SparseSet")] // TODO investigate why styles don't get applied without this
 pub struct Style {
     raw: lightvgl_sys::lv_style_t,
     selector: lv_style_selector_t,
@@ -50,7 +51,7 @@ impl Default for Style {
         };
         Self {
             raw,
-            selector: lv_part_t_LV_PART_MAIN,
+            selector: lv_part_t_LV_PART_MAIN as lv_style_selector_t,
         }
     }
 }
@@ -58,7 +59,8 @@ impl Default for Style {
 impl Clone for Style {
     fn clone(&self) -> Self {
         let mut result = Style::default();
-        lv_style_copy(&mut result, self);
+        //lv_style_copy(&mut result, self);
+        result.copy(self);
         result.selector = self.selector;
         result
     }
@@ -93,7 +95,6 @@ unsafe impl Send for Style {}
 unsafe impl Sync for Style {}
 
 fn add_style(mut world: DeferredWorld, ctx: HookContext) {
-    // TODO make this safer
     let widget = world
         .get_mut::<Widget>(ctx.entity)
         .expect("Style components must be added to Widget entities")
@@ -106,7 +107,6 @@ fn add_style(mut world: DeferredWorld, ctx: HookContext) {
 }
 
 fn remove_style(mut world: DeferredWorld, ctx: HookContext) {
-    // TODO make this safer
     let widget = world
         .get_mut::<Widget>(ctx.entity)
         .expect("Style components must be added to Widget entities")

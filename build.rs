@@ -32,6 +32,9 @@ fn main() {
         use ::alloc::ffi::CString;
         use constptr::ConstPtr;
         use lightvgl_sys::*;
+        use crate::widgets::*;
+        use crate::events::Event;
+        use crate::subjects::Subject;
 
         #(#widgets_impl)*
     };

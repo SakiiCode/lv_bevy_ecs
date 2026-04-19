@@ -9,27 +9,26 @@
 //! #
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
-//! let mut dropdown = Dropdown::create_widget();
+//! let mut dropdown = Dropdown::new();
 //! let mut chart_type_subject = Subject::new_int(0);
 //!
-//! unsafe {
-//!     lv_dropdown_bind_value(dropdown.raw_mut(), chart_type_subject.raw_mut());
-//! }
+//! dropdown.bind_value(chart_type_subject.raw_mut());
 //!
-//! let mut chart = Chart::create_widget();
-//! lv_subject_add_observer_obj(&mut chart_type_subject, &mut chart, |observer, subject| unsafe {
-//!        let v = lv_subject_get_int(subject);
-//!        let mut chart = Wdg::from_ptr(lv_observer_get_target(observer) as *mut lv_obj_t);
-//!        let type_ = if v == 0 {
-//!            lv_chart_type_t_LV_CHART_TYPE_LINE
-//!        } else {
-//!            lv_chart_type_t_LV_CHART_TYPE_BAR
-//!        };
-//!        lv_chart_set_type(&mut chart, type_);
+//! let mut chart = Chart::new();
+//! chart_type_subject.add_observer_obj(&mut chart, |observer, subject| unsafe {
+//!         let v = lv_subject_get_int(subject);
+//!         let mut chart_wdg = Wdg::from_ptr(lv_observer_get_target(observer).cast());
+//!         let chart: &mut Chart<Wdg> = chart_wdg.downcast_mut().unwrap();
+//!         let chart_type = if v == 0 {
+//!             lv_chart_type_t_LV_CHART_TYPE_LINE
+//!         } else {
+//!             lv_chart_type_t_LV_CHART_TYPE_BAR
+//!         };
+//!         chart.set_type(chart_type);
 //! });
-//! lv_subject_set_int(&mut chart_type_subject, 1);
+//! chart_type_subject.set_int(1);
 //!
-//! assert_eq!(lv_chart_get_type(&mut chart), lv_chart_type_t_LV_CHART_TYPE_BAR);
+//! assert_eq!(chart.get_type(), lv_chart_type_t_LV_CHART_TYPE_BAR);
 //! ```
 
 use ::core::{
@@ -37,11 +36,12 @@ use ::core::{
     mem::MaybeUninit,
 };
 use alloc::{boxed::Box, vec};
+use core::ptr::addr_of_mut;
 
 use bevy_ecs::component::Component;
-use lightvgl_sys::lv_subject_t;
+use lightvgl_sys::{lv_observer_get_user_data, lv_subject_t};
 
-use crate::{info, warn, widgets::Widget};
+use crate::widgets::Wdg;
 
 #[derive(Component)]
 #[component(storage = "SparseSet")]
@@ -52,7 +52,7 @@ pub struct Subject {
 impl Drop for Subject {
     fn drop(&mut self) {
         unsafe {
-            info!("Dropping Subject");
+            crate::info!("Dropping Subject");
             lightvgl_sys::lv_subject_deinit(&mut self.raw);
         }
     }
@@ -79,7 +79,7 @@ impl Subject {
             let zero: c_char = 0;
             lightvgl_sys::lv_subject_init_string(
                 subject.as_mut_ptr(),
-                vec![zero; len].into_boxed_slice().as_mut_ptr(),
+                addr_of_mut!(vec![zero; len].leak()[0]),
                 core::ptr::null_mut(),
                 len,
                 value.as_ptr(),
@@ -110,23 +110,32 @@ impl Subject {
     }
 }
 
+impl Subject {
+    pub fn add_observer_obj<'a, F>(&'a mut self, object: &'a mut Wdg, callback: F)
+    where
+        F: FnMut(*mut lightvgl_sys::lv_observer_t, *mut lightvgl_sys::lv_subject_t) + 'a,
+    {
+        lv_subject_add_observer_obj(self, object, callback)
+    }
+}
+
 // the order of parameters is not the same, but callback should come last for readability
 pub(crate) fn lv_subject_add_observer_obj<'a, F>(
     subject: &'a mut Subject,
-    object: &mut Widget,
+    object: &mut Wdg,
     callback: F,
 ) where
     F: FnMut(*mut lightvgl_sys::lv_observer_t, *mut lightvgl_sys::lv_subject_t) + 'a,
 {
     unsafe {
         lightvgl_sys::lv_subject_add_observer_obj(
-            &mut subject.raw,
+            subject.raw_mut(),
             Some(subject_callback::<F>),
             object.raw_mut(),
-            Box::into_raw(Box::new(callback)) as *mut c_void,
+            Box::into_raw(Box::new(callback)).cast(),
         );
     }
-    info!("Added Observer");
+    crate::info!("Added Observer");
 }
 
 unsafe extern "C" fn subject_callback<F>(
@@ -136,11 +145,12 @@ unsafe extern "C" fn subject_callback<F>(
     F: FnMut(*mut lightvgl_sys::lv_observer_t, *mut lightvgl_sys::lv_subject_t),
 {
     unsafe {
-        if !(*observer).user_data.is_null() {
-            let callback = &mut *((*observer).user_data as *mut F);
+        let user_data = lv_observer_get_user_data(observer);
+        if !user_data.is_null() {
+            let callback = &mut *(user_data.cast::<F>());
             callback(observer, subject);
         } else {
-            warn!("Subject callback user data was null, this should never happen!");
+            crate::warn!("Subject callback user data was null, this should never happen!");
         }
     }
 }

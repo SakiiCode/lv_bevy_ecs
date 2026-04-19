@@ -4,7 +4,8 @@ use std::{
         Mutex,
         atomic::{AtomicBool, Ordering},
     },
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    thread::sleep,
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
 use lv_bevy_ecs::{
@@ -12,13 +13,13 @@ use lv_bevy_ecs::{
     bevy::{component::Component, entity::Entity, query::With},
     display::{Display, DrawBuffer},
     error,
-    events::Event,
+    events::EventCode,
     functions::*,
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     support::{Align, OpacityLevel},
-    sys::lv_part_t_LV_PART_MAIN,
+    sys::{LV_DEF_REFR_PERIOD, lv_part_t_LV_PART_MAIN, lv_style_selector_t},
     widgets::{Arc, Button, Label, LvglWorld},
 };
 
@@ -32,7 +33,6 @@ use embedded_graphics_simulator::{
 };
 
 #[derive(Component)]
-#[component(storage = "SparseSet")]
 struct DynamicButton;
 
 fn main() {
@@ -51,6 +51,7 @@ fn main() {
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
     let mut window = Window::new("Button Example", &output_settings);
+    window.set_max_fps(0);
 
     info!("SIMULATOR OK");
     error!("Random error");
@@ -67,6 +68,9 @@ fn main() {
         sim_display
             .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
             .unwrap();
+        if refresh.display.flush_is_last() {
+            window.update(&sim_display);
+        }
     });
 
     info!("Display Driver OK");
@@ -90,22 +94,22 @@ fn main() {
     info!("ECS OK");
 
     {
-        let mut button = Button::create_widget();
-        let mut label = Label::create_widget();
-        lv_label_set_text(&mut label, c"SPAWN");
+        let mut button = Button::new();
+        let mut label = Label::new();
+        label.set_text(c"SPAWN");
         //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
-        let label_entity = world.spawn((Label, label)).id();
+        let label_entity = world.spawn(label.into_inner()).id();
 
         let anim = Animation::new(
             Duration::from_secs(5),
             OpacityLevel::Transparent as i32,
             OpacityLevel::Cover as i32,
             |obj, val| {
-                lv_obj_set_style_opa(obj, val as u8, lv_part_t_LV_PART_MAIN);
+                obj.set_style_opa(val as u8, lv_part_t_LV_PART_MAIN as lv_style_selector_t);
             },
         );
 
-        lv_obj_add_event_cb(&mut button, Event::Clicked, |_| {
+        button.add_event_cb(EventCode::Clicked, |_| {
             match world
                 .query_filtered::<Entity, With<DynamicButton>>()
                 .single(&world)
@@ -122,34 +126,34 @@ fn main() {
                     }*/
                 }
                 None => {
-                    let mut dynamic_button = Button::create_widget();
-                    let mut label = Label::create_widget();
-                    lv_obj_set_align(&mut dynamic_button, Align::TopRight.into());
-                    lv_label_set_text(&mut label, c"This is dynamic");
+                    let mut dynamic_button = Button::new();
+                    let mut label = Label::new();
+                    dynamic_button.set_align(Align::TopRight.into());
+                    label.set_text(c"This is dynamic");
                     world
-                        .spawn((DynamicButton, Button, dynamic_button))
-                        .with_child((Label, label));
+                        .spawn((DynamicButton, dynamic_button.into_inner()))
+                        .with_child(label.into_inner());
                 }
             }
         });
 
-        let mut button_entity = world.spawn((Button, button, anim));
+        let mut button_entity = world.spawn((button.into_inner(), anim));
 
         button_entity.add_child(label_entity);
 
         let mut style = Style::default();
-        lv_style_set_opa(&mut style, OpacityLevel::Percent50 as u8);
-        lv_style_set_align(&mut style, Align::TopLeft.into());
-        lv_style_set_bg_color(&mut style, lv_color_make(255, 0, 0));
+        style.set_opa(OpacityLevel::Percent50 as u8);
+        style.set_align(Align::TopLeft.into());
+        style.set_bg_color(lv_color_make(255, 0, 0));
 
         button_entity.insert(style);
         //button_entity.remove::<Style>();
         // button_entity.insert(style);
 
-        let mut arc = Arc::create_widget();
-        lv_obj_set_align(&mut arc, Align::BottomMid.into());
+        let mut arc = Arc::new();
+        arc.set_align(Align::BottomMid.into());
 
-        world.spawn((Arc, arc));
+        world.spawn(arc.into_inner());
     }
 
     info!("Create OK");
@@ -157,9 +161,20 @@ fn main() {
     window.update(&sim_display);
 
     loop {
-        lv_timer_handler();
-
-        window.update(&sim_display);
+        let start = Instant::now();
+        let next_timer_period = lv_timer_handler();
+        match next_timer_period {
+            NextTimerPeriod::Ready => {
+                continue;
+            }
+            NextTimerPeriod::AfterMs(next_timer_ms) => {
+                let next_instant = start + Duration::from_millis(next_timer_ms.get().into());
+                sleep(next_instant - Instant::now());
+            }
+            NextTimerPeriod::Never => {
+                sleep(Duration::from_millis(LV_DEF_REFR_PERIOD.into()));
+            }
+        }
     }
 }
 

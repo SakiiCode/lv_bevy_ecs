@@ -1,26 +1,10 @@
 use std::{
     process::exit,
     sync::{
-        LazyLock, Mutex,
+        Mutex,
         atomic::{AtomicBool, Ordering},
     },
-    thread::sleep,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
-};
-
-use lv_bevy_ecs::{
-    animation::Animation,
-    display::{Display, DrawBuffer},
-    error,
-    events::EventCode,
-    functions::*,
-    info,
-    input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
-    styles::Style,
-    support::{Align, OpacityLevel},
-    sys::{LV_DEF_REFR_PERIOD, lv_part_t_LV_PART_MAIN, lv_style_selector_t},
-    trace,
-    widgets::{Arc, Button, Label, Widget},
 };
 
 use embedded_graphics::{
@@ -31,36 +15,43 @@ use embedded_graphics::{
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
+use lv_bevy_ecs::{
+    animation::Animation,
+    bevy::{component::Component, entity::Entity, query::With},
+    display::{Display, DrawBuffer},
+    error,
+    events::EventCode,
+    functions::*,
+    info,
+    input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
+    styles::Style,
+    support::{Align, OpacityLevel},
+    sys::{LV_DEF_REFR_PERIOD, lv_part_t_LV_PART_MAIN, lv_style_selector_t},
+    widgets::{Arc, Button, Label, LvglWorld},
+};
+use macro_rules_attribute::apply;
+use smol::{Timer, future::yield_now};
+use smol_macros::main;
 
-#[derive(Default)]
-struct Objects {
-    dynamic_button: Option<Button<Widget>>,
-    dynamic_button_label: Option<Label<Widget>>,
-    animation: Option<Animation>,
-}
+#[derive(Component)]
+struct DynamicButton;
 
-static OBJECTS: LazyLock<Mutex<Objects>> = LazyLock::new(|| Mutex::new(Objects::default()));
-
-fn main() {
+#[apply(main!)]
+async fn main() {
     lv_init();
     lv_bevy_ecs::logging::lv_log_init();
-
-    #[cfg(feature = "rust-alloc")]
-    lv_bevy_ecs::malloc::provide_mem_monitor_impl(get_memory_stats);
 
     const HOR_RES: u32 = 320;
     const VER_RES: u32 = 240;
     const LINE_HEIGHT: u32 = 16;
 
-    let mut sim_display: SimulatorDisplay<Rgb565> =
-        SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
+    let mut sim_display = SimulatorDisplay::<Rgb565>::new(Size::new(HOR_RES, VER_RES));
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
-    let mut window = Window::new("Button Example", &output_settings);
+    let mut window = Window::new("Async Button Example", &output_settings);
     window.set_max_fps(0);
 
-    info!("SIMULATOR OK");
-    error!("Random error");
+    info!("Simulator OK");
 
     let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
 
@@ -71,8 +62,6 @@ fn main() {
 
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
-        trace!("Flushing to display");
-        //let _unused = WORLD.lock().unwrap();
         sim_display
             .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
             .unwrap();
@@ -83,27 +72,29 @@ fn main() {
 
     info!("Display Driver OK");
 
-    // Register a new input device that's capable of reading the current state of the input
     let _touch_screen = InputDevice::<Pointer>::create(|| get_touch_input(window.events()));
-
-    info!("Input OK");
 
     lv_tick_set_cb(|| {
         let current_time = SystemTime::now();
         let since_epoch = current_time
             .duration_since(UNIX_EPOCH)
             .expect("Time should only go forward");
-        since_epoch.as_millis() as u32
+        let ms = since_epoch.as_millis() as u32;
+        ms
     });
 
+    let mut world = LvglWorld::default();
+
+    info!("ECS OK");
+
     {
-        let mut objects = OBJECTS.lock().unwrap();
         let mut button = Button::new();
         let mut label = Label::new();
         label.set_text(c"SPAWN");
-        label.set_parent(&mut button);
+        //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
+        let label_entity = world.spawn(label.into_inner()).id();
 
-        let mut anim = Animation::new(
+        let anim = Animation::new(
             Duration::from_secs(5),
             OpacityLevel::Transparent as i32,
             OpacityLevel::Cover as i32,
@@ -112,47 +103,55 @@ fn main() {
             },
         );
 
-        anim.set_widget(&mut button);
-
         button.add_event_cb(EventCode::Clicked, |_| {
-            let mut objects = OBJECTS.lock().unwrap();
-            match &objects.dynamic_button {
-                Some(_widget) => {
-                    objects.dynamic_button = None;
-                    objects.dynamic_button_label = None;
+            match world
+                .query_filtered::<Entity, With<DynamicButton>>()
+                .single(&world)
+                .ok()
+            {
+                Some(entity) => {
+                    world.despawn(entity);
+                    /*let mut entities = Vec::new();
+                    for entity in world.query_filtered::<Entity, With<Button>>().iter(&world) {
+                        entities.push(entity);
+                    }
+                    for entity in entities{
+                        world.despawn(entity);
+                    }*/
                 }
                 None => {
                     let mut dynamic_button = Button::new();
-                    let mut dynamic_label = Label::new();
+                    let mut label = Label::new();
                     dynamic_button.set_align(Align::TopRight.into());
-                    dynamic_label.set_text(c"This is dynamic");
-                    dynamic_label.set_parent(&mut dynamic_button);
-                    objects.dynamic_button = Some(dynamic_button);
-                    objects.dynamic_button_label = Some(dynamic_label);
+                    label.set_text(c"This is dynamic");
+                    world
+                        .spawn((DynamicButton, dynamic_button.into_inner()))
+                        .with_child(label.into_inner());
                 }
             }
         });
 
-        objects.animation = Some(anim);
-        objects.animation.as_mut().unwrap().start();
+        let mut button_entity = world.spawn((button.into_inner(), anim));
 
-        let mut style = Box::leak(Box::new(Style::default()));
-        style.set_opa(OpacityLevel::Transparent as u8);
+        button_entity.add_child(label_entity);
+
+        let mut style = Style::default();
+        style.set_opa(OpacityLevel::Percent50 as u8);
         style.set_align(Align::TopLeft.into());
         style.set_bg_color(lv_color_make(255, 0, 0));
-        unsafe {
-            button.add_style(&mut style, lv_part_t_LV_PART_MAIN as lv_style_selector_t);
-        }
 
-        button.leak();
-        label.leak();
+        button_entity.insert(style);
+        //button_entity.remove::<Style>();
+        // button_entity.insert(style);
 
         let mut arc = Arc::new();
         arc.set_align(Align::BottomMid.into());
-        arc.leak();
+
+        world.spawn(arc.into_inner());
     }
 
     info!("Create OK");
+
     window.update(&sim_display);
 
     loop {
@@ -160,14 +159,13 @@ fn main() {
         let next_timer_period = lv_timer_handler();
         match next_timer_period {
             NextTimerPeriod::Ready => {
-                continue;
-            }
-            NextTimerPeriod::AfterMs(next_timer_ms) => {
-                let next_instant = start + Duration::from_millis(next_timer_ms.get().into());
-                sleep(next_instant - Instant::now());
+                yield_now().await;
             }
             NextTimerPeriod::Never => {
-                sleep(Duration::from_millis(LV_DEF_REFR_PERIOD.into()));
+                Timer::after(Duration::from_millis(LV_DEF_REFR_PERIOD.into())).await;
+            }
+            NextTimerPeriod::AfterMs(next_timer_ms) => {
+                Timer::at(start + Duration::from_millis(next_timer_ms.get().into())).await;
             }
         }
     }
@@ -227,6 +225,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
     return *lock;
 }
 
+#[unsafe(no_mangle)]
 pub fn get_memory_stats(monitor: &mut lv_bevy_ecs::sys::lv_mem_monitor_t) {
     if let Some(stats) = memory_stats::memory_stats() {
         let memory = stats.physical_mem;

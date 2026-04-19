@@ -6,7 +6,11 @@ use ::core::ffi::c_void;
 #[global_allocator]
 static ALLOCATOR: LvglAlloc = LvglAlloc;
 
-#[cfg(all(LV_USE_STDLIB_MALLOC = "BUILTIN", not(feature = "ctor")))]
+#[cfg(all(
+    LV_USE_STDLIB_MALLOC = "BUILTIN",
+    not(feature = "ctor"),
+    not(target_os = "none")
+))]
 compile_error!(
     "`lvgl-alloc` and `LV_USE_STDLIB_MALLOC = BUILTIN` without `ctor` gives instant segmentation fault"
 );

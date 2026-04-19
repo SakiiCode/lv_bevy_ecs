@@ -8,22 +8,22 @@
 //! # use lv_bevy_ecs::functions::*;
 //! # use lv_bevy_ecs::support::OpacityLevel;
 //! # use lv_bevy_ecs::sys::{lv_part_t_LV_PART_MAIN, lv_anim_count_running};
-//! # use lv_bevy_ecs::widgets::{Button, LvglWorld};
+//! # use lv_bevy_ecs::widgets::{Button, LvglWorld, Wdg};
 //! #
 //! # lv_bevy_ecs::setup_test_display!();
 //! #
 //! let mut world = LvglWorld::default();
-//! let button = Button::create_widget();
+//! let button = Button::new();
 //!
 //! let anim = Animation::new(
 //!     Duration::from_secs(5),
 //!     OpacityLevel::Transparent as i32,
 //!     OpacityLevel::Cover as i32,
 //!     |obj, val| {
-//!         lv_obj_set_style_opa(obj, val as u8, lv_part_t_LV_PART_MAIN);
+//!         obj.set_style_opa(val as u8, lv_part_t_LV_PART_MAIN);
 //!     },
 //! );
-//! let mut button_entity = world.spawn((Button, button, anim));
+//! let mut button_entity = world.spawn((button.into_inner(), anim));
 //! unsafe {
 //!     assert_eq!(lv_anim_count_running(), 1);
 //! }
@@ -35,7 +35,6 @@ use ::core::{ffi::c_void, mem::MaybeUninit, ptr::NonNull, time::Duration};
 use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};
 
 use crate::widgets::{Wdg, Widget};
-use crate::{info, warn};
 
 #[derive(Component)]
 #[component(on_insert = add_animation)]
@@ -49,24 +48,31 @@ impl Animation {
     where
         F: FnMut(&mut Wdg, i32),
     {
-        let mut raw = unsafe {
+        unsafe {
             let mut anim = MaybeUninit::<lightvgl_sys::lv_anim_t>::uninit();
             lightvgl_sys::lv_anim_init(anim.as_mut_ptr());
-            anim.assume_init()
-        };
-        raw.duration = duration.as_millis().try_into().unwrap_or(0);
-        raw.start_value = start;
-        raw.current_value = start;
-        raw.end_value = end;
-        raw.user_data = Box::<F>::into_raw(Box::new(animator)) as *mut _;
-        raw.exec_cb = Some(animator_trampoline::<F>);
+            let mut raw = anim.assume_init();
 
-        Self { raw }
+            lightvgl_sys::lv_anim_set_duration(
+                &mut raw,
+                duration.as_millis().try_into().unwrap_or(0),
+            );
+            lightvgl_sys::lv_anim_set_values(&mut raw, start, end);
+            lightvgl_sys::lv_anim_set_user_data(
+                &mut raw,
+                Box::<F>::into_raw(Box::new(animator)).cast(),
+            );
+            lightvgl_sys::lv_anim_set_exec_cb(&mut raw, Some(animator_trampoline::<F>));
+
+            Self { raw }
+        }
     }
 
     #[cfg(feature = "no_ecs")]
     pub fn set_widget(&mut self, widget: &mut Wdg) {
-        self.raw_mut().var = widget.raw_mut() as *mut _;
+        unsafe {
+            lightvgl_sys::lv_anim_set_var(self.raw_mut(), widget.raw_mut().cast());
+        }
     }
 
     pub fn start(&mut self) {
@@ -91,7 +97,7 @@ unsafe impl Sync for Animation {}
 
 impl Drop for Animation {
     fn drop(&mut self) {
-        info!("Dropping Animation");
+        crate::info!("Dropping Animation");
     }
 }
 
@@ -100,11 +106,14 @@ fn add_animation(mut world: DeferredWorld, ctx: HookContext) {
         .get_mut::<Widget>(ctx.entity)
         .expect("Animation components must be added entities with a Widget component")
         .as_mut()
-        .raw();
+        .raw_mut();
     let mut anim = world.get_mut::<Animation>(ctx.entity).unwrap();
-    anim.raw.var = obj as *mut _;
+    unsafe {
+        lightvgl_sys::lv_anim_set_var(anim.raw_mut(), obj.cast());
+    }
+
     anim.start();
-    info!("Added Animation");
+    crate::info!("Added Animation");
 }
 
 unsafe extern "C" fn animator_trampoline<F>(obj: *mut c_void, val: i32)
@@ -112,15 +121,16 @@ where
     F: FnMut(&mut Wdg, i32),
 {
     unsafe {
-        let ptr = lightvgl_sys::lv_anim_get(obj, None) as *mut lightvgl_sys::lv_anim_t;
+        let ptr = lightvgl_sys::lv_anim_get(obj, None);
         let anim = NonNull::new(ptr).unwrap();
-        let obj = obj as *mut lightvgl_sys::lv_obj_t;
-        if anim.as_ref().user_data.is_null() {
-            warn!("Animation user data was null, this should never happen!");
+        let obj = obj.cast();
+        let user_data = lightvgl_sys::lv_anim_get_user_data(anim.as_ref());
+        if user_data.is_null() {
+            crate::warn!("Animation user data was null, this should never happen!");
             return;
         }
         let mut obj_wdg = Wdg::from_ptr(obj);
-        let callback = &mut *(anim.as_ref().user_data as *mut F);
+        let callback = &mut *(user_data.cast::<F>());
         callback(&mut obj_wdg, val);
     }
 }

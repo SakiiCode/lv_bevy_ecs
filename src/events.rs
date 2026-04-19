@@ -1,5 +1,13 @@
 //! # Events
+//!
+//!
+use core::{
+    ops::{Deref, DerefMut},
+    ptr::NonNull,
+};
+
 use ::alloc::boxed::Box;
+use lightvgl_sys::{lv_event_code_t, lv_event_t};
 
 use crate::widgets::Wdg;
 
@@ -13,7 +21,7 @@ use crate::widgets::Wdg;
 /// regardless of their type.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 #[allow(clippy::empty_docs)]
-pub enum Event {
+pub enum EventCode {
     /// The object has been pressed
     Pressed,
 
@@ -66,96 +74,140 @@ pub enum Event {
     Focused,
 }
 
-impl TryFrom<lightvgl_sys::lv_event_code_t> for Event {
+impl TryFrom<lv_event_code_t> for EventCode {
     type Error = ();
 
-    fn try_from(value: lightvgl_sys::lv_event_code_t) -> Result<Self, Self::Error> {
-        const LV_EVENT_PRESSED: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_PRESSED;
-        const LV_EVENT_PRESSING: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_PRESSING;
-        const LV_EVENT_PRESS_LOST: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_PRESS_LOST;
-        const LV_EVENT_SHORT_CLICKED: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_SHORT_CLICKED;
-        const LV_EVENT_CLICKED: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_CLICKED;
-        const LV_EVENT_LONG_PRESSED: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_LONG_PRESSED;
-        const LV_EVENT_LONG_PRESSED_REPEAT: u32 =
+    fn try_from(value: lv_event_code_t) -> Result<Self, Self::Error> {
+        const LV_EVENT_PRESSED: lv_event_code_t = lightvgl_sys::lv_event_code_t_LV_EVENT_PRESSED;
+        const LV_EVENT_PRESSING: lv_event_code_t = lightvgl_sys::lv_event_code_t_LV_EVENT_PRESSING;
+        const LV_EVENT_PRESS_LOST: lv_event_code_t =
+            lightvgl_sys::lv_event_code_t_LV_EVENT_PRESS_LOST;
+        const LV_EVENT_SHORT_CLICKED: lv_event_code_t =
+            lightvgl_sys::lv_event_code_t_LV_EVENT_SHORT_CLICKED;
+        const LV_EVENT_CLICKED: lv_event_code_t = lightvgl_sys::lv_event_code_t_LV_EVENT_CLICKED;
+        const LV_EVENT_LONG_PRESSED: lv_event_code_t =
+            lightvgl_sys::lv_event_code_t_LV_EVENT_LONG_PRESSED;
+        const LV_EVENT_LONG_PRESSED_REPEAT: lv_event_code_t =
             lightvgl_sys::lv_event_code_t_LV_EVENT_LONG_PRESSED_REPEAT;
-        const LV_EVENT_RELEASED: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_RELEASED;
-        const LV_EVENT_VALUE_CHANGED: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_VALUE_CHANGED;
-        const LV_EVENT_DRAW_MAIN: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN;
-        const LV_EVENT_DRAW_MAIN_BEGIN: u32 =
+        const LV_EVENT_RELEASED: lv_event_code_t = lightvgl_sys::lv_event_code_t_LV_EVENT_RELEASED;
+        const LV_EVENT_VALUE_CHANGED: lv_event_code_t =
+            lightvgl_sys::lv_event_code_t_LV_EVENT_VALUE_CHANGED;
+        const LV_EVENT_DRAW_MAIN: lv_event_code_t =
+            lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN;
+        const LV_EVENT_DRAW_MAIN_BEGIN: lv_event_code_t =
             lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN_BEGIN;
-        const LV_EVENT_DRAW_MAIN_END: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN_END;
-        const LV_EVENT_DRAW_POST: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST;
-        const LV_EVENT_DRAW_POST_BEGIN: u32 =
+        const LV_EVENT_DRAW_MAIN_END: lv_event_code_t =
+            lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN_END;
+        const LV_EVENT_DRAW_POST: lv_event_code_t =
+            lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST;
+        const LV_EVENT_DRAW_POST_BEGIN: lv_event_code_t =
             lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST_BEGIN;
-        const LV_EVENT_DRAW_POST_END: u32 = lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST_END;
+        const LV_EVENT_DRAW_POST_END: lv_event_code_t =
+            lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST_END;
 
         match value {
-            LV_EVENT_PRESSED => Ok(Event::Pressed),
-            LV_EVENT_PRESSING => Ok(Event::Pressing),
-            LV_EVENT_PRESS_LOST => Ok(Event::PressLost),
-            LV_EVENT_SHORT_CLICKED => Ok(Event::ShortClicked),
-            LV_EVENT_CLICKED => Ok(Event::Clicked),
-            LV_EVENT_LONG_PRESSED => Ok(Event::LongPressed),
-            LV_EVENT_LONG_PRESSED_REPEAT => Ok(Event::LongPressedRepeat),
-            LV_EVENT_RELEASED => Ok(Event::Released),
-            LV_EVENT_VALUE_CHANGED => Ok(Event::ValueChanged),
-            LV_EVENT_DRAW_MAIN => Ok(Event::DrawMain),
-            LV_EVENT_DRAW_MAIN_BEGIN => Ok(Event::DrawMainBegin),
-            LV_EVENT_DRAW_MAIN_END => Ok(Event::DrawMainEnd),
-            LV_EVENT_DRAW_POST => Ok(Event::DrawPost),
-            LV_EVENT_DRAW_POST_BEGIN => Ok(Event::DrawPostBegin),
-            LV_EVENT_DRAW_POST_END => Ok(Event::DrawPostEnd),
+            LV_EVENT_PRESSED => Ok(EventCode::Pressed),
+            LV_EVENT_PRESSING => Ok(EventCode::Pressing),
+            LV_EVENT_PRESS_LOST => Ok(EventCode::PressLost),
+            LV_EVENT_SHORT_CLICKED => Ok(EventCode::ShortClicked),
+            LV_EVENT_CLICKED => Ok(EventCode::Clicked),
+            LV_EVENT_LONG_PRESSED => Ok(EventCode::LongPressed),
+            LV_EVENT_LONG_PRESSED_REPEAT => Ok(EventCode::LongPressedRepeat),
+            LV_EVENT_RELEASED => Ok(EventCode::Released),
+            LV_EVENT_VALUE_CHANGED => Ok(EventCode::ValueChanged),
+            LV_EVENT_DRAW_MAIN => Ok(EventCode::DrawMain),
+            LV_EVENT_DRAW_MAIN_BEGIN => Ok(EventCode::DrawMainBegin),
+            LV_EVENT_DRAW_MAIN_END => Ok(EventCode::DrawMainEnd),
+            LV_EVENT_DRAW_POST => Ok(EventCode::DrawPost),
+            LV_EVENT_DRAW_POST_BEGIN => Ok(EventCode::DrawPostBegin),
+            LV_EVENT_DRAW_POST_END => Ok(EventCode::DrawPostEnd),
             _ => Err(()),
         }
     }
 }
 
-impl From<Event> for lightvgl_sys::lv_event_code_t {
-    fn from(event: Event) -> Self {
+impl From<EventCode> for lv_event_code_t {
+    fn from(event: EventCode) -> Self {
         let native_event = match event {
-            Event::Pressed => lightvgl_sys::lv_event_code_t_LV_EVENT_PRESSED,
-            Event::Pressing => lightvgl_sys::lv_event_code_t_LV_EVENT_PRESSING,
-            Event::PressLost => lightvgl_sys::lv_event_code_t_LV_EVENT_PRESS_LOST,
-            Event::ShortClicked => lightvgl_sys::lv_event_code_t_LV_EVENT_SHORT_CLICKED,
-            Event::Clicked => lightvgl_sys::lv_event_code_t_LV_EVENT_CLICKED,
-            Event::LongPressed => lightvgl_sys::lv_event_code_t_LV_EVENT_LONG_PRESSED,
-            Event::LongPressedRepeat => lightvgl_sys::lv_event_code_t_LV_EVENT_LONG_PRESSED_REPEAT,
-            Event::Released => lightvgl_sys::lv_event_code_t_LV_EVENT_RELEASED,
-            Event::ValueChanged => lightvgl_sys::lv_event_code_t_LV_EVENT_VALUE_CHANGED,
-            Event::DrawMain => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN,
-            Event::DrawMainBegin => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN_BEGIN,
-            Event::DrawMainEnd => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN_END,
-            Event::DrawPost => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST,
-            Event::DrawPostBegin => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST_BEGIN,
-            Event::DrawPostEnd => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST_END,
+            EventCode::Pressed => lightvgl_sys::lv_event_code_t_LV_EVENT_PRESSED,
+            EventCode::Pressing => lightvgl_sys::lv_event_code_t_LV_EVENT_PRESSING,
+            EventCode::PressLost => lightvgl_sys::lv_event_code_t_LV_EVENT_PRESS_LOST,
+            EventCode::ShortClicked => lightvgl_sys::lv_event_code_t_LV_EVENT_SHORT_CLICKED,
+            EventCode::Clicked => lightvgl_sys::lv_event_code_t_LV_EVENT_CLICKED,
+            EventCode::LongPressed => lightvgl_sys::lv_event_code_t_LV_EVENT_LONG_PRESSED,
+            EventCode::LongPressedRepeat => {
+                lightvgl_sys::lv_event_code_t_LV_EVENT_LONG_PRESSED_REPEAT
+            }
+            EventCode::Released => lightvgl_sys::lv_event_code_t_LV_EVENT_RELEASED,
+            EventCode::ValueChanged => lightvgl_sys::lv_event_code_t_LV_EVENT_VALUE_CHANGED,
+            EventCode::DrawMain => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN,
+            EventCode::DrawMainBegin => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN_BEGIN,
+            EventCode::DrawMainEnd => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_MAIN_END,
+            EventCode::DrawPost => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST,
+            EventCode::DrawPostBegin => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST_BEGIN,
+            EventCode::DrawPostEnd => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST_END,
             // TODO: handle all types...
             _ => lightvgl_sys::lv_event_code_t_LV_EVENT_CLICKED,
         };
-        native_event as lightvgl_sys::lv_event_code_t
+        native_event as lv_event_code_t
     }
 }
 
-pub(crate) fn lv_obj_add_event_cb<'a, F>(widget: &'a mut Wdg, filter: Event, callback: F)
+pub(crate) fn lv_obj_add_event_cb<F>(widget: &mut Wdg, filter: EventCode, callback: F)
 where
-    F: FnMut(lightvgl_sys::lv_event_t) + 'a,
+    F: FnMut(Event),
 {
     unsafe {
-        let obj = widget.raw_mut();
         lightvgl_sys::lv_obj_add_event_cb(
-            obj,
+            widget.raw_mut(),
             Some(event_callback::<F>),
             filter.into(),
-            Box::into_raw(Box::new(callback)) as *mut _,
+            Box::into_raw(Box::new(callback)).cast(),
         );
     }
 }
 
 pub(crate) unsafe extern "C" fn event_callback<F>(event: *mut lightvgl_sys::lv_event_t)
 where
-    F: FnMut(lightvgl_sys::lv_event_t),
+    F: FnMut(Event),
 {
     unsafe {
-        let callback = &mut *((*event).user_data as *mut F);
-        callback(*event);
+        let user_data = lightvgl_sys::lv_event_get_user_data(event);
+        let callback = &mut *(user_data.cast::<F>());
+        let event_ref = Event::from_ptr(event);
+        callback(event_ref);
+    }
+}
+
+pub struct Event {
+    raw: NonNull<lv_event_t>,
+}
+
+impl Deref for Event {
+    type Target = lv_event_t;
+    fn deref(&self) -> &Self::Target {
+        unsafe { self.raw.as_ref() }
+    }
+}
+
+impl DerefMut for Event {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { self.raw.as_mut() }
+    }
+}
+
+impl Event {
+    pub fn raw(&self) -> *const lv_event_t {
+        self.raw.as_ptr().cast_const()
+    }
+
+    pub fn raw_mut(&mut self) -> *mut lv_event_t {
+        self.raw.as_ptr()
+    }
+
+    pub fn from_ptr(ptr: *mut lv_event_t) -> Self {
+        Self {
+            raw: NonNull::new(ptr).unwrap(),
+        }
     }
 }

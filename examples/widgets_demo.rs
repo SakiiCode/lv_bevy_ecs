@@ -1,7 +1,7 @@
 use std::{
     process::exit,
     sync::{
-        LazyLock, Mutex,
+        Mutex,
         atomic::{AtomicBool, Ordering},
     },
     thread::sleep,
@@ -9,18 +9,12 @@ use std::{
 };
 
 use lv_bevy_ecs::{
-    animation::Animation,
     display::{Display, DrawBuffer},
     error,
-    events::EventCode,
     functions::*,
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
-    styles::Style,
-    support::{Align, OpacityLevel},
-    sys::{LV_DEF_REFR_PERIOD, lv_part_t_LV_PART_MAIN, lv_style_selector_t},
-    trace,
-    widgets::{Arc, Button, Label, Widget},
+    sys::LV_DEF_REFR_PERIOD,
 };
 
 use embedded_graphics::{
@@ -32,31 +26,19 @@ use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
 
-#[derive(Default)]
-struct Objects {
-    dynamic_button: Option<Button<Widget>>,
-    dynamic_button_label: Option<Label<Widget>>,
-    animation: Option<Animation>,
-}
-
-static OBJECTS: LazyLock<Mutex<Objects>> = LazyLock::new(|| Mutex::new(Objects::default()));
-
 fn main() {
     lv_init();
     lv_bevy_ecs::logging::lv_log_init();
 
-    #[cfg(feature = "rust-alloc")]
-    lv_bevy_ecs::malloc::provide_mem_monitor_impl(get_memory_stats);
-
-    const HOR_RES: u32 = 320;
-    const VER_RES: u32 = 240;
+    const HOR_RES: u32 = 800;
+    const VER_RES: u32 = 480;
     const LINE_HEIGHT: u32 = 16;
 
     let mut sim_display: SimulatorDisplay<Rgb565> =
         SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
-    let mut window = Window::new("Button Example", &output_settings);
+    let mut window = Window::new("Widgets Demo", &output_settings);
     window.set_max_fps(0);
 
     info!("SIMULATOR OK");
@@ -71,8 +53,6 @@ fn main() {
 
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
-        trace!("Flushing to display");
-        //let _unused = WORLD.lock().unwrap();
         sim_display
             .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
             .unwrap();
@@ -93,66 +73,15 @@ fn main() {
         let since_epoch = current_time
             .duration_since(UNIX_EPOCH)
             .expect("Time should only go forward");
-        since_epoch.as_millis() as u32
+        let ms = since_epoch.as_millis() as u32;
+        ms
     });
 
-    {
-        let mut objects = OBJECTS.lock().unwrap();
-        let mut button = Button::new();
-        let mut label = Label::new();
-        label.set_text(c"SPAWN");
-        label.set_parent(&mut button);
-
-        let mut anim = Animation::new(
-            Duration::from_secs(5),
-            OpacityLevel::Transparent as i32,
-            OpacityLevel::Cover as i32,
-            |obj, val| {
-                obj.set_style_opa(val as u8, lv_part_t_LV_PART_MAIN as lv_style_selector_t);
-            },
-        );
-
-        anim.set_widget(&mut button);
-
-        button.add_event_cb(EventCode::Clicked, |_| {
-            let mut objects = OBJECTS.lock().unwrap();
-            match &objects.dynamic_button {
-                Some(_widget) => {
-                    objects.dynamic_button = None;
-                    objects.dynamic_button_label = None;
-                }
-                None => {
-                    let mut dynamic_button = Button::new();
-                    let mut dynamic_label = Label::new();
-                    dynamic_button.set_align(Align::TopRight.into());
-                    dynamic_label.set_text(c"This is dynamic");
-                    dynamic_label.set_parent(&mut dynamic_button);
-                    objects.dynamic_button = Some(dynamic_button);
-                    objects.dynamic_button_label = Some(dynamic_label);
-                }
-            }
-        });
-
-        objects.animation = Some(anim);
-        objects.animation.as_mut().unwrap().start();
-
-        let mut style = Box::leak(Box::new(Style::default()));
-        style.set_opa(OpacityLevel::Transparent as u8);
-        style.set_align(Align::TopLeft.into());
-        style.set_bg_color(lv_color_make(255, 0, 0));
-        unsafe {
-            button.add_style(&mut style, lv_part_t_LV_PART_MAIN as lv_style_selector_t);
-        }
-
-        button.leak();
-        label.leak();
-
-        let mut arc = Arc::new();
-        arc.set_align(Align::BottomMid.into());
-        arc.leak();
+    unsafe {
+        lv_bevy_ecs::sys::lv_demo_widgets();
     }
-
     info!("Create OK");
+
     window.update(&sim_display);
 
     loop {
@@ -227,6 +156,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
     return *lock;
 }
 
+#[unsafe(no_mangle)]
 pub fn get_memory_stats(monitor: &mut lv_bevy_ecs::sys::lv_mem_monitor_t) {
     if let Some(stats) = memory_stats::memory_stats() {
         let memory = stats.physical_mem;

@@ -30,7 +30,7 @@ pub mod widgets;
 
 #[cfg(feature = "ctor")]
 #[ctor::ctor]
-fn init() {
+unsafe fn init() {
     crate::functions::lv_init();
 }
 

@@ -44,7 +44,7 @@ DEP_LV_CONFIG_PATH = { relative = true, value = "." }
 ```
 
 3. Assign a tick callback that measures elapsed time in milliseconds. This must be done **before** creating the UI.
-   _For other frameworks (like FreeRTOS), you should [use its tick counter](https://docs.lvgl.io/9.4/details/integration/overview/connecting_lvgl.html#tick-interface) instead to get precise and constant framerate._
+   _For other frameworks (like ESP-IDF or Embassy), you should [use its tick counter](https://docs.lvgl.io/9.5/integration/overview.html#tick-interface) instead to get precise and constant framerate._
 
 ```rust
 # use lv_bevy_ecs::functions::*;
@@ -60,7 +60,7 @@ lv_tick_set_cb(|| {
 ```
 
 4. You have to obtain a World instance with `LvglWorld::default();`.
-   This is a global variable, it can be stored in a LazyLock or passed around in an Arc<Mutex<>> if needed elsewhere than in main().
+   This is a global variable, it can be stored in a `LazyLock` or passed around in an `Arc<Mutex<LvglWorld>>` if needed elsewhere than in main().
 
 ```rust
 # use lv_bevy_ecs::widgets::LvglWorld;
@@ -69,7 +69,7 @@ lv_tick_set_cb(|| {
 static WORLD: LazyLock<Mutex<LvglWorld>> = LazyLock::new(|| Mutex::new(LvglWorld::default()));
 ```
 
-4. Last thing is to call `lv_timer_handle()` in every loop cycle.
+4. Last thing is to call `lv_timer_handler()` in every loop cycle.
 
 ```rust
 # use lv_bevy_ecs::functions::*;
@@ -110,14 +110,14 @@ This needs `LV_USE_STDLIB_MALLOC` set to `LV_STDLIB_CUSTOM` in `lv_conf.h`.
 Additionally, an optional implementation of the `get_memory_stats(&mut lv_mem_monitor_t)` function can be provided.
 Check the examples and sample projects for reference implementation.
 
-```rust
+```rust,ignore
 pub fn get_memory_stats(monitor: &mut lv_bevy_ecs::sys::lv_mem_monitor_t) {
     // ...
 }
 
 fn main() {
     // ...
-    provide_mem_monitor_impl(get_memory_stats);
+    lv_bevy_ecs::malloc::provide_mem_monitor_impl(get_memory_stats);
 }
 ```
 
