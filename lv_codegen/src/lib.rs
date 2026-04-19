@@ -15,21 +15,22 @@ type CGResult<T> = Result<T, Box<dyn Error>>;
 const LIB_PREFIX: &str = "lv_";
 
 #[cfg(feature = "no_ecs")]
-const FUNCTION_BLACKLIST: [&str; 10] = [
+const FUNCTION_BLACKLIST: [&str; 11] = [
     "lv_style_init",                // use Style::default() instead
     "lv_obj_null_on_delete",        // can invalidate NonNull<>
-    "lv_obj_add_style",             // use functions::lv_obj_add_style() instead
-    "lv_obj_set_parent",            // use functions::lv_obj_set_parent() instead
+    "lv_obj_add_style",             // implemented manually
+    "lv_obj_set_parent",            // implemented manually
     "lv_obj_add_event_cb",          // implemented manually
     "lv_list_get_button_text",      // lifetime can't be elided
     "lv_label_set_text_vfmt",       // cannot cross-compile
     "lv_obj_report_style_change",   // first parameter is not obj
     "lv_style_transition_dsc_init", // first parameter is not style
     "lv_keyboard_def_event_cb",     // first parameter is not keyboard
+    "lv_subject_add_observer_obj",  // implemented manually
 ];
 
 #[cfg(not(feature = "no_ecs"))]
-const FUNCTION_BLACKLIST: [&str; 13] = [
+const FUNCTION_BLACKLIST: [&str; 14] = [
     "lv_obj_null_on_delete",        // can invalidate NonNull<>
     "lv_obj_add_style",             // add component instead
     "lv_obj_replace_style",         // replace component instead
@@ -43,6 +44,7 @@ const FUNCTION_BLACKLIST: [&str; 13] = [
     "lv_obj_report_style_change",   // first parameter is not obj
     "lv_style_transition_dsc_init", // first parameter is not style
     "lv_keyboard_def_event_cb",     // first parameter is not keyboard
+    "lv_subject_add_observer_obj",  // implemented manually
 ];
 
 #[derive(Debug, Clone, Error)]
@@ -86,7 +88,11 @@ impl LvWidget {
         let create_function = format_ident!("lv_{}_create", &self.name);
         let widget_class = format_ident!("lv_{}_class", &self.name);
 
-        if self.name == "obj" || self.name == "style" || self.name == "event" {
+        if self.name == "obj"
+            || self.name == "style"
+            || self.name == "event"
+            || self.name == "subject"
+        {
             Err(SkipReason::CustomStruct(self.name.clone()))
         } else {
             Ok(quote! {
@@ -119,7 +125,8 @@ impl LvFunc {
             let first_arg = &self.args[0];
             return first_arg.typ.literal_name.contains("lv_obj_t")
                 || first_arg.typ.literal_name.contains("lv_style_t")
-                || first_arg.typ.literal_name.contains("lv_event_t");
+                || first_arg.typ.literal_name.contains("lv_event_t")
+                || first_arg.typ.literal_name.contains("lv_subject_t");
         }
         false
     }
@@ -137,6 +144,8 @@ impl Rusty for LvFunc {
             quote! {Style}
         } else if parent.name == "event" {
             quote! {Event}
+        } else if parent.name == "subject" {
+            quote! {Subject}
         } else {
             let pascal_name = format_ident!("{}", parent.name.to_pascal_case());
             quote! {#pascal_name<Wdg>}
@@ -501,11 +510,14 @@ impl LvArg {
             quote! {
                 #ident_raw
             }
-        } else if self.typ.is_const_style() || self.typ.is_const_event() {
+        } else if self.typ.is_const_style()
+            || self.typ.is_const_event()
+            || self.typ.is_const_subject()
+        {
             quote! {
                 #ident.raw()
             }
-        } else if self.typ.is_mut_style() || self.typ.is_mut_event() {
+        } else if self.typ.is_mut_style() || self.typ.is_mut_event() || self.typ.is_mut_subject() {
             quote! {
                 #ident.raw_mut()
             }
@@ -609,6 +621,14 @@ impl LvType {
         self.literal_name == "* const lv_event_t"
     }
 
+    pub fn is_mut_subject(&self) -> bool {
+        self.literal_name == "* mut lv_subject_t"
+    }
+
+    pub fn is_const_subject(&self) -> bool {
+        self.literal_name == "* const lv_subject_t"
+    }
+
     pub fn is_pointer(&self) -> bool {
         self.literal_name.starts_with('*')
     }
@@ -661,6 +681,10 @@ impl Rusty for LvType {
             quote!(&Event)
         } else if self.is_mut_event() {
             quote!(&mut Event)
+        } else if self.is_const_subject() {
+            quote!(&Subject)
+        } else if self.is_mut_subject() {
+            quote!(&mut Subject)
         } else if self.is_mut_void() {
             quote!(&mut dyn Any)
         } else if self.is_const_void() {
@@ -746,7 +770,8 @@ impl CodeGen {
                 )
             })
             .collect::<Vec<_>>();
-        result.push("event".to_string());
+        result.push("event".to_string()); // does not have init() or create()
+        result.push("subject".to_string()); // does not have init() or create()
         result
     }
 

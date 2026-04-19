@@ -163,7 +163,7 @@ fn create_ui(world: &mut World) {
         1,
     );
 
-    dropdown.bind_value(chart_type_subject.raw_mut());
+    dropdown.bind_value(&mut chart_type_subject);
 
     world.spawn(dropdown.into_inner());
 
