@@ -15,38 +15,34 @@ type CGResult<T> = Result<T, Box<dyn Error>>;
 const LIB_PREFIX: &str = "lv_";
 
 #[cfg(feature = "no_ecs")]
-const FUNCTION_BLACKLIST: [&str; 12] = [
-    "lv_style_init",                   // use Style::default() instead
-    "lv_obj_null_on_delete",           // can invalidate NonNull<>
-    "lv_obj_add_style",                // use functions::lv_obj_add_style() instead
-    "lv_obj_set_parent",               // use functions::lv_obj_set_parent() instead
-    "lv_obj_add_event_cb",             // implemented manually
-    "lv_event_get_target",             // use functions::lv_event_get_target() instead
-    "lv_event_get_target_obj",         // use functions::lv_event_get_target_obj() instead
-    "lv_event_get_current_target_obj", // use functions::lv_event_get_current_target_obj() instead
-    "lv_list_get_button_text",         // lifetime can't be elided
-    "lv_label_set_text_vfmt",          // cannot cross-compile
-    "lv_obj_report_style_change",      // first parameter is not obj
-    "lv_style_transition_dsc_init",    // first parameter is not style
+const FUNCTION_BLACKLIST: [&str; 10] = [
+    "lv_style_init",                // use Style::default() instead
+    "lv_obj_null_on_delete",        // can invalidate NonNull<>
+    "lv_obj_add_style",             // use functions::lv_obj_add_style() instead
+    "lv_obj_set_parent",            // use functions::lv_obj_set_parent() instead
+    "lv_obj_add_event_cb",          // implemented manually
+    "lv_list_get_button_text",      // lifetime can't be elided
+    "lv_label_set_text_vfmt",       // cannot cross-compile
+    "lv_obj_report_style_change",   // first parameter is not obj
+    "lv_style_transition_dsc_init", // first parameter is not style
+    "lv_keyboard_def_event_cb",     // first parameter is not keyboard
 ];
 
 #[cfg(not(feature = "no_ecs"))]
-const FUNCTION_BLACKLIST: [&str; 15] = [
-    "lv_obj_null_on_delete",           // can invalidate NonNull<>
-    "lv_obj_add_style",                // add component instead
-    "lv_obj_replace_style",            // replace component instead
-    "lv_obj_remove_style",             // remove component instead
-    "lv_obj_remove_style_all",         // remove components instead
-    "lv_obj_set_parent",               // use EntityWorldMut::add_child() instead
-    "lv_obj_add_event_cb",             // implemented manually
-    "lv_style_init",                   // use Style::default() instead
-    "lv_event_get_target",             // use functions::lv_event_get_target() instead
-    "lv_event_get_target_obj",         // use functions::lv_event_get_target_obj() instead
-    "lv_event_get_current_target_obj", // use functions::lv_event_get_current_target_obj() instead
-    "lv_list_get_button_text",         // lifetime can't be elided
-    "lv_label_set_text_vfmt",          // cannot cross-compile
-    "lv_obj_report_style_change",      // first parameter is not obj
-    "lv_style_transition_dsc_init",    // first parameter is not style
+const FUNCTION_BLACKLIST: [&str; 13] = [
+    "lv_obj_null_on_delete",        // can invalidate NonNull<>
+    "lv_obj_add_style",             // add component instead
+    "lv_obj_replace_style",         // replace component instead
+    "lv_obj_remove_style",          // remove component instead
+    "lv_obj_remove_style_all",      // remove components instead
+    "lv_obj_set_parent",            // use EntityWorldMut::add_child() instead
+    "lv_obj_add_event_cb",          // implemented manually
+    "lv_style_init",                // use Style::default() instead
+    "lv_list_get_button_text",      // lifetime can't be elided
+    "lv_label_set_text_vfmt",       // cannot cross-compile
+    "lv_obj_report_style_change",   // first parameter is not obj
+    "lv_style_transition_dsc_init", // first parameter is not style
+    "lv_keyboard_def_event_cb",     // first parameter is not keyboard
 ];
 
 #[derive(Debug, Clone, Error)]
@@ -90,7 +86,7 @@ impl LvWidget {
         let create_function = format_ident!("lv_{}_create", &self.name);
         let widget_class = format_ident!("lv_{}_class", &self.name);
 
-        if self.name == "obj" || self.name == "style" {
+        if self.name == "obj" || self.name == "style" || self.name == "event" {
             Err(SkipReason::CustomStruct(self.name.clone()))
         } else {
             Ok(quote! {
@@ -122,7 +118,8 @@ impl LvFunc {
         if !self.args.is_empty() {
             let first_arg = &self.args[0];
             return first_arg.typ.literal_name.contains("lv_obj_t")
-                || first_arg.typ.literal_name.contains("lv_style_t");
+                || first_arg.typ.literal_name.contains("lv_style_t")
+                || first_arg.typ.literal_name.contains("lv_event_t");
         }
         false
     }
@@ -138,6 +135,8 @@ impl Rusty for LvFunc {
             quote! {Wdg}
         } else if parent.name == "style" {
             quote! {Style}
+        } else if parent.name == "event" {
+            quote! {Event}
         } else {
             let pascal_name = format_ident!("{}", parent.name.to_pascal_case());
             quote! {#pascal_name<Wdg>}
@@ -502,11 +501,11 @@ impl LvArg {
             quote! {
                 #ident_raw
             }
-        } else if self.typ.is_const_style() {
+        } else if self.typ.is_const_style() || self.typ.is_const_event() {
             quote! {
                 #ident.raw()
             }
-        } else if self.typ.is_mut_style() {
+        } else if self.typ.is_mut_style() || self.typ.is_mut_event() {
             quote! {
                 #ident.raw_mut()
             }
@@ -602,6 +601,14 @@ impl LvType {
         self.literal_name == "* const lv_style_t"
     }
 
+    pub fn is_mut_event(&self) -> bool {
+        self.literal_name == "* mut lv_event_t"
+    }
+
+    pub fn is_const_event(&self) -> bool {
+        self.literal_name == "* const lv_event_t"
+    }
+
     pub fn is_pointer(&self) -> bool {
         self.literal_name.starts_with('*')
     }
@@ -650,6 +657,10 @@ impl Rusty for LvType {
             quote!(&Style)
         } else if self.is_mut_style() {
             quote!(&mut Style)
+        } else if self.is_const_event() {
+            quote!(&Event)
+        } else if self.is_mut_event() {
+            quote!(&mut Event)
         } else if self.is_mut_void() {
             quote!(&mut dyn Any)
         } else if self.is_const_void() {
@@ -721,7 +732,7 @@ impl CodeGen {
         let reg = format!("^{}([^_]+)_(create|init)$", LIB_PREFIX);
         let create_func = Regex::new(reg.as_str()).unwrap();
 
-        functions
+        let mut result = functions
             .iter()
             .filter(|e| (create_func.is_match(e.name.as_str())) && e.args.len() == 1)
             .map(|f| {
@@ -734,7 +745,9 @@ impl CodeGen {
                         .as_str(),
                 )
             })
-            .collect::<Vec<_>>()
+            .collect::<Vec<_>>();
+        result.push("event".to_string());
+        result
     }
 
     pub fn load_func_defs(bindgen_code: &str) -> CGResult<Vec<LvFunc>> {
@@ -999,6 +1012,42 @@ mod test {
                 }
             }
         };
+        assert_eq!(code.to_string(), expected_code.to_string());
+    }
+
+    #[test]
+    fn generate_method_wrapper_for_event() {
+        let bindgen_code = quote! {
+            unsafe extern "C" {
+                #[doc = " Stop event from bubbling.\n This is only valid when called in the middle of an event processing chain.\n @param e     pointer to the event descriptor"]
+                pub fn lv_event_stop_bubbling(e: *mut lv_event_t);
+            }
+        };
+        let cg = CodeGen::load_func_defs(bindgen_code.to_string().as_str()).unwrap();
+
+        let event_stop_bubbling = cg.get(0).unwrap().clone();
+        let parent_widget = LvWidget {
+            name: "event".to_string(),
+            methods: vec![],
+        };
+
+        let code = event_stop_bubbling.code(&parent_widget).unwrap();
+        let expected_code = quote! {
+            impl Event {
+                #[cfg_attr(
+                    not(doctest),
+                    doc = "Stop event from bubbling.\n\nThis is only valid when called in the middle of an event processing chain.\n\n@param e     pointer to the event descriptor"
+                )]
+                pub fn stop_bubbling(&mut self) {
+                    unsafe {
+                        lightvgl_sys::lv_event_stop_bubbling(
+                            self.raw_mut()
+                        )
+                    }
+                }
+            }
+        };
+        assert_eq!(code.to_string(), expected_code.to_string());
     }
 
     #[test]
@@ -1169,6 +1218,7 @@ mod test {
                 }
             }
         };
+
         assert_eq!(code.to_string(), expected_code.to_string());
     }
 

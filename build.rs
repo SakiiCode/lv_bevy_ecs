@@ -33,6 +33,7 @@ fn main() {
         use constptr::ConstPtr;
         use lightvgl_sys::*;
         use crate::widgets::*;
+        use crate::events::Event;
 
         #(#widgets_impl)*
     };
