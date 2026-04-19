@@ -1,7 +1,7 @@
 //! Input
 use ::alloc::boxed::Box;
 use ::core::{marker::PhantomData, ptr::NonNull};
-use lightvgl_sys::lv_indev_get_user_data;
+use lightvgl_sys::{lv_indev_get_user_data, lv_indev_state_t, lv_indev_t, lv_indev_type_t};
 
 use embedded_graphics::prelude::Point;
 
@@ -16,7 +16,7 @@ pub enum InputState {
 }
 
 impl InputState {
-    fn as_lv_indev_state(&self) -> lightvgl_sys::lv_indev_state_t {
+    fn as_lv_indev_state(&self) -> lv_indev_state_t {
         match self {
             InputState::Pressed => lightvgl_sys::lv_indev_state_t_LV_INDEV_STATE_PRESSED,
             InputState::Released => lightvgl_sys::lv_indev_state_t_LV_INDEV_STATE_RELEASED,
@@ -53,7 +53,7 @@ impl<T: InputType> InputEvent<T> {
 
 pub trait InputType {
     type DataType;
-    fn as_lv_indev_type() -> lightvgl_sys::lv_indev_type_t;
+    fn as_lv_indev_type() -> lv_indev_type_t;
     fn set_lv_indev_data(event_data: &Self::DataType, data: &mut lightvgl_sys::lv_indev_data_t);
 }
 
@@ -63,7 +63,7 @@ pub struct Pointer;
 impl InputType for Pointer {
     type DataType = Point;
 
-    fn as_lv_indev_type() -> lightvgl_sys::lv_indev_type_t {
+    fn as_lv_indev_type() -> lv_indev_type_t {
         lightvgl_sys::lv_indev_type_t_LV_INDEV_TYPE_POINTER
     }
 
@@ -78,7 +78,7 @@ pub struct Keypad;
 impl InputType for Keypad {
     type DataType = u32;
 
-    fn as_lv_indev_type() -> lightvgl_sys::lv_indev_type_t {
+    fn as_lv_indev_type() -> lv_indev_type_t {
         lightvgl_sys::lv_indev_type_t_LV_INDEV_TYPE_KEYPAD
     }
 
@@ -90,38 +90,38 @@ impl InputType for Keypad {
 pub struct Encoder;
 
 impl InputType for Encoder {
-    type DataType = ();
+    type DataType = i16;
 
-    fn as_lv_indev_type() -> lightvgl_sys::lv_indev_type_t {
+    fn as_lv_indev_type() -> lv_indev_type_t {
         lightvgl_sys::lv_indev_type_t_LV_INDEV_TYPE_ENCODER
     }
 
-    fn set_lv_indev_data(_event_data: &Self::DataType, _data: &mut lightvgl_sys::lv_indev_data_t) {
-        unimplemented!("Encoders are not yet supported");
+    fn set_lv_indev_data(event_data: &Self::DataType, data: &mut lightvgl_sys::lv_indev_data_t) {
+        data.enc_diff = *event_data;
     }
 }
 pub struct Button;
 
 impl InputType for Button {
-    type DataType = ();
+    type DataType = u32;
 
-    fn as_lv_indev_type() -> lightvgl_sys::lv_indev_type_t {
+    fn as_lv_indev_type() -> lv_indev_type_t {
         lightvgl_sys::lv_indev_type_t_LV_INDEV_TYPE_BUTTON
     }
 
-    fn set_lv_indev_data(_event_data: &Self::DataType, _data: &mut lightvgl_sys::lv_indev_data_t) {
-        unimplemented!("Buttons are not yet supported");
+    fn set_lv_indev_data(event_data: &Self::DataType, data: &mut lightvgl_sys::lv_indev_data_t) {
+        data.btn_id = *event_data;
     }
 }
 
 #[allow(dead_code)]
-pub struct InputDevice<T: InputType> {
-    raw: NonNull<lightvgl_sys::lv_indev_t>,
+pub struct Indev<T: InputType> {
+    raw: NonNull<lv_indev_t>,
     r#type: PhantomData<T>,
 }
 
-impl<T: InputType> InputDevice<T> {
-    pub fn create<F>(read_cb: F) -> Self
+impl<T: InputType> Indev<T> {
+    pub fn new<F>(read_cb: F) -> Self
     where
         F: FnMut() -> InputEvent<T>,
     {
@@ -140,10 +140,18 @@ impl<T: InputType> InputDevice<T> {
             }
         }
     }
+
+    pub fn raw(&self) -> *const lv_indev_t {
+        self.raw.as_ptr().cast_const()
+    }
+
+    pub fn raw_mut(&mut self) -> *mut lv_indev_t {
+        self.raw.as_ptr()
+    }
 }
 
 unsafe extern "C" fn read_input<F, T>(
-    indev: *mut lightvgl_sys::lv_indev_t,
+    indev: *mut lv_indev_t,
     data: *mut lightvgl_sys::lv_indev_data_t,
 ) where
     T: InputType,

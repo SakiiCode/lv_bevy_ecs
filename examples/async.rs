@@ -23,7 +23,7 @@ use lv_bevy_ecs::{
     events::EventCode,
     functions::*,
     info,
-    input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
+    input::{BufferStatus, Indev, InputEvent, InputState, Pointer},
     styles::Style,
     support::{Align, OpacityLevel},
     sys::{LV_DEF_REFR_PERIOD, lv_part_t_LV_PART_MAIN, lv_style_selector_t},
@@ -72,7 +72,7 @@ async fn main() {
 
     info!("Display Driver OK");
 
-    let _touch_screen = InputDevice::<Pointer>::create(|| get_touch_input(window.events()));
+    let _touch_screen = Indev::<Pointer>::new(|| get_touch_input(window.events()));
 
     lv_tick_set_cb(|| {
         let current_time = SystemTime::now();

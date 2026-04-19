@@ -18,7 +18,7 @@ use lv_bevy_ecs::{
     events::{Event, EventCode},
     functions::*,
     info,
-    input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
+    input::{BufferStatus, Indev, InputEvent, InputState, Pointer},
     styles::Style,
     subjects::Subject,
     support::{LV_SIZE_CONTENT, OpacityLevel},
@@ -89,7 +89,7 @@ fn main() {
     });
 
     // Register a new input device that's capable of reading the current state of the input
-    let _touch_screen = InputDevice::<Pointer>::create(|| get_touch_input(window.events()));
+    let _touch_screen = Indev::<Pointer>::new(|| get_touch_input(window.events()));
 
     lv_tick_set_cb(|| {
         let current_time = SystemTime::now();

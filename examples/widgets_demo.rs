@@ -13,7 +13,7 @@ use lv_bevy_ecs::{
     error,
     functions::*,
     info,
-    input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
+    input::{BufferStatus, Indev, InputEvent, InputState, Pointer},
     sys::LV_DEF_REFR_PERIOD,
 };
 
@@ -64,7 +64,7 @@ fn main() {
     info!("Display Driver OK");
 
     // Register a new input device that's capable of reading the current state of the input
-    let _touch_screen = InputDevice::<Pointer>::create(|| get_touch_input(window.events()));
+    let _touch_screen = Indev::<Pointer>::new(|| get_touch_input(window.events()));
 
     info!("Input OK");
 
