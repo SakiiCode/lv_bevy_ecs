@@ -7,7 +7,7 @@
 //! # use embedded_graphics::pixelcolor::Rgb565;
 //! # use embedded_graphics::prelude::*;
 //! # use embedded_graphics_simulator::*;
-//! # use lv_bevy_ecs::display::{DrawBuffer, Display};
+//! # use lv_bevy_ecs::display::{DrawBuf, Display};
 //! # use lv_bevy_ecs::support::LvglColorFormat;
 //! # use lv_bevy_ecs::sys::*;
 //! #
@@ -17,9 +17,9 @@
 //! const LINE_HEIGHT: u32 = 10;
 //!
 //! let mut sim_display: SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
-//! let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
+//! let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
 //!
-//! let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(HOR_RES, LINE_HEIGHT);
+//! let buffer = DrawBuf::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 //! display.register(buffer, |refresh| {
 //!     // alternative (slower): sim_display.draw_iter(refresh.as_pixels()).unwrap();
 //!     sim_display
@@ -62,8 +62,8 @@ pub struct Display {
 }
 
 impl Display {
-    pub fn create(hor_res: i32, ver_res: i32) -> Self {
-        crate::support::assert_lv_initialized!();
+    pub fn new(hor_res: i32, ver_res: i32) -> Self {
+        crate::support::assert_lv_is_initialized!();
         unsafe {
             let raw = NonNull::new(lightvgl_sys::lv_display_create(hor_res, ver_res)).unwrap();
             Self { raw }
@@ -72,7 +72,7 @@ impl Display {
 
     pub fn register<'a, F, const N: usize, C: LvglColorFormat>(
         &'a mut self,
-        buffer: DrawBuffer<N, C>,
+        buffer: DrawBuf<N, C>,
         callback: F,
     ) where
         F: FnMut(&mut DisplayRefresh<N, C>) + 'a,
@@ -287,13 +287,13 @@ impl<const N: usize, C> DisplayRefresh<'_, N, C> {
     }
 }
 
-pub struct DrawBuffer<const N: usize, C: LvglColorFormat> {
+pub struct DrawBuf<const N: usize, C: LvglColorFormat> {
     raw: NonNull<lv_draw_buf_t>,
     color_depth: PhantomData<C>,
 }
 
-impl<const N: usize, C: LvglColorFormat> DrawBuffer<N, C> {
-    pub fn create(w: u32, h: u32) -> Self {
+impl<const N: usize, C: LvglColorFormat> DrawBuf<N, C> {
+    pub fn new(w: u32, h: u32) -> Self {
         assert_eq!(w * h, N as u32);
         let cf = C::as_lv_color_format_t();
         unsafe {
@@ -331,12 +331,10 @@ macro_rules! setup_test_display {
 
         lv_bevy_ecs::functions::lv_init();
 
-        let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
+        let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
 
-        let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(
-            HOR_RES,
-            LINE_HEIGHT,
-        );
+        let buffer =
+            DrawBuf::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
         display.register(buffer, |refresh| {
             //sim_display.draw_iter(refresh.as_pixels()).unwrap();

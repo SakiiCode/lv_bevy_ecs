@@ -129,7 +129,7 @@ pub(crate) fn lv_subject_add_observer_obj<'a, F>(
     unsafe {
         lightvgl_sys::lv_subject_add_observer_obj(
             subject.raw_mut(),
-            Some(subject_callback::<F>),
+            Some(observer_trampoline::<F>),
             object.raw_mut(),
             Box::into_raw(Box::new(callback)).cast(),
         );
@@ -137,7 +137,7 @@ pub(crate) fn lv_subject_add_observer_obj<'a, F>(
     crate::info!("Added Observer");
 }
 
-unsafe extern "C" fn subject_callback<F>(
+unsafe extern "C" fn observer_trampoline<F>(
     observer: *mut lightvgl_sys::lv_observer_t,
     subject: *mut lightvgl_sys::lv_subject_t,
 ) where

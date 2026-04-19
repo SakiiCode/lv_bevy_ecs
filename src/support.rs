@@ -12,7 +12,7 @@ macro_rules! cstr {
     }};
 }
 
-macro_rules! assert_lv_initialized {
+macro_rules! assert_lv_is_initialized {
     () => {
         #[cfg(not(feature = "ctor"))]
         unsafe {
@@ -24,7 +24,7 @@ macro_rules! assert_lv_initialized {
     };
 }
 
-pub(crate) use assert_lv_initialized;
+pub(crate) use assert_lv_is_initialized;
 
 pub trait LvglColorFormat {
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t;

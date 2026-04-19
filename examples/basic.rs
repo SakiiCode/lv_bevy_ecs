@@ -11,7 +11,7 @@ use std::{
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, query::With},
-    display::{Display, DrawBuffer},
+    display::{Display, DrawBuf},
     error,
     events::EventCode,
     functions::*,
@@ -56,10 +56,10 @@ fn main() {
     info!("SIMULATOR OK");
     error!("Random error");
 
-    let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
+    let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
 
     let buffer =
-        DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(HOR_RES, LINE_HEIGHT);
+        DrawBuf::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
     info!("Display OK");
 

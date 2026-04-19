@@ -13,7 +13,7 @@ use std::{
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, hierarchy::Children, query::With, world::World},
-    display::{Display, DrawBuffer},
+    display::{Display, DrawBuf},
     error,
     events::{Event, EventCode},
     functions::*,
@@ -73,10 +73,10 @@ fn main() {
     let mut window = Window::new("Bindings Test Example", &output_settings);
     window.set_max_fps(0);
 
-    let mut display = Display::create(HOR_RES as i32, VER_RES as i32);
+    let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
 
     let buffer =
-        DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::create(HOR_RES, LINE_HEIGHT);
+        DrawBuf::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
