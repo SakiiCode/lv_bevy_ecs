@@ -14,7 +14,7 @@ use lv_bevy_ecs::{
     functions::*,
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
-    sys::{LV_DEF_REFR_PERIOD, LV_NO_TIMER_READY},
+    sys::LV_DEF_REFR_PERIOD,
 };
 
 use embedded_graphics::{
@@ -86,17 +86,17 @@ fn main() {
 
     loop {
         let start = Instant::now();
-        let next_timer_ms = lv_timer_handler();
-        match next_timer_ms {
-            0 => {
+        let next_timer_period = lv_timer_handler();
+        match next_timer_period {
+            NextTimerPeriod::Ready => {
                 continue;
             }
-            LV_NO_TIMER_READY => {
-                sleep(Duration::from_millis(LV_DEF_REFR_PERIOD.into()));
-            }
-            _ => {
-                let next_instant = start + Duration::from_millis(next_timer_ms.into());
+            NextTimerPeriod::AfterMs(next_timer_ms) => {
+                let next_instant = start + Duration::from_millis(next_timer_ms.get().into());
                 sleep(next_instant - Instant::now());
+            }
+            NextTimerPeriod::Never => {
+                sleep(Duration::from_millis(LV_DEF_REFR_PERIOD.into()));
             }
         }
     }

@@ -24,7 +24,7 @@ use lv_bevy_ecs::{
     support::{LV_SIZE_CONTENT, OpacityLevel},
     sys::{
         LV_ANIM_REPEAT_INFINITE, LV_DEF_REFR_PERIOD, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST,
-        LV_NO_TIMER_READY, LV_SYMBOL_FILE, lv_align_t_LV_ALIGN_BOTTOM_RIGHT, lv_anim_path_ease_out,
+        LV_SYMBOL_FILE, lv_align_t_LV_ALIGN_BOTTOM_RIGHT, lv_anim_path_ease_out,
         lv_anim_set_path_cb, lv_anim_set_repeat_count, lv_area_t,
         lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
         lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED,
@@ -107,17 +107,17 @@ fn main() {
 
     loop {
         let start = Instant::now();
-        let next_timer_ms = lv_timer_handler();
-        match next_timer_ms {
-            0 => {
+        let next_timer_period = lv_timer_handler();
+        match next_timer_period {
+            NextTimerPeriod::Ready => {
                 continue;
             }
-            LV_NO_TIMER_READY => {
-                sleep(Duration::from_millis(LV_DEF_REFR_PERIOD.into()));
-            }
-            _ => {
-                let next_instant = start + Duration::from_millis(next_timer_ms.into());
+            NextTimerPeriod::AfterMs(next_timer_ms) => {
+                let next_instant = start + Duration::from_millis(next_timer_ms.get().into());
                 sleep(next_instant - Instant::now());
+            }
+            NextTimerPeriod::Never => {
+                sleep(Duration::from_millis(LV_DEF_REFR_PERIOD.into()));
             }
         }
     }

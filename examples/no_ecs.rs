@@ -18,7 +18,7 @@ use lv_bevy_ecs::{
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     support::{Align, OpacityLevel},
-    sys::{LV_DEF_REFR_PERIOD, LV_NO_TIMER_READY, lv_part_t_LV_PART_MAIN, lv_style_selector_t},
+    sys::{LV_DEF_REFR_PERIOD, lv_part_t_LV_PART_MAIN, lv_style_selector_t},
     trace,
     widgets::{Arc, Button, Label, Widget},
 };
@@ -101,7 +101,7 @@ fn main() {
         let mut button = Button::new();
         let mut label = Label::new();
         label.set_text(c"SPAWN");
-        lv_obj_set_parent(&mut label, &mut button);
+        label.set_parent(&mut button);
 
         let mut anim = Animation::new(
             Duration::from_secs(5),
@@ -126,7 +126,7 @@ fn main() {
                     let mut dynamic_label = Label::new();
                     dynamic_button.set_align(Align::TopRight.into());
                     dynamic_label.set_text(c"This is dynamic");
-                    lv_obj_set_parent(&mut dynamic_label, &mut dynamic_button);
+                    dynamic_label.set_parent(&mut dynamic_button);
                     objects.dynamic_button = Some(dynamic_button);
                     objects.dynamic_button_label = Some(dynamic_label);
                 }
@@ -141,11 +141,7 @@ fn main() {
         style.set_align(Align::TopLeft.into());
         style.set_bg_color(lv_color_make(255, 0, 0));
         unsafe {
-            lv_obj_add_style(
-                &mut button,
-                &mut style,
-                lv_part_t_LV_PART_MAIN as lv_style_selector_t,
-            );
+            button.add_style(&mut style, lv_part_t_LV_PART_MAIN as lv_style_selector_t);
         }
 
         button.leak();
@@ -161,17 +157,17 @@ fn main() {
 
     loop {
         let start = Instant::now();
-        let next_timer_ms = lv_timer_handler();
-        match next_timer_ms {
-            0 => {
+        let next_timer_period = lv_timer_handler();
+        match next_timer_period {
+            NextTimerPeriod::Ready => {
                 continue;
             }
-            LV_NO_TIMER_READY => {
-                sleep(Duration::from_millis(LV_DEF_REFR_PERIOD.into()));
-            }
-            _ => {
-                let next_instant = start + Duration::from_millis(next_timer_ms.into());
+            NextTimerPeriod::AfterMs(next_timer_ms) => {
+                let next_instant = start + Duration::from_millis(next_timer_ms.get().into());
                 sleep(next_instant - Instant::now());
+            }
+            NextTimerPeriod::Never => {
+                sleep(Duration::from_millis(LV_DEF_REFR_PERIOD.into()));
             }
         }
     }

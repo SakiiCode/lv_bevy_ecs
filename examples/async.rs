@@ -26,7 +26,7 @@ use lv_bevy_ecs::{
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     support::{Align, OpacityLevel},
-    sys::{LV_DEF_REFR_PERIOD, LV_NO_TIMER_READY, lv_part_t_LV_PART_MAIN, lv_style_selector_t},
+    sys::{LV_DEF_REFR_PERIOD, lv_part_t_LV_PART_MAIN, lv_style_selector_t},
     widgets::{Arc, Button, Label, LvglWorld},
 };
 use macro_rules_attribute::apply;
@@ -156,16 +156,16 @@ async fn main() {
 
     loop {
         let start = Instant::now();
-        let next_timer_ms = lv_timer_handler();
-        match next_timer_ms {
-            0 => {
+        let next_timer_period = lv_timer_handler();
+        match next_timer_period {
+            NextTimerPeriod::Ready => {
                 yield_now().await;
             }
-            LV_NO_TIMER_READY => {
+            NextTimerPeriod::Never => {
                 Timer::after(Duration::from_millis(LV_DEF_REFR_PERIOD.into())).await;
             }
-            _ => {
-                Timer::at(start + Duration::from_millis(next_timer_ms.into())).await;
+            NextTimerPeriod::AfterMs(next_timer_ms) => {
+                Timer::at(start + Duration::from_millis(next_timer_ms.get().into())).await;
             }
         }
     }

@@ -2,11 +2,21 @@
 
 use ::core::{
     ffi::{CStr, c_void},
+    num::NonZero,
     time::Duration,
 };
 
 use crate::styles::Style;
 use crate::widgets::Wdg;
+
+pub enum NextTimerPeriod {
+    /// At least one timer is waiting to be polled
+    Ready,
+    /// LVGL can wait this many milliseconds
+    AfterMs(NonZero<u32>),
+    /// There is no timer running
+    Never,
+}
 
 pub fn lv_init() {
     unsafe {
@@ -25,8 +35,15 @@ where
     crate::timers::lv_tick_set_cb(callback);
 }
 
-pub fn lv_timer_handler() -> u32 {
-    unsafe { lightvgl_sys::lv_timer_handler() }
+pub fn lv_timer_handler() -> NextTimerPeriod {
+    unsafe {
+        let next_timer_ms = lightvgl_sys::lv_timer_handler();
+        match next_timer_ms {
+            0 => NextTimerPeriod::Ready,
+            LV_NO_TIMER_READY => NextTimerPeriod::Never,
+            _ => NextTimerPeriod::AfterMs(NonZero::new_unchecked(next_timer_ms)),
+        }
+    }
 }
 
 pub fn lv_pct(pct: lightvgl_sys::lv_coord_t) -> lightvgl_sys::lv_coord_t {
