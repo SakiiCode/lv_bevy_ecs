@@ -12,7 +12,7 @@
 //! let mut dropdown = Dropdown::new();
 //! let mut chart_type_subject = Subject::new_int(0);
 //!
-//! dropdown.bind_value(chart_type_subject.raw_mut());
+//! dropdown.bind_value(&mut chart_type_subject);
 //!
 //! let mut chart = Chart::new();
 //! chart_type_subject.add_observer_obj(&mut chart, |observer, subject| unsafe {

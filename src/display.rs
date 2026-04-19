@@ -321,7 +321,7 @@ macro_rules! setup_test_display {
         use embedded_graphics::pixelcolor::Rgb565;
         use embedded_graphics::prelude::{Point, Size};
         use embedded_graphics_simulator::SimulatorDisplay;
-        use lv_bevy_ecs::display::{Display, DrawBuffer};
+        use lv_bevy_ecs::display::{Display, DrawBuf};
 
         const HOR_RES: u32 = 320;
         const VER_RES: u32 = 240;
