@@ -132,9 +132,13 @@ use bevy_ecs::{
     system::{ParamSet, Query},
     world::World,
 };
+#[cfg(feature = "no_ecs")]
+use lightvgl_sys::lv_style_selector_t;
 use lightvgl_sys::{lv_label_create, lv_obj_class_t, lv_obj_get_class, lv_obj_t};
 use thiserror::Error;
 
+#[cfg(feature = "no_ecs")]
+use crate::styles::Style;
 use crate::{
     events::{Event, EventCode},
     info,
@@ -297,6 +301,21 @@ impl Wdg {
         F: FnMut(Event),
     {
         crate::events::lv_obj_add_event_cb(self, filter, callback)
+    }
+
+    #[cfg(feature = "no_ecs")]
+    /// ## Safety
+    /// You need to make sure the given Style does not get deallocated, otherwise this will cause a
+    /// use-after-free.
+    ///
+    /// For example `Box::leak(Box::new(style))` can be used to prevent dropping it.
+    pub unsafe fn add_style(&mut self, style: &mut Style, selector: lv_style_selector_t) {
+        unsafe { lightvgl_sys::lv_obj_add_style(self.raw_mut(), style.raw_mut(), selector) }
+    }
+
+    #[cfg(feature = "no_ecs")]
+    pub fn set_parent(&mut self, parent: &mut Wdg) {
+        unsafe { lightvgl_sys::lv_obj_set_parent(self.raw_mut(), parent.raw_mut()) }
     }
 }
 

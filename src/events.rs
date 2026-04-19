@@ -130,7 +130,7 @@ impl TryFrom<lv_event_code_t> for EventCode {
     }
 }
 
-impl From<EventCode> for lightvgl_sys::lv_event_code_t {
+impl From<EventCode> for lv_event_code_t {
     fn from(event: EventCode) -> Self {
         let native_event = match event {
             EventCode::Pressed => lightvgl_sys::lv_event_code_t_LV_EVENT_PRESSED,
@@ -153,7 +153,7 @@ impl From<EventCode> for lightvgl_sys::lv_event_code_t {
             // TODO: handle all types...
             _ => lightvgl_sys::lv_event_code_t_LV_EVENT_CLICKED,
         };
-        native_event as lightvgl_sys::lv_event_code_t
+        native_event as lv_event_code_t
     }
 }
 

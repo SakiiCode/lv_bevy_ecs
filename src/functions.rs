@@ -78,19 +78,4 @@ pub fn lv_screen_active() -> Option<Wdg> {
     unsafe { Wdg::try_from_ptr(lightvgl_sys::lv_screen_active()) }
 }
 
-#[cfg(feature = "no_ecs")]
-/// ## Safety
-/// You need to make sure the given Style does not get deallocated, otherwise this will cause a
-/// use-after-free.
-///
-/// For example `Box::leak(Box::new(style))` can be used to prevent dropping it.
-pub unsafe fn lv_obj_add_style(widget: &mut Wdg, style: &mut Style, selector: lv_style_selector_t) {
-    unsafe { lightvgl_sys::lv_obj_add_style(widget.raw_mut(), style.raw_mut(), selector) }
-}
-
-#[cfg(feature = "no_ecs")]
-pub fn lv_obj_set_parent(obj: &mut Wdg, parent: &mut Wdg) {
-    unsafe { lightvgl_sys::lv_obj_set_parent(obj.raw_mut(), parent.raw_mut()) }
-}
-
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
