@@ -450,22 +450,6 @@ impl From<SimpleObject<Wdg>> for Wdg {
     }
 }
 
-fn asd() {
-    let mut a = SimpleObject::new();
-    a.set_text(c"asdsdad");
-    let mut world = World::new();
-    //lv_label_set_text(&mut *a, c"asdsad");
-    a.universal_func();
-    //let widget: Widget = a.into();
-    //world.spawn(a);
-    //let lbl: SimpleObject<Widget> = widget.try_into().unwrap();
-    //let lbl_borrow: SimpleObject<Wdg> = asdasd.try_into().unwrap();
-}
-
-impl Wdg {
-    fn universal_func(&self) {}
-}
-
 pub trait WidgetSpec {
     fn get_class() -> &'static lv_obj_class_t;
 
@@ -495,14 +479,6 @@ macro_rules! impl_widget {
         }
 
         impl<T: RawObj> $t<T> {
-            pub fn raw(&self) -> *const lv_obj_t {
-                self.0.raw()
-            }
-
-            pub fn raw_mut(&mut self) -> *mut lv_obj_t {
-                self.0.raw_mut()
-            }
-
             pub fn into_inner(self) -> T {
                 self.0
             }
