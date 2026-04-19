@@ -36,7 +36,6 @@ use ::core::{
     mem::MaybeUninit,
 };
 use alloc::{boxed::Box, vec};
-use core::ptr::addr_of_mut;
 
 use bevy_ecs::component::Component;
 use lightvgl_sys::{lv_observer_get_user_data, lv_subject_t};
@@ -79,7 +78,7 @@ impl Subject {
             let zero: c_char = 0;
             lightvgl_sys::lv_subject_init_string(
                 subject.as_mut_ptr(),
-                addr_of_mut!(vec![zero; len].leak()[0]),
+                &raw mut vec![zero; len].leak()[0],
                 core::ptr::null_mut(),
                 len,
                 value.as_ptr(),

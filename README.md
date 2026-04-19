@@ -151,7 +151,6 @@ codegen-units = 1
 
 - [x] Displays
 - [x] Widgets
-- [x] Widget functions
 - [x] Events
 - [x] Styles
 - [x] Input devices
@@ -165,6 +164,7 @@ codegen-units = 1
 - [x] LVGL docstrings
 - [x] Cross-language LTO
 - [x] Defmt support
+- [x] OOP-style function calls
 - [ ] Auto-generated enums
 - [ ] File system
 - [ ] Custom fonts
