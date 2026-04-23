@@ -6,20 +6,22 @@ use ::core::ffi::c_void;
 #[global_allocator]
 static ALLOCATOR: LvglAlloc = LvglAlloc;
 
-#[cfg(all(
-    LV_USE_STDLIB_MALLOC = "BUILTIN",
-    not(feature = "ctor"),
-    not(target_os = "none")
-))]
-compile_error!(
-    "`lvgl-alloc` and `LV_USE_STDLIB_MALLOC = BUILTIN` without `ctor` gives instant segmentation fault"
-);
-
 /// LVGL allocator. Enabled by toggling the `lvgl-alloc` feature.
 pub struct LvglAlloc;
 
 unsafe impl GlobalAlloc for LvglAlloc {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+        #[cfg(all(
+            LV_USE_STDLIB_MALLOC = "BUILTIN",
+            not(feature = "ctor"),
+            not(target_os = "none")
+        ))]
+        unsafe {
+            if !lightvgl_sys::lv_is_initialized() {
+                lightvgl_sys::lv_init();
+            }
+        }
+
         unsafe {
             const USIZE_BYTES: usize = (usize::BITS / u8::BITS) as usize;
             let extra_bytes = USIZE_BYTES + (layout.align() - 1);
