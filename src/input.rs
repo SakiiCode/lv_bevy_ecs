@@ -115,12 +115,12 @@ impl InputType for Button {
 }
 
 #[allow(dead_code)]
-pub struct Indev<T: InputType> {
+pub struct InputDevice<T: InputType> {
     raw: NonNull<lv_indev_t>,
     r#type: PhantomData<T>,
 }
 
-impl<T: InputType> Indev<T> {
+impl<T: InputType> InputDevice<T> {
     pub fn new<F>(read_cb: F) -> Self
     where
         F: FnMut() -> InputEvent<T>,

@@ -10,12 +10,12 @@ use std::{
 
 use lv_bevy_ecs::{
     animation::Animation,
-    display::{Display, DrawBuf},
+    display::{Display, DrawBuffer},
     error,
     events::EventCode,
     functions::*,
     info,
-    input::{BufferStatus, Indev, InputEvent, InputState, Pointer},
+    input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     support::{Align, OpacityLevel},
     sys::{LV_DEF_REFR_PERIOD, lv_part_t_LV_PART_MAIN, lv_style_selector_t},
@@ -64,7 +64,7 @@ fn main() {
 
     let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
 
-    let buffer = DrawBuf::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
+    let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
     info!("Display OK");
 
@@ -84,7 +84,7 @@ fn main() {
     info!("Display Driver OK");
 
     // Register a new input device that's capable of reading the current state of the input
-    let _touch_screen = Indev::<Pointer>::new(|| get_touch_input(window.events()));
+    let _touch_screen = InputDevice::<Pointer>::new(|| get_touch_input(window.events()));
 
     info!("Input OK");
 

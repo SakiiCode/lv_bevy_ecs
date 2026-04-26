@@ -72,7 +72,7 @@ impl Display {
 
     pub fn register<'a, F, const N: usize, C: LvglColorFormat>(
         &'a mut self,
-        buffer: DrawBuf<N, C>,
+        buffer: DrawBuffer<N, C>,
         callback: F,
     ) where
         F: FnMut(&mut DisplayRefresh<N, C>) + 'a,
@@ -297,12 +297,12 @@ impl<const N: usize, C> DisplayRefresh<'_, N, C> {
     }
 }
 
-pub struct DrawBuf<const N: usize, C: LvglColorFormat> {
+pub struct DrawBuffer<const N: usize, C: LvglColorFormat> {
     raw: NonNull<lv_draw_buf_t>,
     color_depth: PhantomData<C>,
 }
 
-impl<const N: usize, C: LvglColorFormat> DrawBuf<N, C> {
+impl<const N: usize, C: LvglColorFormat> DrawBuffer<N, C> {
     pub fn new(w: u32, h: u32) -> Self {
         assert_eq!(w * h, N as u32);
         let cf = C::as_lv_color_format_t();

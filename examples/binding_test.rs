@@ -13,12 +13,12 @@ use std::{
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, hierarchy::Children, query::With, world::World},
-    display::{Display, DrawBuf},
+    display::{Display, DrawBuffer},
     error,
     events::{Event, EventCode},
     functions::*,
     info,
-    input::{BufferStatus, Indev, InputEvent, InputState, Pointer},
+    input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     subjects::Subject,
     support::{LV_SIZE_CONTENT, OpacityLevel},
@@ -75,7 +75,7 @@ fn main() {
 
     let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
 
-    let buffer = DrawBuf::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
+    let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
@@ -89,7 +89,7 @@ fn main() {
     });
 
     // Register a new input device that's capable of reading the current state of the input
-    let _touch_screen = Indev::<Pointer>::new(|| get_touch_input(window.events()));
+    let _touch_screen = InputDevice::<Pointer>::new(|| get_touch_input(window.events()));
 
     lv_tick_set_cb(|| {
         let current_time = SystemTime::now();
