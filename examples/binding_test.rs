@@ -75,8 +75,7 @@ fn main() {
 
     let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
 
-    let buffer =
-        DrawBuf::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
+    let buffer = DrawBuf::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
@@ -86,6 +85,7 @@ fn main() {
         if refresh.display.flush_is_last() {
             window.update(&sim_display);
         }
+        refresh.display.flush_ready();
     });
 
     // Register a new input device that's capable of reading the current state of the input
