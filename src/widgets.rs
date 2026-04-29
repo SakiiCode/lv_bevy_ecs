@@ -121,7 +121,7 @@ use ::core::{
     ops::{Deref, DerefMut},
     ptr::NonNull,
 };
-use core::ffi::CStr;
+use core::{ffi::CStr, mem::MaybeUninit};
 
 use alloc::string::{String, ToString};
 use bevy_ecs::{
@@ -144,6 +144,43 @@ use crate::{
     info,
 };
 
+/// An [LvglWorld] wrapper that is `const` compatible, but must be initalized manually before first use using `.init()`
+///
+/// It never checks whether the underlying data has been initialized, potentially causing undefined behaviour
+///
+/// If unsure, just use `std::sync::LazyLock` *(std)* or `once_cell::sync::Lazy` *(no_std)*
+#[repr(transparent)]
+pub struct UnsafeLvglWorld(MaybeUninit<LvglWorld>);
+
+impl UnsafeLvglWorld {
+    pub const fn new() -> Self {
+        Self(MaybeUninit::uninit())
+    }
+    pub fn init(&mut self) {
+        self.0.write(LvglWorld::default());
+    }
+}
+
+impl Default for UnsafeLvglWorld {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Deref for UnsafeLvglWorld {
+    type Target = LvglWorld;
+    fn deref(&self) -> &Self::Target {
+        unsafe { self.0.assume_init_ref() }
+    }
+}
+
+impl DerefMut for UnsafeLvglWorld {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { self.0.assume_init_mut() }
+    }
+}
+
 pub struct LvglWorld(World);
 
 impl Default for LvglWorld {
@@ -164,6 +201,13 @@ impl Deref for LvglWorld {
 impl DerefMut for LvglWorld {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
+    }
+}
+
+impl LvglWorld {
+    #[inline]
+    pub fn new() -> Self {
+        Self::default()
     }
 }
 
