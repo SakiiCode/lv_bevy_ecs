@@ -110,31 +110,21 @@ impl Subject {
 }
 
 impl Subject {
-    pub fn add_observer_obj<'a, F>(&'a mut self, object: &'a mut Wdg, callback: F)
+    // the order of parameters is not the same, but callback should come last for readability
+    pub fn add_observer_obj<F>(&mut self, object: &mut Wdg, callback: F)
     where
-        F: FnMut(*mut lightvgl_sys::lv_observer_t, *mut lightvgl_sys::lv_subject_t) + 'a,
+        F: FnMut(*mut lightvgl_sys::lv_observer_t, *mut lightvgl_sys::lv_subject_t) + 'static,
     {
-        lv_subject_add_observer_obj(self, object, callback)
+        unsafe {
+            lightvgl_sys::lv_subject_add_observer_obj(
+                self.raw_mut(),
+                Some(observer_trampoline::<F>),
+                object.raw_mut(),
+                Box::into_raw(Box::new(callback)).cast(),
+            );
+        }
+        crate::info!("Added Observer");
     }
-}
-
-// the order of parameters is not the same, but callback should come last for readability
-pub(crate) fn lv_subject_add_observer_obj<'a, F>(
-    subject: &'a mut Subject,
-    object: &mut Wdg,
-    callback: F,
-) where
-    F: FnMut(*mut lightvgl_sys::lv_observer_t, *mut lightvgl_sys::lv_subject_t) + 'a,
-{
-    unsafe {
-        lightvgl_sys::lv_subject_add_observer_obj(
-            subject.raw_mut(),
-            Some(observer_trampoline::<F>),
-            object.raw_mut(),
-            Box::into_raw(Box::new(callback)).cast(),
-        );
-    }
-    crate::info!("Added Observer");
 }
 
 unsafe extern "C" fn observer_trampoline<F>(

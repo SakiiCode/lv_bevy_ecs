@@ -91,12 +91,12 @@ impl Display {
     /// ## Arguments
     ///  - `buffer` - [DrawBuffer] object that matches the [Display] color format
     ///  - `callback` - Function or closure that pushes the pixels to the screen
-    pub fn register<'a, F, const N: usize, C: LvglColorFormat>(
-        &'a mut self,
+    pub fn register<F, const N: usize, C: LvglColorFormat>(
+        &mut self,
         buffer: DrawBuffer<N, C>,
         callback: F,
     ) where
-        F: FnMut(&mut DisplayRefresh<N, C>) + 'a,
+        F: FnMut(&mut DisplayRefresh<N, C>) + 'static,
     {
         let cf = C::as_lv_color_format_t();
         verify_color_format(cf);
@@ -126,13 +126,13 @@ impl Display {
     /// ## Safety
     /// `buffer` must live at least as long as the Display.
     /// Deallocating it earlier will cause a use-after-free.
-    pub unsafe fn register_raw<'a, F, const N: usize, C: LvglColorFormat>(
-        &'a mut self,
+    pub unsafe fn register_raw<F, const N: usize, C: LvglColorFormat>(
+        &mut self,
         buffer: &mut [u8],
         render_mode: RenderMode,
         callback: F,
     ) where
-        F: FnMut(&mut DisplayRefresh<N, C>) + 'a,
+        F: FnMut(&mut DisplayRefresh<N, C>) + 'static,
     {
         let cf = C::as_lv_color_format_t();
         verify_color_format(cf);

@@ -342,7 +342,7 @@ impl Wdg {
 
     pub fn add_event_cb<'a, F>(&mut self, filter: EventCode, callback: F)
     where
-        F: FnMut(Event),
+        F: FnMut(Event) + 'static,
     {
         crate::events::lv_obj_add_event_cb(self, filter, callback)
     }
