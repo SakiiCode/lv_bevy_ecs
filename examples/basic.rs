@@ -1,5 +1,7 @@
 use std::{
+    cell::RefCell,
     process::exit,
+    rc::Rc,
     sync::{
         Mutex,
         atomic::{AtomicBool, Ordering},
@@ -53,6 +55,10 @@ fn main() {
     let mut window = Window::new("Button Example", &output_settings);
     window.set_max_fps(0);
 
+    window.update(&sim_display);
+
+    let window = Rc::new(RefCell::new(window));
+
     info!("SIMULATOR OK");
     error!("Random error");
 
@@ -63,20 +69,30 @@ fn main() {
 
     info!("Display OK");
 
-    display.register(buffer, |refresh| {
-        //sim_display.draw_iter(refresh.as_pixels()).unwrap();
-        sim_display
-            .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
-            .unwrap();
-        if refresh.display.flush_is_last() {
-            window.update(&sim_display);
-        }
-    });
+    let window_rc = window.clone();
+    display.register(
+        buffer,
+        Box::pin(
+            move |refresh: &mut lv_bevy_ecs::display::DisplayRefresh<'_, _, Rgb565>| {
+                //sim_display.draw_iter(refresh.as_pixels()).unwrap();
+                sim_display
+                    .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
+                    .unwrap();
+                if refresh.display.flush_is_last() {
+                    window_rc.borrow_mut().update(&sim_display);
+                }
+            },
+        ),
+    );
 
     info!("Display Driver OK");
 
     // Register a new input device that's capable of reading the current state of the input
-    let _touch_screen = InputDevice::<Pointer>::new(|| get_touch_input(window.events()));
+    let window_rc = window.clone();
+    let _touch_screen =
+        InputDevice::<Pointer>::new(move || get_touch_input(window_rc.borrow_mut().events()));
+
+    drop(window);
 
     info!("Input OK");
 
@@ -89,11 +105,13 @@ fn main() {
         ms
     });
 
-    let mut world = LvglWorld::default();
+    let world = Rc::new(RefCell::new(LvglWorld::default()));
 
     info!("ECS OK");
 
     {
+        let world_rc = world.clone();
+        let mut world = world_rc.borrow_mut();
         let mut button = Button::new();
         let mut label = Label::new();
         label.set_text(c"SPAWN");
@@ -109,7 +127,9 @@ fn main() {
             },
         );
 
-        button.add_event_cb(EventCode::Clicked, |_| {
+        let world_rc = world_rc.clone();
+        button.add_event_cb(EventCode::Clicked, move |_| {
+            let mut world = world_rc.borrow_mut();
             match world
                 .query_filtered::<Entity, With<DynamicButton>>()
                 .single(&world)
@@ -157,8 +177,6 @@ fn main() {
     }
 
     info!("Create OK");
-
-    window.update(&sim_display);
 
     loop {
         let start = Instant::now();

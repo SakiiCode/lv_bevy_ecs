@@ -1,7 +1,9 @@
 use std::{
+    cell::RefCell,
     process::exit,
+    rc::Rc,
     sync::{
-        Mutex,
+        LazyLock, Mutex,
         atomic::{AtomicBool, Ordering},
     },
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
@@ -27,14 +29,23 @@ use lv_bevy_ecs::{
     styles::Style,
     support::{Align, OpacityLevel},
     sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t},
-    widgets::{Arc, Button, Label, LvglWorld},
+    widgets::{Arc, Button, Label, UnsafeLvglWorld},
 };
 use macro_rules_attribute::apply;
 use smol::{Timer, future::yield_now};
 use smol_macros::main;
+use static_cell::StaticCell;
 
 #[derive(Component)]
 struct DynamicButton;
+
+static WORLD: Mutex<UnsafeLvglWorld> = Mutex::new(UnsafeLvglWorld::new());
+
+macro_rules! arc_as_mut {
+    ($var:ident) => {
+        std::sync::Arc::get_mut(&mut $var).unwrap()
+    };
+}
 
 #[apply(main!)]
 async fn main() {
@@ -51,6 +62,8 @@ async fn main() {
     let mut window = Window::new("Async Button Example", &output_settings);
     window.set_max_fps(0);
 
+    let window = Box::pin(Rc::new(RefCell::new(window)));
+
     info!("Simulator OK");
 
     let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
@@ -59,20 +72,30 @@ async fn main() {
         DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
     info!("Display OK");
+    let window_rc = window.clone();
 
-    display.register(buffer, |refresh| {
-        //sim_display.draw_iter(refresh.as_pixels()).unwrap();
-        sim_display
-            .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
-            .unwrap();
-        if refresh.display.flush_is_last() {
-            window.update(&sim_display);
-        }
-    });
+    display.register(
+        buffer,
+        Box::pin(
+            move |refresh: &mut lv_bevy_ecs::display::DisplayRefresh<'_, _, Rgb565>| {
+                //sim_display.draw_iter(refresh.as_pixels()).unwrap();
+                sim_display
+                    .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
+                    .unwrap();
+                if refresh.display.flush_is_last() {
+                    window.update(&sim_display);
+                }
+            },
+        ),
+    );
 
     info!("Display Driver OK");
 
-    let _touch_screen = InputDevice::<Pointer>::new(|| get_touch_input(window.events()));
+    let window_rc = window.clone();
+    let _touch_screen =
+        InputDevice::<Pointer>::new(move || get_touch_input(window_rc.borrow_mut().events()));
+
+    drop(window);
 
     lv_tick_set_cb(|| {
         let current_time = SystemTime::now();
@@ -83,11 +106,12 @@ async fn main() {
         ms
     });
 
-    let mut world = LvglWorld::default();
-
     info!("ECS OK");
 
     {
+        let mut world = WORLD.lock().unwrap();
+        world.init();
+
         let mut button = Button::new();
         let mut label = Label::new();
         label.set_text(c"SPAWN");
@@ -104,6 +128,7 @@ async fn main() {
         );
 
         button.add_event_cb(EventCode::Clicked, |_| {
+            let mut world = WORLD.lock().unwrap();
             match world
                 .query_filtered::<Entity, With<DynamicButton>>()
                 .single(&world)
@@ -151,8 +176,6 @@ async fn main() {
     }
 
     info!("Create OK");
-
-    window.update(&sim_display);
 
     loop {
         let start = Instant::now();
