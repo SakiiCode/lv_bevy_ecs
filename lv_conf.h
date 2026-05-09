@@ -909,7 +909,7 @@
 #define LV_FS_DEFAULT_DRIVER_LETTER '\0'
 
 /** API for fopen, fread, etc. */
-#define LV_USE_FS_STDIO 1
+#define LV_USE_FS_STDIO __linux__
 #if LV_USE_FS_STDIO
     #define LV_FS_STDIO_LETTER 'A'     /**< Set an upper-case driver-identifier letter for this driver (e.g. 'A'). */
     #define LV_FS_STDIO_PATH ""         /**< Set the working directory. File/directory paths will be appended to it. */
@@ -925,9 +925,9 @@
 #endif
 
 /** API for CreateFile, ReadFile, etc. */
-#define LV_USE_FS_WIN32 0
+#define LV_USE_FS_WIN32 _WIN32
 #if LV_USE_FS_WIN32
-    #define LV_FS_WIN32_LETTER '\0'     /**< Set an upper-case driver-identifier letter for this driver (e.g. 'A'). */
+    #define LV_FS_WIN32_LETTER 'A'     /**< Set an upper-case driver-identifier letter for this driver (e.g. 'A'). */
     #define LV_FS_WIN32_PATH ""         /**< Set the working directory. File/directory paths will be appended to it. */
     #define LV_FS_WIN32_CACHE_SIZE 0    /**< >0 to cache this number of bytes in lv_fs_read() */
 #endif

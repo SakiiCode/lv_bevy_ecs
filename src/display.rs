@@ -61,7 +61,8 @@ pub struct Display {
     raw: NonNull<lv_display_t>,
 }
 
-#[repr(u32)]
+#[cfg_attr(windows, repr(i32))]
+#[cfg_attr(not(windows), repr(u32))]
 pub enum RenderMode {
     Partial = lightvgl_sys::lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL,
     Direct = lightvgl_sys::lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_DIRECT,

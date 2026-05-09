@@ -51,6 +51,7 @@ use embedded_graphics::{
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
+use static_cell::StaticCell;
 
 #[derive(Component)]
 struct DynamicLabel;
@@ -75,7 +76,8 @@ fn main() {
 
     let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
 
-    let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
+    let buffer =
+        DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
     display.register(buffer, |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
@@ -133,20 +135,24 @@ fn create_ui(world: &mut World) {
         style_big_font.set_text_font(&lv_font_montserrat_24);
     }
 
-    let grid_cols = [
-        300 as i32,
-        lv_grid_fr(3) as i32,
-        lv_grid_fr(2) as i32,
+    //const LV_GRID_TEMPLATE_LAST: i32 = 536870911; //1 << 29 - 1;
+    static GRID_COLS: StaticCell<[i32; 4]> = StaticCell::new();
+    let grid_cols = GRID_COLS.init([
+        300,
+        lv_grid_fr(3),
+        lv_grid_fr(2),
         LV_GRID_TEMPLATE_LAST as i32,
-    ];
-    let grid_rows = [
-        100 as i32,
-        lv_grid_fr(1) as i32,
+    ]);
+    static GRID_ROWS: StaticCell<[i32; 4]> = StaticCell::new();
+    let grid_rows = GRID_ROWS.init([
+        100,
+        lv_grid_fr(1),
         LV_GRID_CONTENT as i32,
         LV_GRID_TEMPLATE_LAST as i32,
-    ];
+    ]);
 
     let mut active_screen = lv_screen_active().unwrap();
+    // grid descriptors must not be dropped
     active_screen.set_grid_dsc_array(&grid_cols[0], &grid_rows[0]);
 
     let mut chart_type_subject = Subject::new_int(0);
@@ -218,11 +224,11 @@ fn create_ui(world: &mut World) {
         ptr
     });
 
-    let btnmatrix_ctrl = Box::new([
+    let btnmatrix_ctrl = [
         lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED,
         2 | lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
         1,
-    ]);
+    ];
 
     let mut btnmatrix = Buttonmatrix::new();
     btnmatrix.set_grid_cell(
@@ -234,9 +240,12 @@ fn create_ui(world: &mut World) {
         1,
     );
 
-    btnmatrix.set_map(&btnmatrix_options);
+    static BTNMATRIX_MAP: StaticCell<[*const i8; 5]> = StaticCell::new();
+    let btnmatrix_options = BTNMATRIX_MAP.init(btnmatrix_options);
+    // btnmatrix_options must not be dropped
+    btnmatrix.set_map(btnmatrix_options);
 
-    btnmatrix.set_ctrl_map(&Box::leak(btnmatrix_ctrl)[0]);
+    btnmatrix.set_ctrl_map(&btnmatrix_ctrl[0]);
 
     btnmatrix.set_selected_button(1);
     btnmatrix.add_event_cb(EventCode::ValueChanged, |mut event| {
