@@ -61,6 +61,19 @@ pub struct Display {
     raw: NonNull<lv_display_t>,
 }
 
+#[repr(u32)]
+pub enum RenderMode {
+    Partial = lightvgl_sys::lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL,
+    Direct = lightvgl_sys::lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_DIRECT,
+    Full = lightvgl_sys::lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_FULL,
+}
+
+impl From<RenderMode> for lightvgl_sys::lv_display_render_mode_t {
+    fn from(value: RenderMode) -> Self {
+        value as Self
+    }
+}
+
 impl Display {
     pub fn new(hor_res: i32, ver_res: i32) -> Self {
         crate::support::assert_lv_is_initialized!();
@@ -84,6 +97,37 @@ impl Display {
                 self.raw_mut(),
                 buffer.raw.as_ptr(),
                 ::core::ptr::null_mut(),
+            );
+            lightvgl_sys::lv_display_set_flush_cb(
+                self.raw.as_ptr(),
+                Some(disp_flush_trampoline::<F, N, C>),
+            );
+            lightvgl_sys::lv_display_set_user_data(
+                self.raw.as_ptr(),
+                Box::into_raw(Box::new(callback)).cast(),
+            );
+        }
+        crate::info!("Display Registered");
+    }
+
+    pub fn register_raw<'a, F, const N: usize, C: LvglColorFormat>(
+        &'a mut self,
+        buffer: &mut [u8],
+        render_mode: RenderMode,
+        callback: F,
+    ) where
+        F: FnMut(&mut DisplayRefresh<N, C>) + 'a,
+    {
+        let cf = C::as_lv_color_format_t();
+        verify_color_format(cf);
+        assert_eq!(buffer.len(), N);
+        unsafe {
+            lightvgl_sys::lv_display_set_buffers(
+                self.raw_mut(),
+                buffer.as_mut_ptr().cast(),
+                ::core::ptr::null_mut(),
+                N as u32,
+                render_mode.into(),
             );
             lightvgl_sys::lv_display_set_flush_cb(
                 self.raw.as_ptr(),
@@ -314,7 +358,19 @@ impl<const N: usize, C: LvglColorFormat> DrawBuffer<N, C> {
             }
         }
     }
-    pub fn raw(&self) -> *mut lv_draw_buf_t {
+
+    pub fn from_raw(raw: NonNull<lv_draw_buf_t>) -> Self {
+        Self {
+            raw,
+            color_depth: PhantomData,
+        }
+    }
+
+    pub fn raw(&mut self) -> *const lv_draw_buf_t {
+        self.raw.as_ptr().cast_const()
+    }
+
+    pub fn raw_mut(&mut self) -> *mut lv_draw_buf_t {
         self.raw.as_ptr()
     }
 }
