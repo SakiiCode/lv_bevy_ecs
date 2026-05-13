@@ -87,7 +87,6 @@ fn main() {
         if refresh.display.flush_is_last() {
             window.update(&sim_display);
         }
-        refresh.display.flush_ready();
     });
 
     // Register a new input device that's capable of reading the current state of the input

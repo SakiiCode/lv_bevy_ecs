@@ -64,7 +64,8 @@ fn main() {
 
     let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
 
-    let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
+    let buffer =
+        DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
     info!("Display OK");
 
@@ -78,7 +79,6 @@ fn main() {
         if refresh.display.flush_is_last() {
             window.update(&sim_display);
         }
-        refresh.display.flush_ready();
     });
 
     info!("Display Driver OK");

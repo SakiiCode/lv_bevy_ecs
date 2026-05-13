@@ -68,7 +68,6 @@ async fn main() {
         if refresh.display.flush_is_last() {
             window.update(&sim_display);
         }
-        refresh.display.flush_ready();
     });
 
     info!("Display Driver OK");

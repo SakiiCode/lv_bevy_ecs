@@ -53,7 +53,10 @@ use embedded_graphics::{
     prelude::{PixelColor, Point, Size},
     primitives::Rectangle,
 };
-use lightvgl_sys::{lv_color_format_t, lv_display_get_user_data, lv_display_t, lv_draw_buf_t};
+use lightvgl_sys::{
+    lv_color_format_t, lv_display_flush_ready, lv_display_get_user_data, lv_display_t,
+    lv_draw_buf_t,
+};
 
 use crate::support::LvglColorFormat;
 
@@ -84,6 +87,10 @@ impl Display {
         }
     }
 
+    /// Assigns a callback to `lv_display_set_flush_cb`
+    /// ## Arguments
+    ///  - `buffer` - [DrawBuffer] object that matches the [Display] color format
+    ///  - `callback` - Function or closure that pushes the pixels to the screen
     pub fn register<'a, F, const N: usize, C: LvglColorFormat>(
         &'a mut self,
         buffer: DrawBuffer<N, C>,
@@ -111,7 +118,15 @@ impl Display {
         crate::info!("Display Registered");
     }
 
-    pub fn register_raw<'a, F, const N: usize, C: LvglColorFormat>(
+    /// Assigns a callback to `lv_display_set_flush_cb`
+    /// ## Arguments
+    ///  * `buffer` - `&mut [u8]` slice that is exactly *N* bytes long
+    ///  * `render_mode` - Specifies the `lv_display_render_mode_t`
+    ///  * `callback` - Function or closure that pushes the pixels to the screen
+    /// ## Safety
+    /// `buffer` must live at least as long as the Display.
+    /// Deallocating it earlier will cause a use-after-free.
+    pub unsafe fn register_raw<'a, F, const N: usize, C: LvglColorFormat>(
         &'a mut self,
         buffer: &mut [u8],
         render_mode: RenderMode,
@@ -307,6 +322,7 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
                 display: Display::from_ptr_unchecked(display),
             };
             callback(&mut update);
+            lv_display_flush_ready(display);
         } else {
             crate::warn!("Display callback user data was null, this should never happen!");
         }
