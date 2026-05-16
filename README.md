@@ -1,10 +1,13 @@
 # lv_bevy_ecs
 
-Safe Rust bindings to the LVGL library using bevy_ecs. Compatible with `#![no_std]` environments by default.
+Safe Rust bindings to the LVGL library using bevy_ecs. Compatible with `#![no_std]` environments by default. An `alloc` implementation is required.
 
 [![Crates.io](https://img.shields.io/crates/v/lv_bevy_ecs.svg)](https://crates.io/crates/lv_bevy_ecs)
 [![Docs](https://docs.rs/lv_bevy_ecs/badge.svg)](https://docs.rs/lv_bevy_ecs/latest/lv_bevy_ecs/)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+
+> [!NOTE]
+> This crate is under heavy development and the API has not settled yet. Expect several breaking changes in every 0.x release.
 
 ## What is an ECS?
 
