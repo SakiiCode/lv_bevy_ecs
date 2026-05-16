@@ -40,7 +40,7 @@ fn main() {
     lv_bevy_ecs::logging::lv_log_init();
 
     #[cfg(feature = "rust-alloc")]
-    lv_bevy_ecs::malloc::provide_mem_monitor_impl(get_memory_stats);
+    lv_bevy_ecs::malloc::set_mem_monitor(get_memory_stats);
 
     const HOR_RES: u32 = 320;
     const VER_RES: u32 = 240;
@@ -58,7 +58,8 @@ fn main() {
 
     let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
 
-    let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
+    let buffer =
+        DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
     info!("Display OK");
 

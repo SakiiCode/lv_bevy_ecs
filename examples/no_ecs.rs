@@ -46,7 +46,7 @@ fn main() {
     lv_bevy_ecs::logging::lv_log_init();
 
     #[cfg(feature = "rust-alloc")]
-    lv_bevy_ecs::malloc::provide_mem_monitor_impl(get_memory_stats);
+    lv_bevy_ecs::malloc::set_mem_monitor(get_memory_stats);
 
     const HOR_RES: u32 = 320;
     const VER_RES: u32 = 240;

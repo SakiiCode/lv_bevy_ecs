@@ -117,7 +117,7 @@ pub fn get_memory_stats(monitor: &mut lv_bevy_ecs::sys::lv_mem_monitor_t) {
 
 fn main() {
     // ...
-    lv_bevy_ecs::malloc::provide_mem_monitor_impl(get_memory_stats);
+    lv_bevy_ecs::malloc::set_mem_monitor(get_memory_stats);
 }
 ```
 

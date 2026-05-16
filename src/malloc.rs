@@ -85,7 +85,7 @@ pub unsafe extern "C" fn lv_mem_monitor_core(monitor: *mut lv_mem_monitor_t) {
     }
 }
 
-pub fn provide_mem_monitor_impl(callback: fn(&mut lv_mem_monitor_t)) {
+pub fn set_mem_monitor(callback: fn(&mut lv_mem_monitor_t)) {
     unsafe {
         MEM_MONITOR_IMPL = callback;
     }
