@@ -12,19 +12,15 @@ macro_rules! cstr {
     }};
 }
 
-macro_rules! assert_lv_is_initialized {
-    () => {
-        #[cfg(not(feature = "ctor"))]
-        unsafe {
-            assert!(
-                lightvgl_sys::lv_is_initialized(),
-                "LVGL was not initialized! Add lv_init(); to the beginning of main()"
-            );
-        }
-    };
+#[inline]
+pub(crate) fn assert_lv_is_initialized() {
+    unsafe {
+        assert!(
+            lightvgl_sys::lv_is_initialized(),
+            "LVGL was not initialized! Add lv_init(); to the beginning of main()"
+        );
+    }
 }
-
-pub(crate) use assert_lv_is_initialized;
 
 pub trait LvglColorFormat {
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t;

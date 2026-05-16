@@ -80,7 +80,7 @@ impl From<RenderMode> for lightvgl_sys::lv_display_render_mode_t {
 
 impl Display {
     pub fn new(hor_res: i32, ver_res: i32) -> Self {
-        crate::support::assert_lv_is_initialized!();
+        crate::support::assert_lv_is_initialized();
         unsafe {
             let raw = NonNull::new(lightvgl_sys::lv_display_create(hor_res, ver_res)).unwrap();
             Self { raw }
