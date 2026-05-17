@@ -4,7 +4,8 @@ Safe Rust bindings to the LVGL library using bevy_ecs. Compatible with `#![no_st
 
 [![Crates.io](https://img.shields.io/crates/v/lv_bevy_ecs.svg)](https://crates.io/crates/lv_bevy_ecs)
 [![Docs](https://docs.rs/lv_bevy_ecs/badge.svg)](https://docs.rs/lv_bevy_ecs/latest/lv_bevy_ecs/)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+[![Changelog](https://img.shields.io/badge/changelog-.md-darkorchid)](https://github.com/SakiiCode/lv_bevy_ecs/blob/master/CHANGELOG.md)
+![License](https://img.shields.io/badge/license-MIT-informational.svg)
 
 > [!NOTE]
 > This crate is under heavy development and the API has not settled yet. Expect several breaking changes in every 0.x release.
@@ -39,7 +40,7 @@ It is highly recommended to read [Chapter 14 of the Unofficial Bevy Cheat Book](
 2.  This package depends on [lightvgl-sys](https://crates.io/crates/lightvgl-sys) to generate the raw unsafe bindings.
     It needs an environment variable called `DEP_LV_CONFIG_PATH` that specifies the path to the folder containing `lv_conf.h` file.
 
-    It is recommended to put it into `.cargo/config.toml`
+    It is recommended to add it inside `.cargo/config.toml`
 
 ```toml
 [env]
@@ -62,8 +63,10 @@ lv_tick_set_cb(|| {
 });
 ```
 
-4. Obtain a World instance with `LvglWorld::default();`.
+4. Obtain a World instance with `LvglWorld::new();`.
    This is a global variable, it can be stored in a `LazyLock` or passed around in an `Arc<Mutex<LvglWorld>>` if needed elsewhere than in main().
+
+   _There are better but more complex patterns, like making LvglWorld local inside a specific task and using channels for communication. Alternatively, making the state global and synchronizing with LVGL before `lv_timer_handler()`. This way Mutex usage can be minimized._
 
 ```rust
 # use lv_bevy_ecs::widgets::LvglWorld;
@@ -78,6 +81,7 @@ static WORLD: LazyLock<Mutex<LvglWorld>> = LazyLock::new(|| Mutex::new(LvglWorld
 # use lv_bevy_ecs::functions::*;
 # use std::thread::sleep;
 # use std::time::{Duration, Instant};
+#
 loop {
     let start = Instant::now();
     let next_timer_period = lv_timer_handler();
@@ -108,6 +112,8 @@ git clone git@github.com:SakiiCode/lv_bevy_ecs.git
 cd lv_bevy_ecs
 cargo run --example basic
 ```
+
+On Windows, you have to [install SDL2](https://github.com/Rust-SDL2/rust-sdl2#windows-msvc).
 
 ## Building for embedded
 
@@ -196,6 +202,7 @@ codegen-units = 1
 
 | lv_bevy_ecs | bevy_ecs | lightvgl-sys |
 | ----------- | -------- | ------------ |
+| 0.10.x      | 0.18.x   | 9.5.x        |
 | 0.9.x       | 0.18.x   | 9.5.x        |
 | 0.8.x       | 0.18.x   | 9.5.x        |
 | 0.7.x       | 0.18.x   | 9.4.x        |
