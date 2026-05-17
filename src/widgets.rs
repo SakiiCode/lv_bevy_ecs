@@ -144,7 +144,7 @@ use crate::{
     info,
 };
 
-/// An [LvglWorld] wrapper that is `const` compatible, but must be initalized manually before first use using `.init()`
+/// An [LvglWorld] wrapper that is `const` compatible, but it must be initalized manually before first use using `.init()`
 ///
 /// It never checks whether the underlying data has been initialized, potentially causing undefined behaviour
 ///

@@ -7,7 +7,7 @@
 //! # use embedded_graphics::pixelcolor::Rgb565;
 //! # use embedded_graphics::prelude::*;
 //! # use embedded_graphics_simulator::*;
-//! # use lv_bevy_ecs::display::{DrawBuf, Display};
+//! # use lv_bevy_ecs::display::{DrawBuffer, Display};
 //! # use lv_bevy_ecs::support::LvglColorFormat;
 //! # use lv_bevy_ecs::sys::*;
 //! #
@@ -19,7 +19,7 @@
 //! let mut sim_display: SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
 //! let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
 //!
-//! let buffer = DrawBuf::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
+//! let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 //! display.register(buffer, |refresh| {
 //!     // alternative (slower): sim_display.draw_iter(refresh.as_pixels()).unwrap();
 //!     sim_display
@@ -403,7 +403,7 @@ macro_rules! setup_test_display {
         use embedded_graphics::pixelcolor::Rgb565;
         use embedded_graphics::prelude::{Point, Size};
         use embedded_graphics_simulator::SimulatorDisplay;
-        use lv_bevy_ecs::display::{Display, DrawBuf};
+        use lv_bevy_ecs::display::{Display, DrawBuffer};
 
         const HOR_RES: u32 = 320;
         const VER_RES: u32 = 240;
@@ -417,7 +417,7 @@ macro_rules! setup_test_display {
         let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
 
         let buffer =
-            DrawBuf::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
+            DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
         display.register(buffer, |refresh| {
             //sim_display.draw_iter(refresh.as_pixels()).unwrap();

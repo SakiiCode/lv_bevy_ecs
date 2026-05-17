@@ -62,7 +62,7 @@ lv_tick_set_cb(|| {
 });
 ```
 
-4. You have to obtain a World instance with `LvglWorld::default();`.
+4. Obtain a World instance with `LvglWorld::default();`.
    This is a global variable, it can be stored in a `LazyLock` or passed around in an `Arc<Mutex<LvglWorld>>` if needed elsewhere than in main().
 
 ```rust
@@ -72,13 +72,28 @@ lv_tick_set_cb(|| {
 static WORLD: LazyLock<Mutex<LvglWorld>> = LazyLock::new(|| Mutex::new(LvglWorld::default()));
 ```
 
-4. Last thing is to call `lv_timer_handler()` in every loop cycle.
+5. Last thing is to call `lv_timer_handler()` periodically.
 
-```rust
+```rust,no_run
 # use lv_bevy_ecs::functions::*;
+# use std::thread::sleep;
+# use std::time::{Duration, Instant};
 loop {
-    lv_timer_handler();
-#    break;
+    let start = Instant::now();
+    let next_timer_period = lv_timer_handler();
+    match next_timer_period {
+        NextTimerPeriod::Ready => {
+            // yield or continue
+            continue;
+        }
+        NextTimerPeriod::AfterMs(next_timer_ms) => {
+            let next_instant = start + Duration::from_millis(next_timer_ms.get().into());
+            sleep(next_instant - Instant::now());
+        }
+        NextTimerPeriod::Never => {
+           sleep(Duration::from_secs(5));
+        }
+    }
 }
 ```
 
@@ -113,13 +128,14 @@ This needs `LV_USE_STDLIB_MALLOC` set to `LV_STDLIB_CUSTOM` in `lv_conf.h`.
 Additionally, an optional implementation of the `get_memory_stats(&mut lv_mem_monitor_t)` function can be provided.
 Check the examples and sample projects for reference implementation.
 
-```rust,ignore
+```rust
 pub fn get_memory_stats(monitor: &mut lv_bevy_ecs::sys::lv_mem_monitor_t) {
     // ...
 }
 
 fn main() {
     // ...
+#   #[cfg(feature="rust-alloc")]
     lv_bevy_ecs::malloc::set_mem_monitor(get_memory_stats);
 }
 ```
