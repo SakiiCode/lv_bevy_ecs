@@ -26,7 +26,7 @@ fn main() {
 
     lv_log_add(
         log::Level::Warn,
-        c"custom_logging.rs",
+        c"defmt.rs",
         11,
         c"main",
         c"This warning came from LVGL",
@@ -35,7 +35,7 @@ fn main() {
     lv_log_add(
         log::Level::Info,
         c"lv_conf.h",
-        395,
+        486,
         c"main",
         c"You can turn off line numbers with \"LV_LOG_USE_FILE_LINE 0\" in",
     );

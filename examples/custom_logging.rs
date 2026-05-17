@@ -24,7 +24,7 @@ fn main() {
     lv_log_add(
         log::Level::Info,
         c"lv_conf.h",
-        395,
+        486,
         c"main",
         c"You can turn off line numbers with \"LV_LOG_USE_FILE_LINE 0\" in",
     );
