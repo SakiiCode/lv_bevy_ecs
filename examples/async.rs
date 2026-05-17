@@ -3,7 +3,7 @@ use std::{
     process::exit,
     rc::Rc,
     sync::{
-        LazyLock, Mutex,
+        Mutex,
         atomic::{AtomicBool, Ordering},
     },
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
@@ -34,18 +34,11 @@ use lv_bevy_ecs::{
 use macro_rules_attribute::apply;
 use smol::{Timer, future::yield_now};
 use smol_macros::main;
-use static_cell::StaticCell;
 
 #[derive(Component)]
 struct DynamicButton;
 
 static WORLD: Mutex<UnsafeLvglWorld> = Mutex::new(UnsafeLvglWorld::new());
-
-macro_rules! arc_as_mut {
-    ($var:ident) => {
-        std::sync::Arc::get_mut(&mut $var).unwrap()
-    };
-}
 
 #[apply(main!)]
 async fn main() {
@@ -62,7 +55,9 @@ async fn main() {
     let mut window = Window::new("Async Button Example", &output_settings);
     window.set_max_fps(0);
 
-    let window = Box::pin(Rc::new(RefCell::new(window)));
+    window.update(&sim_display);
+
+    let window_rc = Rc::new(RefCell::new(window));
 
     info!("Simulator OK");
 
@@ -72,30 +67,23 @@ async fn main() {
         DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
     info!("Display OK");
-    let window_rc = window.clone();
 
-    display.register(
-        buffer,
-        Box::pin(
-            move |refresh: &mut lv_bevy_ecs::display::DisplayRefresh<'_, _, Rgb565>| {
-                //sim_display.draw_iter(refresh.as_pixels()).unwrap();
-                sim_display
-                    .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
-                    .unwrap();
-                if refresh.display.flush_is_last() {
-                    window.update(&sim_display);
-                }
-            },
-        ),
-    );
+    let window = window_rc.clone();
+    display.register(buffer, move |refresh| {
+        //sim_display.draw_iter(refresh.as_pixels()).unwrap();
+        sim_display
+            .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
+            .unwrap();
+        if refresh.display.flush_is_last() {
+            window.borrow_mut().update(&sim_display);
+        }
+    });
 
     info!("Display Driver OK");
 
-    let window_rc = window.clone();
+    let window = window_rc;
     let _touch_screen =
-        InputDevice::<Pointer>::new(move || get_touch_input(window_rc.borrow_mut().events()));
-
-    drop(window);
+        InputDevice::<Pointer>::new(move || get_touch_input(window.borrow().events()));
 
     lv_tick_set_cb(|| {
         let current_time = SystemTime::now();

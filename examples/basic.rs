@@ -54,10 +54,8 @@ fn main() {
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
     let mut window = Window::new("Button Example", &output_settings);
     window.set_max_fps(0);
-
     window.update(&sim_display);
-
-    let window = Rc::new(RefCell::new(window));
+    let window_rc = Rc::new(RefCell::new(window));
 
     info!("SIMULATOR OK");
     error!("Random error");
@@ -69,30 +67,26 @@ fn main() {
 
     info!("Display OK");
 
-    let window_rc = window.clone();
+    let window = window_rc.clone();
     display.register(
         buffer,
-        Box::pin(
-            move |refresh: &mut lv_bevy_ecs::display::DisplayRefresh<'_, _, Rgb565>| {
-                //sim_display.draw_iter(refresh.as_pixels()).unwrap();
-                sim_display
-                    .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
-                    .unwrap();
-                if refresh.display.flush_is_last() {
-                    window_rc.borrow_mut().update(&sim_display);
-                }
-            },
-        ),
+        move |refresh: &mut lv_bevy_ecs::display::DisplayRefresh<'_, _, Rgb565>| {
+            //sim_display.draw_iter(refresh.as_pixels()).unwrap();
+            sim_display
+                .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
+                .unwrap();
+            if refresh.display.flush_is_last() {
+                window.borrow_mut().update(&sim_display);
+            }
+        },
     );
 
     info!("Display Driver OK");
 
     // Register a new input device that's capable of reading the current state of the input
-    let window_rc = window.clone();
+    let window = window_rc;
     let _touch_screen =
-        InputDevice::<Pointer>::new(move || get_touch_input(window_rc.borrow_mut().events()));
-
-    drop(window);
+        InputDevice::<Pointer>::new(move || get_touch_input(window.borrow().events()));
 
     info!("Input OK");
 

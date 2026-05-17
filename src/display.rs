@@ -47,7 +47,6 @@
 
 use ::alloc::boxed::Box;
 use ::core::{marker::PhantomData, ptr::NonNull};
-use core::pin::Pin;
 
 use embedded_graphics::{
     Pixel,
@@ -95,9 +94,9 @@ impl Display {
     pub fn register<F, const N: usize, C: LvglColorFormat>(
         &mut self,
         buffer: DrawBuffer<N, C>,
-        callback: Pin<Box<F>>,
+        callback: F,
     ) where
-        F: FnMut(&mut DisplayRefresh<N, C>) + Send + 'static,
+        F: FnMut(&mut DisplayRefresh<N, C>) + 'static,
     {
         let cf = C::as_lv_color_format_t();
         verify_color_format(cf);

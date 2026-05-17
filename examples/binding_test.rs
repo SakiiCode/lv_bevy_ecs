@@ -1,6 +1,8 @@
 use std::{
+    cell::RefCell,
     ffi::{CStr, CString},
     process::exit,
+    rc::Rc,
     str::FromStr,
     sync::{
         Mutex,
@@ -72,24 +74,29 @@ fn main() {
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
     let mut window = Window::new("Bindings Test Example", &output_settings);
     window.set_max_fps(0);
+    window.update(&sim_display);
+    let window_rc = Rc::new(RefCell::new(window));
 
     let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
 
     let buffer =
         DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
-    display.register(buffer, |refresh| {
+    let window = window_rc.clone();
+    display.register(buffer, move |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
         sim_display
             .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
             .unwrap();
         if refresh.display.flush_is_last() {
-            window.update(&sim_display);
+            window.borrow_mut().update(&sim_display);
         }
     });
 
+    let window = window_rc.clone();
     // Register a new input device that's capable of reading the current state of the input
-    let _touch_screen = InputDevice::<Pointer>::new(|| get_touch_input(window.events()));
+    let _touch_screen =
+        InputDevice::<Pointer>::new(move || get_touch_input(window.borrow_mut().events()));
 
     lv_tick_set_cb(|| {
         let current_time = SystemTime::now();
@@ -99,11 +106,9 @@ fn main() {
         since_epoch.as_millis() as u32
     });
 
-    let mut world = LvglWorld::default();
+    let world_rc = Rc::new(RefCell::new(LvglWorld::default()));
 
-    create_ui(&mut world);
-
-    window.update(&sim_display);
+    create_ui(world_rc);
 
     loop {
         let start = Instant::now();
@@ -123,7 +128,8 @@ fn main() {
     }
 }
 
-fn create_ui(world: &mut World) {
+fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
+    let mut world = world_rc.borrow_mut();
     let c1: lv_color_t = lv_color_hex(0xff0000);
     let c2: lv_color_t = lv_palette_darken(lv_palette_t_LV_PALETTE_BLUE, 2);
     let c3: lv_color_t = lv_color_mix(c1, c2, OpacityLevel::Percent60 as u8);
@@ -246,8 +252,9 @@ fn create_ui(world: &mut World) {
     btnmatrix.set_ctrl_map(&btnmatrix_ctrl[0]);
 
     btnmatrix.set_selected_button(1);
-    btnmatrix.add_event_cb(EventCode::ValueChanged, |mut event| {
-        buttonmatrix_event_cb(world, &mut event);
+    let world2 = world_rc.clone();
+    btnmatrix.add_event_cb(EventCode::ValueChanged, move |mut event| {
+        buttonmatrix_event_cb(&mut world2.borrow_mut(), &mut event);
     });
 
     let mut btnmatrix_entity = world.spawn(btnmatrix.into_inner());
@@ -277,7 +284,7 @@ fn create_ui(world: &mut World) {
     let mut fourth = None;
 
     for i in 0..10u32 {
-        let btn_id = list_button_create(world, cont_id);
+        let btn_id = list_button_create(&mut world, cont_id);
 
         if i == 0 {
             let mut btn_entity = world.get_entity_mut(btn_id).unwrap();
