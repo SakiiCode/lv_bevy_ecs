@@ -23,10 +23,9 @@ use lv_bevy_ecs::{
     subjects::Subject,
     support::{LV_SIZE_CONTENT, OpacityLevel},
     sys::{
-        LV_ANIM_REPEAT_INFINITE, LV_DEF_REFR_PERIOD, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST,
-        LV_SYMBOL_FILE, lv_align_t_LV_ALIGN_BOTTOM_RIGHT, lv_anim_path_ease_out,
-        lv_anim_set_path_cb, lv_anim_set_repeat_count, lv_area_t,
-        lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
+        LV_ANIM_REPEAT_INFINITE, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST, LV_SYMBOL_FILE,
+        lv_align_t_LV_ALIGN_BOTTOM_RIGHT, lv_anim_path_ease_out, lv_anim_set_path_cb,
+        lv_anim_set_repeat_count, lv_area_t, lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
         lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED,
         lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X, lv_chart_type_t_LV_CHART_TYPE_BAR,
         lv_chart_type_t_LV_CHART_TYPE_LINE, lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_color_t,
@@ -118,7 +117,7 @@ fn main() {
                 sleep(next_instant - Instant::now());
             }
             NextTimerPeriod::Never => {
-                sleep(Duration::from_millis(LV_DEF_REFR_PERIOD.into()));
+                sleep(Duration::from_secs(5));
             }
         }
     }

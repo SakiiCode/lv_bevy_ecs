@@ -18,7 +18,7 @@ use lv_bevy_ecs::{
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     support::{Align, OpacityLevel},
-    sys::{LV_DEF_REFR_PERIOD, lv_part_t_LV_PART_MAIN, lv_style_selector_t},
+    sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t},
     trace,
     widgets::{Arc, Button, Label, Widget},
 };
@@ -167,7 +167,7 @@ fn main() {
                 sleep(next_instant - Instant::now());
             }
             NextTimerPeriod::Never => {
-                sleep(Duration::from_millis(LV_DEF_REFR_PERIOD.into()));
+                sleep(Duration::from_secs(5));
             }
         }
     }

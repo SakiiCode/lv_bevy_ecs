@@ -26,7 +26,7 @@ use lv_bevy_ecs::{
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     support::{Align, OpacityLevel},
-    sys::{LV_DEF_REFR_PERIOD, lv_part_t_LV_PART_MAIN, lv_style_selector_t},
+    sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t},
     widgets::{Arc, Button, Label, LvglWorld},
 };
 use macro_rules_attribute::apply;
@@ -162,7 +162,7 @@ async fn main() {
                 yield_now().await;
             }
             NextTimerPeriod::Never => {
-                Timer::after(Duration::from_millis(LV_DEF_REFR_PERIOD.into())).await;
+                Timer::after(Duration::from_secs(5)).await;
             }
             NextTimerPeriod::AfterMs(next_timer_ms) => {
                 Timer::at(start + Duration::from_millis(next_timer_ms.get().into())).await;

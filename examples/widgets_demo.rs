@@ -14,7 +14,6 @@ use lv_bevy_ecs::{
     functions::*,
     info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
-    sys::LV_DEF_REFR_PERIOD,
 };
 
 use embedded_graphics::{
@@ -96,7 +95,7 @@ fn main() {
                 sleep(next_instant - Instant::now());
             }
             NextTimerPeriod::Never => {
-                sleep(Duration::from_millis(LV_DEF_REFR_PERIOD.into()));
+                sleep(Duration::from_secs(5));
             }
         }
     }
