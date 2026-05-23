@@ -52,6 +52,7 @@ use embedded_graphics::{
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
+use share_rc::share;
 use static_cell::StaticCell;
 
 #[derive(Component)]
@@ -82,21 +83,24 @@ fn main() {
     let buffer =
         DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
-    let window = window_rc.clone();
-    display.register(buffer, move |refresh| {
-        //sim_display.draw_iter(refresh.as_pixels()).unwrap();
-        sim_display
-            .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
-            .unwrap();
-        if refresh.display.flush_is_last() {
-            window.borrow_mut().update(&sim_display);
-        }
-    });
+    display.register(
+        buffer,
+        share!(|refresh| {
+            //sim_display.draw_iter(refresh.as_pixels()).unwrap();
+            sim_display
+                .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
+                .unwrap();
+            if refresh.display.flush_is_last() {
+                take!(window_rc.clone()).borrow_mut().update(&sim_display);
+            }
+        }),
+    );
 
-    let window = window_rc.clone();
     // Register a new input device that's capable of reading the current state of the input
-    let _touch_screen =
-        InputDevice::<Pointer>::new(move || get_touch_input(window.borrow_mut().events()));
+    let _touch_screen = InputDevice::<Pointer>::new(share!(|| {
+        get_touch_input(take!(window_rc.clone()).borrow_mut().events())
+    }));
+    drop(window_rc);
 
     lv_tick_set_cb(|| {
         let current_time = SystemTime::now();

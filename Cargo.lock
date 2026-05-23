@@ -1372,6 +1372,8 @@ dependencies = [
 [[package]]
 name = "share-rc"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37a663f2ca8bd7fc480aee3c50d6ddf4f6983544d6d1a9753c149660b9ed32c3"
 dependencies = [
  "proc-macro2",
  "quote",
