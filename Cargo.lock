@@ -333,8 +333,6 @@ dependencies = [
 [[package]]
 name = "bindgen"
 version = "0.72.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "993776b509cfb49c750f11b8f07a46fa23e0a1386ffc01fb1e7d343efc387895"
 dependencies = [
  "bitflags 2.10.0",
  "cexpr",
@@ -934,6 +932,7 @@ dependencies = [
  "prettyplease",
  "proc-macro2",
  "quote",
+ "share-rc",
  "simple_logger",
  "smol",
  "smol-macros",
@@ -1364,6 +1363,15 @@ name = "serde_derive"
 version = "1.0.228"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d540f220d3187173da220f885ab66608367b6574e925011a9353e4badda91d79"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "share-rc"
+version = "0.1.0"
 dependencies = [
  "proc-macro2",
  "quote",
