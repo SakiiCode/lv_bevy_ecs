@@ -20,7 +20,7 @@
 //! let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
 //!
 //! let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
-//! display.register(buffer, |refresh| {
+//! display.register(buffer, move |refresh| {
 //!     // alternative (slower): sim_display.draw_iter(refresh.as_pixels()).unwrap();
 //!     sim_display
 //!         .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
@@ -419,7 +419,7 @@ macro_rules! setup_test_display {
         let buffer =
             DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
-        display.register(buffer, |refresh| {
+        display.register(buffer, move |refresh| {
             //sim_display.draw_iter(refresh.as_pixels()).unwrap();
             sim_display
                 .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
