@@ -1,5 +1,7 @@
 use std::{
+    cell::RefCell,
     process::exit,
+    rc::Rc,
     sync::{
         Mutex,
         atomic::{AtomicBool, Ordering},
@@ -27,7 +29,7 @@ use lv_bevy_ecs::{
     styles::Style,
     support::{Align, OpacityLevel},
     sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t},
-    widgets::{Arc, Button, Label, LvglWorld},
+    widgets::{Arc, Button, Label, UnsafeLvglWorld},
 };
 use macro_rules_attribute::apply;
 use smol::{Timer, future::yield_now};
@@ -35,6 +37,8 @@ use smol_macros::main;
 
 #[derive(Component)]
 struct DynamicButton;
+
+static WORLD: Mutex<UnsafeLvglWorld> = Mutex::new(UnsafeLvglWorld::new());
 
 #[apply(main!)]
 async fn main() {
@@ -51,6 +55,10 @@ async fn main() {
     let mut window = Window::new("Async Button Example", &output_settings);
     window.set_max_fps(0);
 
+    window.update(&sim_display);
+
+    let window_rc = Rc::new(RefCell::new(window));
+
     info!("Simulator OK");
 
     let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
@@ -60,19 +68,22 @@ async fn main() {
 
     info!("Display OK");
 
-    display.register(buffer, |refresh| {
+    let window = window_rc.clone();
+    display.register(buffer, move |refresh| {
         //sim_display.draw_iter(refresh.as_pixels()).unwrap();
         sim_display
             .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
             .unwrap();
         if refresh.display.flush_is_last() {
-            window.update(&sim_display);
+            window.borrow_mut().update(&sim_display);
         }
     });
 
     info!("Display Driver OK");
 
-    let _touch_screen = InputDevice::<Pointer>::new(|| get_touch_input(window.events()));
+    let window = window_rc;
+    let _touch_screen =
+        InputDevice::<Pointer>::new(move || get_touch_input(window.borrow().events()));
 
     lv_tick_set_cb(|| {
         let current_time = SystemTime::now();
@@ -83,11 +94,12 @@ async fn main() {
         ms
     });
 
-    let mut world = LvglWorld::default();
-
     info!("ECS OK");
 
     {
+        let mut world = WORLD.lock().unwrap();
+        world.init();
+
         let mut button = Button::new();
         let mut label = Label::new();
         label.set_text(c"SPAWN");
@@ -104,6 +116,7 @@ async fn main() {
         );
 
         button.add_event_cb(EventCode::Clicked, |_| {
+            let mut world = WORLD.lock().unwrap();
             match world
                 .query_filtered::<Entity, With<DynamicButton>>()
                 .single(&world)
@@ -151,8 +164,6 @@ async fn main() {
     }
 
     info!("Create OK");
-
-    window.update(&sim_display);
 
     loop {
         let start = Instant::now();

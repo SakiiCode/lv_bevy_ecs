@@ -1,5 +1,7 @@
 use std::{
+    cell::RefCell,
     process::exit,
+    rc::Rc,
     sync::{
         LazyLock, Mutex,
         atomic::{AtomicBool, Ordering},
@@ -31,6 +33,7 @@ use embedded_graphics::{
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
+use share_rc::share;
 
 #[derive(Default)]
 struct Objects {
@@ -58,6 +61,8 @@ fn main() {
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
     let mut window = Window::new("Button Example", &output_settings);
     window.set_max_fps(0);
+    window.update(&sim_display);
+    let window_rc = Rc::new(RefCell::new(window));
 
     info!("SIMULATOR OK");
     error!("Random error");
@@ -69,22 +74,28 @@ fn main() {
 
     info!("Display OK");
 
-    display.register(buffer, |refresh| {
-        //sim_display.draw_iter(refresh.as_pixels()).unwrap();
-        trace!("Flushing to display");
-        //let _unused = WORLD.lock().unwrap();
-        sim_display
-            .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
-            .unwrap();
-        if refresh.display.flush_is_last() {
-            window.update(&sim_display);
-        }
-    });
+    display.register(
+        buffer,
+        share!(|refresh| {
+            //sim_display.draw_iter(refresh.as_pixels()).unwrap();
+            trace!("Flushing to display");
+            sim_display
+                .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
+                .unwrap();
+            if refresh.display.flush_is_last() {
+                take!(window_rc.clone()).borrow_mut().update(&sim_display);
+            }
+        }),
+    );
 
     info!("Display Driver OK");
 
     // Register a new input device that's capable of reading the current state of the input
-    let _touch_screen = InputDevice::<Pointer>::new(|| get_touch_input(window.events()));
+    let _touch_screen = InputDevice::<Pointer>::new(share!(|| {
+        get_touch_input(take!(window_rc.clone()).borrow().events())
+    }));
+
+    drop(window_rc);
 
     info!("Input OK");
 
@@ -153,7 +164,6 @@ fn main() {
     }
 
     info!("Create OK");
-    window.update(&sim_display);
 
     loop {
         let start = Instant::now();

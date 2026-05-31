@@ -155,7 +155,7 @@ impl From<EventCode> for lv_event_code_t {
 
 pub(crate) fn lv_obj_add_event_cb<F>(widget: &mut Wdg, filter: EventCode, callback: F)
 where
-    F: FnMut(Event),
+    F: FnMut(Event) + 'static,
 {
     unsafe {
         lightvgl_sys::lv_obj_add_event_cb(
@@ -169,7 +169,7 @@ where
 
 pub(crate) unsafe extern "C" fn event_callback<F>(event: *mut lightvgl_sys::lv_event_t)
 where
-    F: FnMut(Event),
+    F: FnMut(Event) + 'static,
 {
     unsafe {
         let user_data = lightvgl_sys::lv_event_get_user_data(event);

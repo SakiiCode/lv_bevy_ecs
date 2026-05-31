@@ -63,16 +63,34 @@ lv_tick_set_cb(|| {
 });
 ```
 
-4. Obtain a World instance with `LvglWorld::new();`.
-   This is a global variable, it can be stored in a `LazyLock` or passed around in an `Arc<Mutex<LvglWorld>>` if needed elsewhere than in main().
+4. Create a global LvglWorld instance with `LvglWorld::new()`:
 
-   _There are better but more complex patterns, like making LvglWorld local inside a specific task and using channels for communication. Alternatively, making the state global and synchronizing with LVGL before `lv_timer_handler()`. This way Mutex usage can be minimized._
+```rust,ignore
 
-```rust
-# use lv_bevy_ecs::widgets::LvglWorld;
-# use std::sync::{LazyLock, Mutex};
+// -- Option 1: Lazy-initialized global Mutex
+static WORLD: LazyLock<Mutex<LvglWorld>> = LazyLock::new(|| Mutex::new(LvglWorld::new()));
 
-static WORLD: LazyLock<Mutex<LvglWorld>> = LazyLock::new(|| Mutex::new(LvglWorld::default()));
+// -- Option 2: Local Rc<RefCell<T>> or Arc<Mutex<T>>
+fn main(){
+    let world_rc = Rc::new(RefCell::new(LvglWorld::new()));
+    some_other_function(world.clone());
+}
+
+fn some_other_function(world_rc: Rc<RefCell<LvglWorld>>){
+    let world = world_rc.clone();
+    some_button.add_event_cb(EventCode::Pressed, move |mut event| {
+        world.borrow_mut().spawn(some_label);
+    });
+
+}
+
+// -- Option 3: Manually initialized global Mutex
+static WORLD: Mutex<UnsafeLvglWorld> = Mutex::new(UnsafeLvglWorld::new());
+
+fn main(){
+    // Make sure to run `.init()` before first use!
+    WORLD.lock().unwrap().init();
+}
 ```
 
 5. Last thing is to call `lv_timer_handler()` periodically.
@@ -134,14 +152,13 @@ This needs `LV_USE_STDLIB_MALLOC` set to `LV_STDLIB_CUSTOM` in `lv_conf.h`.
 Additionally, an optional implementation of the `get_memory_stats(&mut lv_mem_monitor_t)` function can be provided.
 Check the examples and sample projects for reference implementation.
 
-```rust
-pub fn get_memory_stats(monitor: &mut lv_bevy_ecs::sys::lv_mem_monitor_t) {
+```rust,ignore
+pub fn get_memory_stats(monitor: &mut lv_mem_monitor_t) {
     // ...
 }
 
 fn main() {
     // ...
-#   #[cfg(feature="rust-alloc")]
     lv_bevy_ecs::malloc::set_mem_monitor(get_memory_stats);
 }
 ```
