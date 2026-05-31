@@ -14,37 +14,28 @@ type CGResult<T> = Result<T, Box<dyn Error>>;
 
 const LIB_PREFIX: &str = "lv_";
 
-#[cfg(feature = "no_ecs")]
-const FUNCTION_BLACKLIST: [&str; 11] = [
-    "lv_style_init",                // use Style::default() instead
+#[rustfmt::skip]
+const FUNCTION_BLACKLIST: &[&str] = &[
     "lv_obj_null_on_delete",        // can invalidate NonNull<>
-    "lv_obj_add_style",             // implemented manually
-    "lv_obj_set_parent",            // implemented manually
-    "lv_obj_add_event_cb",          // implemented manually
-    "lv_list_get_button_text",      // lifetime can't be elided
-    "lv_label_set_text_vfmt",       // cannot cross-compile
-    "lv_obj_report_style_change",   // first parameter is not obj
-    "lv_style_transition_dsc_init", // first parameter is not style
-    "lv_keyboard_def_event_cb",     // first parameter is not keyboard
-    "lv_subject_add_observer_obj",  // implemented manually
-];
-
-#[cfg(not(feature = "no_ecs"))]
-const FUNCTION_BLACKLIST: [&str; 14] = [
-    "lv_obj_null_on_delete",        // can invalidate NonNull<>
-    "lv_obj_add_style",             // add component instead
+    "lv_obj_add_style",             // add component instead / implemented manually
+    #[cfg(not(feature = "no_ecs"))]
     "lv_obj_replace_style",         // replace component instead
+    #[cfg(not(feature = "no_ecs"))]
     "lv_obj_remove_style",          // remove component instead
+    #[cfg(not(feature = "no_ecs"))]
     "lv_obj_remove_style_all",      // remove components instead
-    "lv_obj_set_parent",            // use EntityWorldMut::add_child() instead
+    "lv_obj_set_parent",            // use EntityWorldMut::add_child() instead / implemented manually
     "lv_obj_add_event_cb",          // implemented manually
-    "lv_style_init",                // use Style::default() instead
     "lv_list_get_button_text",      // lifetime can't be elided
     "lv_label_set_text_vfmt",       // cannot cross-compile
     "lv_obj_report_style_change",   // first parameter is not obj
     "lv_style_transition_dsc_init", // first parameter is not style
     "lv_keyboard_def_event_cb",     // first parameter is not keyboard
     "lv_subject_add_observer_obj",  // implemented manually
+    "lv_display_set_rotation",      // implemented manually
+    "lv_display_set_flush_wait_cb", // implemented manually
+    "lv_display_flush_ready",       // called automatically
+    "lv_sysmon_create",             // lv_display_t pulls this in
 ];
 
 #[derive(Debug, Clone, Error)]
@@ -92,6 +83,7 @@ impl LvWidget {
             || self.name == "style"
             || self.name == "event"
             || self.name == "subject"
+            || self.name == "display"
         {
             Err(SkipReason::CustomStruct(self.name.clone()))
         } else {
@@ -126,7 +118,8 @@ impl LvFunc {
             return first_arg.typ.literal_name.contains("lv_obj_t")
                 || first_arg.typ.literal_name.contains("lv_style_t")
                 || first_arg.typ.literal_name.contains("lv_event_t")
-                || first_arg.typ.literal_name.contains("lv_subject_t");
+                || first_arg.typ.literal_name.contains("lv_subject_t")
+                || first_arg.typ.literal_name.contains("lv_display_t");
         }
         false
     }
@@ -146,6 +139,8 @@ impl Rusty for LvFunc {
             quote! {Event}
         } else if parent.name == "subject" {
             quote! {Subject}
+        } else if parent.name == "display" {
+            quote! {Display}
         } else {
             let pascal_name = format_ident!("{}", parent.name.to_pascal_case());
             quote! {#pascal_name<Wdg>}
@@ -513,11 +508,16 @@ impl LvArg {
         } else if self.typ.is_const_style()
             || self.typ.is_const_event()
             || self.typ.is_const_subject()
+            || self.typ.is_const_display()
         {
             quote! {
                 #ident.raw()
             }
-        } else if self.typ.is_mut_style() || self.typ.is_mut_event() || self.typ.is_mut_subject() {
+        } else if self.typ.is_mut_style()
+            || self.typ.is_mut_event()
+            || self.typ.is_mut_subject()
+            || self.typ.is_mut_display()
+        {
             quote! {
                 #ident.raw_mut()
             }
@@ -629,6 +629,14 @@ impl LvType {
         self.literal_name == "* const lv_subject_t"
     }
 
+    pub fn is_mut_display(&self) -> bool {
+        self.literal_name == "* mut lv_display_t"
+    }
+
+    pub fn is_const_display(&self) -> bool {
+        self.literal_name == "* const lv_display_t"
+    }
+
     pub fn is_pointer(&self) -> bool {
         self.literal_name.starts_with('*')
     }
@@ -685,6 +693,10 @@ impl Rusty for LvType {
             quote!(&Subject)
         } else if self.is_mut_subject() {
             quote!(&mut Subject)
+        } else if self.is_const_display() {
+            quote!(&Display)
+        } else if self.is_mut_display() {
+            quote!(&mut Display)
         } else if self.is_mut_void() {
             quote!(&mut dyn Any)
         } else if self.is_const_void() {
@@ -753,8 +765,8 @@ impl CodeGen {
     }
 
     fn get_widget_names(functions: &[LvFunc]) -> Vec<String> {
-        let reg = format!("^{}([^_]+)_(create|init)$", LIB_PREFIX);
-        let create_func = Regex::new(reg.as_str()).unwrap();
+        let reg = format!("^{LIB_PREFIX}([^_]+)_(create|init)$",);
+        let create_func = Regex::new(&reg).unwrap();
 
         let mut result = functions
             .iter()
@@ -772,6 +784,7 @@ impl CodeGen {
             .collect::<Vec<_>>();
         result.push("event".to_string()); // does not have init() or create()
         result.push("subject".to_string()); // does not have init() or create()
+        result.push("display".to_string()); // does not have init() or create()
         result
     }
 
@@ -797,6 +810,7 @@ impl CodeGen {
                 })
             })
             .filter(|ff| ff.sig.ident.to_string().starts_with(LIB_PREFIX))
+            .filter(|ff| !FUNCTION_BLACKLIST.contains(&ff.sig.ident.to_string().as_str()))
             .map(|ff| ff.into())
             .collect::<Vec<LvFunc>>();
         Ok(fns)
@@ -809,8 +823,9 @@ impl CodeGen {
 
 #[cfg(test)]
 mod test {
+    use std::collections::HashSet;
+
     use crate::{CodeGen, LvArg, LvFunc, LvType, LvWidget, Rusty};
-    use itertools::Itertools;
     use quote::quote;
 
     #[test]
@@ -838,7 +853,7 @@ mod test {
                 "lv_obj_create".to_string(),
                 vec![LvArg::new(
                     "parent".to_string(),
-                    LvType::new("abc".to_string()),
+                    LvType::new("lv_obj_t".to_string()),
                 )],
                 None,
                 String::new(),
@@ -847,7 +862,7 @@ mod test {
                 "lv_btn_create".to_string(),
                 vec![LvArg::new(
                     "parent".to_string(),
-                    LvType::new("abc".to_string()),
+                    LvType::new("lv_obj_t".to_string()),
                 )],
                 None,
                 String::new(),
@@ -883,7 +898,16 @@ mod test {
                 "lv_style_init".to_string(),
                 vec![LvArg::new(
                     "style".to_string(),
-                    LvType::new("abc".to_string()),
+                    LvType::new("lv_style_t".to_string()),
+                )],
+                None,
+                String::new(),
+            ),
+            LvFunc::new(
+                "lv_sysmon_create".to_string(),
+                vec![LvArg::new(
+                    "disp".to_string(),
+                    LvType::new("lv_display_t".to_string()),
                 )],
                 None,
                 String::new(),
@@ -891,9 +915,23 @@ mod test {
         ];
 
         let widget_names = CodeGen::get_widget_names(&funcs);
-        let widgets = CodeGen::extract_widgets(&funcs).unwrap();
-        println!("{:?}", widgets.iter().map(|w| w.name.clone()).collect_vec());
-        assert_eq!(widget_names.len(), 4);
+        assert_eq!(
+            widget_names,
+            vec![
+                "obj", "btn", "cb", "style", "sysmon", "event", "subject", "display"
+            ]
+        );
+
+        let widget_types = CodeGen::extract_widgets(&funcs).unwrap();
+        let widget_names = widget_types
+            .iter()
+            .map(|w| w.name.clone())
+            .collect::<HashSet<String>>();
+        // TODO sysmon should be also filtered out
+        assert_eq!(
+            widget_names,
+            HashSet::from(["obj", "btn", "style", "sysmon"].map(|s| s.to_string()))
+        );
     }
 
     #[test]

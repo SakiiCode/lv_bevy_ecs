@@ -35,6 +35,7 @@ fn main() {
         use crate::widgets::*;
         use crate::events::Event;
         use crate::subjects::Subject;
+        use crate::display::Display;
 
         #(#widgets_impl)*
     };
