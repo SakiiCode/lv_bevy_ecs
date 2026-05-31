@@ -1,9 +1,7 @@
-use inflector::Inflector;
-use inflector::cases::pascalcase::to_pascal_case;
+use inflector::{Inflector, cases::pascalcase::to_pascal_case};
 use itertools::Itertools;
 use proc_macro2::{Ident, TokenStream};
-use quote::quote;
-use quote::{ToTokens, format_ident};
+use quote::{ToTokens, format_ident, quote};
 use regex::Regex;
 use std::collections::HashMap;
 use std::error::Error;
@@ -38,7 +36,16 @@ const FUNCTION_BLACKLIST: &[&str] = &[
     "lv_sysmon_create",             // lv_display_t pulls this in
 ];
 
+const OBJECT_WHITELIST: &[&str] = &[
+    "lv_obj_t",
+    "lv_style_t",
+    "lv_event_t",
+    "lv_subject_t",
+    "lv_display_t",
+];
+
 #[derive(Debug, Clone, Error)]
+#[non_exhaustive]
 pub enum SkipReason {
     #[error("Already implemented ({0})")]
     CustomStruct(String),
@@ -113,15 +120,13 @@ impl LvFunc {
     }
 
     pub fn is_method(&self) -> bool {
-        if !self.args.is_empty() {
-            let first_arg = &self.args[0];
-            return first_arg.typ.literal_name.contains("lv_obj_t")
-                || first_arg.typ.literal_name.contains("lv_style_t")
-                || first_arg.typ.literal_name.contains("lv_event_t")
-                || first_arg.typ.literal_name.contains("lv_subject_t")
-                || first_arg.typ.literal_name.contains("lv_display_t");
+        if let Some(first_arg) = self.args.first() {
+            OBJECT_WHITELIST
+                .iter()
+                .any(|name| first_arg.typ.literal_name.contains(name))
+        } else {
+            false
         }
-        false
     }
 }
 
@@ -149,6 +154,7 @@ impl Rusty for LvFunc {
         let func_name = format_ident!("{}", new_name);
 
         // skip constructors and blacklisted functions
+        #[expect(clippy::else_if_without_else)]
         if new_name.as_str().eq("create") {
             return Err(SkipReason::Constructor(self.name.clone()));
         } else if FUNCTION_BLACKLIST.contains(&self.name.as_str()) {
@@ -156,30 +162,27 @@ impl Rusty for LvFunc {
         }
 
         // Handle return values
-        let return_tokens = match self.ret {
+        let return_tokens = match &self.ret {
             // function returns void
             None => quote!(),
             // function returns something
-            _ => {
-                let return_value: &LvType = self.ret.as_ref().unwrap();
+            Some(return_value) => {
                 if !return_value.is_pointer() {
-                    parse_str(&format!("-> {}", return_value.literal_name)).unwrap_or_else(|_| {
-                        panic!("Cannot parse {} as type", return_value.literal_name)
-                    })
+                    parse_str(&format!("-> {}", return_value.literal_name))
+                        .expect("Cannot parse return value as type")
+                } else if return_value.is_const_native_object()
+                    || return_value.is_mut_native_object()
+                {
+                    parse_str("-> Option<Wdg>").unwrap()
+                } else if return_value.is_const_str() || return_value.is_mut_str() {
+                    parse_str("-> &CStr").unwrap()
+                } else if return_value.is_mut_pointer() {
+                    let raw_name = return_value.literal_name.replacen("* mut ", "", 1);
+                    parse_str(&format!("-> Option<NonNull<{raw_name}>>")).unwrap()
                 } else {
-                    if return_value.is_const_native_object() || return_value.is_mut_native_object()
-                    {
-                        parse_str("-> Option<Wdg>").unwrap()
-                    } else if return_value.is_const_str() || return_value.is_mut_str() {
-                        parse_str("-> &CStr").unwrap()
-                    } else if return_value.is_mut_pointer() {
-                        let raw_name = return_value.literal_name.replacen("* mut ", "", 1);
-                        parse_str(&format!("-> Option<NonNull<{}>>", raw_name)).unwrap()
-                    } else {
-                        assert!(return_value.is_const_pointer());
-                        let raw_name = return_value.literal_name.replacen("* const ", "", 1);
-                        parse_str(&format!("-> Option<ConstPtr<{}>>", raw_name)).unwrap()
-                    }
+                    assert!(return_value.is_const_pointer());
+                    let raw_name = return_value.literal_name.replacen("* const ", "", 1);
+                    parse_str(&format!("-> Option<ConstPtr<{raw_name}>>")).unwrap()
                 }
             }
         };
@@ -284,21 +287,20 @@ impl Rusty for LvFunc {
             .iter()
             .enumerate()
             .fold(quote!(), |args_accumulator, (i, arg)| {
-                let next_arg;
-                if i == 0 {
+                let next_arg = if i == 0 {
                     let var = arg.get_value_usage();
 
-                    next_arg = if arg.typ.is_mut_pointer() {
+                    if arg.typ.is_mut_pointer() {
                         quote! {self.raw_mut()}
                     } else if arg.typ.is_const_pointer() {
                         quote! {self.raw()}
                     } else {
                         quote!(#var)
-                    };
+                    }
                 } else {
                     let var = arg.get_value_usage();
 
-                    next_arg = quote!(#var);
+                    quote!(#var)
                 };
 
                 // If the accummulator is empty then we call quote! only with the next_arg content
@@ -314,8 +316,8 @@ impl Rusty for LvFunc {
         let return_assignment;
         let return_expr;
         let optional_semicolon;
-        let return_value = self.ret.as_ref();
-        if let Some(return_value) = return_value {
+        let return_value_opt = self.ret.as_ref();
+        if let Some(return_value) = return_value_opt {
             if return_value.is_const_native_object() || return_value.is_mut_native_object() {
                 return_assignment = quote!(let pointer = );
                 return_expr = quote!(Wdg::try_from_ptr(pointer));
@@ -394,31 +396,31 @@ impl From<ForeignItemFn> for LvFunc {
                 .filter_map(|fa| {
                     // Since we know those are foreign functions, we only care about typed arguments
                     if let FnArg::Typed(tya) = fa {
-                        Some(tya)
+                        Some(tya.to_owned())
                     } else {
                         None
                     }
                 })
-                .map(|a| a.clone().into())
+                .map(Into::into)
                 .collect::<Vec<LvArg>>(),
             ret,
             ffi.attrs
                 .iter()
                 .filter_map(|attr| {
                     let path = attr.meta.path();
-                    if path.segments.len() > 0 && path.segments[0].ident.to_string() == "doc" {
+                    let first = path.segments.first()?;
+                    if first.ident == "doc" {
                         let name_value = attr.meta.require_name_value().unwrap();
                         let docstring = name_value.value.to_token_stream().to_string();
-                        let formatted = docstring.strip_prefix('"').unwrap_or(&docstring);
-                        let formatted = formatted.strip_suffix('"').unwrap_or(formatted);
-                        Some(formatted.replace("\\n ", "\n\n"))
+                        let formatted = docstring.trim_matches('"').replace("\\n ", "\n\n");
+                        Some(formatted)
                     } else {
                         None
                     }
                 })
                 .join("\n\n")
                 .trim()
-                .to_string(),
+                .to_owned(),
         )
     }
 }
@@ -563,13 +565,6 @@ impl LvType {
         }
     }
 
-    pub fn from(r_type: Box<syn::Type>) -> Self {
-        Self {
-            literal_name: r_type.to_token_stream().to_string(),
-            _r_type: Some(r_type),
-        }
-    }
-
     pub fn raw_name(&self) -> String {
         self.literal_name
             .replace("* const ", "")
@@ -703,11 +698,11 @@ impl Rusty for LvType {
             quote!(&dyn Any)
         } else {
             let raw_name = self.raw_name();
-            let ty: TypePath = parse_str(&raw_name)
-                .unwrap_or_else(|_| panic!("Cannot parse {raw_name} to a type"));
+
+            let ty: TypePath = parse_str(&raw_name).expect("Cannot parse {raw_name} to a type");
             if self.literal_name.starts_with("* mut") {
                 quote!(&mut #ty)
-            } else if self.literal_name.starts_with("*") {
+            } else if self.literal_name.starts_with('*') {
                 quote!(&#ty)
             } else {
                 quote!(#ty)
@@ -719,8 +714,11 @@ impl Rusty for LvType {
 }
 
 impl From<Box<syn::Type>> for LvType {
-    fn from(t: Box<syn::Type>) -> Self {
-        Self::from(t)
+    fn from(r_type: Box<syn::Type>) -> Self {
+        Self {
+            literal_name: r_type.to_token_stream().to_string(),
+            _r_type: Some(r_type),
+        }
     }
 }
 
@@ -732,7 +730,7 @@ pub struct CodeGen {
 impl CodeGen {
     pub fn from(code: &str) -> CGResult<Self> {
         let functions = Self::load_func_defs(code)?;
-        let widgets = Self::extract_widgets(&functions)?;
+        let widgets = Self::extract_widgets(&functions);
         Ok(Self { functions, widgets })
     }
 
@@ -740,13 +738,13 @@ impl CodeGen {
         &self.widgets
     }
 
-    fn extract_widgets(functions: &[LvFunc]) -> CGResult<Vec<LvWidget>> {
+    fn extract_widgets(functions: &[LvFunc]) -> Vec<LvWidget> {
         let widget_names = Self::get_widget_names(functions);
 
         let widgets = functions.iter().fold(HashMap::new(), |mut ws, f| {
             for widget_name in &widget_names {
                 if f.name
-                    .starts_with(format!("{}{}_", LIB_PREFIX, widget_name).as_str())
+                    .starts_with(format!("{LIB_PREFIX}{widget_name}_").as_str())
                     && f.is_method()
                 {
                     ws.entry(widget_name.clone())
@@ -755,36 +753,35 @@ impl CodeGen {
                             methods: Vec::new(),
                         })
                         .methods
-                        .push(f.clone())
+                        .push(f.clone());
                 }
             }
             ws
         });
 
-        Ok(widgets.values().cloned().collect())
+        widgets.values().cloned().collect()
     }
 
     fn get_widget_names(functions: &[LvFunc]) -> Vec<String> {
-        let reg = format!("^{LIB_PREFIX}([^_]+)_(create|init)$",);
-        let create_func = Regex::new(&reg).unwrap();
+        let reg = format!("^{LIB_PREFIX}([^_]+)_(create|init)$");
+        let create_func = Regex::new(&reg).expect("invalid regex");
 
         let mut result = functions
             .iter()
             .filter(|e| (create_func.is_match(e.name.as_str())) && e.args.len() == 1)
             .map(|f| {
-                String::from(
-                    create_func
-                        .captures(f.name.as_str())
-                        .unwrap()
-                        .get(1)
-                        .unwrap()
-                        .as_str(),
-                )
+                create_func
+                    .captures(&f.name)
+                    .unwrap()
+                    .get(1)
+                    .expect("No match found")
+                    .as_str()
+                    .to_owned()
             })
             .collect::<Vec<_>>();
-        result.push("event".to_string()); // does not have init() or create()
-        result.push("subject".to_string()); // does not have init() or create()
-        result.push("display".to_string()); // does not have init() or create()
+        result.push("event".to_owned()); // does not have init() or create()
+        result.push("subject".to_owned()); // does not have init() or create()
+        result.push("display".to_owned()); // does not have init() or create()
         result
     }
 
@@ -811,7 +808,7 @@ impl CodeGen {
             })
             .filter(|ff| ff.sig.ident.to_string().starts_with(LIB_PREFIX))
             .filter(|ff| !FUNCTION_BLACKLIST.contains(&ff.sig.ident.to_string().as_str()))
-            .map(|ff| ff.into())
+            .map(Into::into)
             .collect::<Vec<LvFunc>>();
         Ok(fns)
     }
@@ -922,7 +919,7 @@ mod test {
             ]
         );
 
-        let widget_types = CodeGen::extract_widgets(&funcs).unwrap();
+        let widget_types = CodeGen::extract_widgets(&funcs);
         let widget_names = widget_types
             .iter()
             .map(|w| w.name.clone())
