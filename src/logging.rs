@@ -22,13 +22,6 @@ use ::core::ffi::CStr;
 
 use log::Level;
 
-#[allow(unused)]
-macro_rules! cstr {
-    ($txt:expr) => {
-        ::alloc::ffi::CString::new($txt).unwrap().as_c_str()
-    };
-}
-
 #[macro_export]
 macro_rules! func {
     () => {{
@@ -176,6 +169,13 @@ pub(crate) fn lv_log_add(
 
 #[cfg(LV_USE_LOG)]
 pub struct LvglLogger;
+
+#[cfg(LV_USE_LOG)]
+macro_rules! cstr {
+    ($txt:expr) => {
+        ::alloc::ffi::CString::new($txt).unwrap().as_c_str()
+    };
+}
 
 #[cfg(LV_USE_LOG)]
 impl log::Log for LvglLogger {

@@ -95,10 +95,14 @@ impl From<DisplayRotation> for lightvgl_sys::lv_disp_rotation_t {
 }
 
 impl Display {
-    pub fn new(hor_res: i32, ver_res: i32) -> Self {
+    pub fn new(hor_res: u32, ver_res: u32) -> Self {
         crate::support::assert_lv_is_initialized();
         unsafe {
-            let raw = NonNull::new(lightvgl_sys::lv_display_create(hor_res, ver_res)).unwrap();
+            let raw = NonNull::new(lightvgl_sys::lv_display_create(
+                hor_res.try_into().unwrap(),
+                ver_res.try_into().unwrap(),
+            ))
+            .unwrap();
             Self { raw }
         }
     }

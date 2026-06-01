@@ -61,7 +61,7 @@ async fn main() {
 
     info!("Simulator OK");
 
-    let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
+    let mut display = Display::new(HOR_RES, VER_RES);
 
     let buffer = DrawBuffer::<{ HOR_RES * LINE_HEIGHT }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
