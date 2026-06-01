@@ -92,6 +92,7 @@ restriction = { level = "warn", priority = -1 }
 borrow_as_ptr = "allow"
 doc_markdown = "allow"  # TODO check this later
 if_not_else = "allow"
+items_after_statements = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"  # TODO check this later
 must_use_candidate = "allow"
@@ -102,14 +103,20 @@ wildcard_imports = "allow"
 absolute_paths = "allow"
 allow_attributes_without_reason = "allow"
 arbitrary_source_item_ordering = "allow"
+arithmetic_side_effects = "allow"  # TODO check this later
 as_conversions = "allow"  # TODO check this later
 blanket_clippy_restriction_lints = "allow"
+cast_possible_truncation = "allow"
+cast_possible_wrap = "allow"
+clone_on_ref_ptr = "allow"
 default_numeric_fallback = "allow"
 doc_paragraphs_missing_punctuation = "allow"  # TODO check this later
 exhaustive_enums = "allow"
 exhaustive_structs = "allow"
 expect_used = "allow"
 implicit_return = "allow"
+integer_division = "allow"
+integer_division_remainder_used = "allow"
 min_ident_chars = "allow"
 missing_assert_message = "allow"
 missing_docs_in_private_items = "allow"
@@ -121,12 +128,21 @@ pub_use = "allow"
 pub_with_shorthand = "allow"
 question_mark_used = "allow"
 semicolon_outside_block = "allow"
+shadow_reuse = "allow"
+shadow_unrelated = "allow"
 single_call_fn = "allow"
 single_char_lifetime_names = "allow"
 undocumented_unsafe_blocks = "allow"
 unreachable = "allow"
+unreadable_literal = "allow"
+unseparated_literal_suffix = "allow"
 unused_trait_names = "allow"
 unwrap_used = "allow"  # TODO check this later
+wildcard_enum_match_arm = "allow"
+
+# Useful in the restriction group
+exit = "warn"
+unneeded_field_pattern = "warn"
 
 [profile.dev]
 opt-level = "z"
