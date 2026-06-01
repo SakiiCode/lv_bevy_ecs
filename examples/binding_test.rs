@@ -40,7 +40,7 @@ use lv_bevy_ecs::{
         lv_style_selector_t, lv_subject_get_int, lv_subject_t,
     },
     widgets::{
-        Button, Buttonmatrix, Canvas, Chart, Dropdown, Image, Label, LvglWorld, Wdg, Widget,
+        Button, Buttonmatrix, Canvas, Chart, Dropdown, Image, Label, LvglWorld, RawObj, Wdg, Widget,
     },
 };
 
@@ -80,8 +80,7 @@ fn main() {
 
     let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
 
-    let buffer =
-        DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
+    let buffer = DrawBuffer::<{ HOR_RES * LINE_HEIGHT }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
     display.register(
         buffer,

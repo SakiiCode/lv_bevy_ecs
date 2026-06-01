@@ -85,11 +85,48 @@ serde = ["bevy_ecs/serialize"]
 use-vendored-config = ["lightvgl-sys/use-vendored-config"]
 
 [lints.clippy]
-# save this one for personal projects maybe :)
-# nursery = { level = "warn", priority = -1 }
-blanket_clippy_restriction_lints = "allow"
 pedantic = { level = "warn", priority = -1 }
 restriction = { level = "warn", priority = -1 }
+
+# Pedantic lints
+borrow_as_ptr = "allow"
+doc_markdown = "allow"  # TODO check this later
+if_not_else = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"  # TODO check this later
+must_use_candidate = "allow"
+semicolon_if_nothing_returned = "allow"
+wildcard_imports = "allow"
+
+# Restriction lints
+absolute_paths = "allow"
+allow_attributes_without_reason = "allow"
+arbitrary_source_item_ordering = "allow"
+as_conversions = "allow"  # TODO check this later
+blanket_clippy_restriction_lints = "allow"
+default_numeric_fallback = "allow"
+doc_paragraphs_missing_punctuation = "allow"  # TODO check this later
+exhaustive_enums = "allow"
+exhaustive_structs = "allow"
+expect_used = "allow"
+implicit_return = "allow"
+min_ident_chars = "allow"
+missing_assert_message = "allow"
+missing_docs_in_private_items = "allow"
+missing_inline_in_public_items = "allow"  # TODO check this later
+module_name_repetitions = "allow"
+multiple_unsafe_ops_per_block = "allow"
+pattern_type_mismatch = "allow"
+pub_use = "allow"
+pub_with_shorthand = "allow"
+question_mark_used = "allow"
+semicolon_outside_block = "allow"
+single_call_fn = "allow"
+single_char_lifetime_names = "allow"
+undocumented_unsafe_blocks = "allow"
+unreachable = "allow"
+unused_trait_names = "allow"
+unwrap_used = "allow"  # TODO check this later
 
 [profile.dev]
 opt-level = "z"

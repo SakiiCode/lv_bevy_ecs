@@ -40,7 +40,7 @@ use alloc::{boxed::Box, vec};
 use bevy_ecs::component::Component;
 use lightvgl_sys::{lv_observer_get_user_data, lv_subject_t};
 
-use crate::widgets::Wdg;
+use crate::widgets::{RawObj, Wdg};
 
 #[derive(Component)]
 #[component(storage = "SparseSet")]
@@ -76,6 +76,7 @@ impl Subject {
             let mut subject = MaybeUninit::<lightvgl_sys::lv_subject_t>::uninit();
             let len = value.count_bytes();
             let zero: c_char = 0;
+            #[expect(clippy::indexing_slicing)]
             lightvgl_sys::lv_subject_init_string(
                 subject.as_mut_ptr(),
                 &raw mut vec![zero; len].leak()[0],
@@ -89,7 +90,7 @@ impl Subject {
         }
     }
 
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
+    #[expect(clippy::not_unsafe_ptr_arg_deref)]
     pub fn new_ptr(value: *mut c_void) -> Self {
         unsafe {
             let mut subject = MaybeUninit::<lightvgl_sys::lv_subject_t>::uninit();
@@ -107,9 +108,7 @@ impl Subject {
     pub fn raw(&self) -> &lv_subject_t {
         &self.raw
     }
-}
 
-impl Subject {
     // the order of parameters is not the same, but callback should come last for readability
     pub fn add_observer_obj<F>(&mut self, object: &mut Wdg, callback: F)
     where

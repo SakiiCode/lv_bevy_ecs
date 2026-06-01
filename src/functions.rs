@@ -1,9 +1,10 @@
 //! Auto-generated safe bindings to LVGL functions
-
+#![allow(clippy::let_unit_value)]
+#![allow(clippy::multiple_inherent_impl)]
+#![allow(clippy::allow_attributes)]
 use ::core::{
     ffi::{CStr, c_void},
     num::NonZero,
-    time::Duration,
 };
 
 use crate::styles::Style;
@@ -24,8 +25,8 @@ pub fn lv_init() {
     }
 }
 
-pub fn lv_tick_inc(diff: Duration) {
-    unsafe { lightvgl_sys::lv_tick_inc(diff.as_millis() as u32) }
+pub fn lv_tick_inc(millis: u32) {
+    unsafe { lightvgl_sys::lv_tick_inc(millis) }
 }
 
 pub fn lv_tick_set_cb<F>(callback: F)

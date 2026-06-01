@@ -144,9 +144,9 @@ use crate::{
     info,
 };
 
-/// An [LvglWorld] wrapper that is `const` compatible, but it must be initalized manually before first use using `.init()`
+/// An [`LvglWorld`] wrapper that is `const` compatible, but it must be initalized manually before first use using `.init()`
 ///
-/// It never checks whether the underlying data has been initialized, potentially causing undefined behaviour
+/// It never checks whether the underlying data has been initialized, potentially causing undefined behaviour.
 ///
 /// If unsure, just use `std::sync::LazyLock` *(std)* or `once_cell::sync::Lazy` *(no_std)*
 #[repr(transparent)]
@@ -217,14 +217,6 @@ pub struct Widget {
 }
 
 impl Widget {
-    pub fn raw(&self) -> *const lv_obj_t {
-        self.raw.as_ptr()
-    }
-
-    pub fn raw_mut(&mut self) -> *mut lv_obj_t {
-        self.raw.as_ptr()
-    }
-
     pub fn from_ptr(ptr: *mut lv_obj_t) -> Option<Self> {
         Some(Self {
             raw: NonNull::new(ptr)?,
@@ -235,6 +227,7 @@ impl Widget {
         Self { raw: ptr }
     }
 
+    #[expect(clippy::mem_forget)]
     pub fn leak(self) -> Wdg {
         let wdg = Wdg::from_ptr(self.raw.as_ptr());
         ::core::mem::forget(self);
@@ -277,7 +270,9 @@ pub enum DowncastError {
     NotMatching { actual: String, expected: String },
 }
 
-#[allow(clippy::type_complexity)]
+#[expect(clippy::type_complexity)]
+#[expect(clippy::unwrap_used)]
+#[expect(clippy::needless_pass_by_value)]
 fn on_insert_parent(
     trigger: On<Insert, ChildOf>,
     mut set: ParamSet<(
@@ -295,21 +290,26 @@ fn on_insert_parent(
     info!("On Insert Parent");
 }
 
-/// Represents a borrowed Widget
+/// Represents a borrowed Widget.
 #[derive(PartialEq)]
 pub struct Wdg {
     raw: NonNull<lv_obj_t>,
 }
 
 impl Wdg {
-    /// Convert LVGL Obj pointer to Wdg or panic if null pointer was given
+    /// Convert LVGL Obj pointer to Wdg
+    ///
+    /// # Panics
+    ///
+    /// If null pointer was given, this funcion will panic.
+    /// For checked version, use `try_from_ptr`.
     pub fn from_ptr(ptr: *mut lv_obj_t) -> Self {
         Self {
             raw: NonNull::new(ptr).unwrap(),
         }
     }
 
-    /// Convert LVGL Obj pointer to Some(Wdg) or None if null pointer was given
+    /// Convert LVGL Obj pointer to Some(Wdg) or None if null pointer was given.
     pub fn try_from_ptr(ptr: *mut lv_obj_t) -> Option<Self> {
         Some(Self {
             raw: NonNull::new(ptr)?,
@@ -317,19 +317,11 @@ impl Wdg {
     }
 
     pub fn from_non_null(ptr: &NonNull<lv_obj_t>) -> &Self {
-        unsafe { &*(ptr as *const _ as *const Self) }
+        unsafe { &*(core::ptr::from_ref(ptr).cast::<Self>()) }
     }
 
     pub fn from_non_null_mut(ptr: &mut NonNull<lv_obj_t>) -> &mut Self {
-        unsafe { &mut *(ptr as *mut _ as *mut Self) }
-    }
-
-    pub fn raw(&self) -> *const lv_obj_t {
-        self.raw.as_ptr()
-    }
-
-    pub fn raw_mut(&mut self) -> *mut lv_obj_t {
-        self.raw.as_ptr()
+        unsafe { &mut *(core::ptr::from_mut(ptr).cast::<Self>()) }
     }
 
     pub fn downcast<T: WidgetSpec>(&self) -> Result<&T, DowncastError> {
@@ -340,7 +332,7 @@ impl Wdg {
         T::from_non_null_mut(&mut self.raw)
     }
 
-    pub fn add_event_cb<'a, F>(&mut self, filter: EventCode, callback: F)
+    pub fn add_event_cb<F>(&mut self, filter: EventCode, callback: F)
     where
         F: FnMut(Event) + 'static,
     {
@@ -416,81 +408,84 @@ impl RawObj for Wdg {
     }
 }
 
-pub struct SimpleObject<T: RawObj>(T);
+mod testing {
+    use crate::widgets::*;
+    pub struct SimpleObject<T: RawObj>(T);
 
-impl<T: RawObj> SimpleObject<T> {
-    pub fn raw(&self) -> *const lv_obj_t {
-        self.0.raw()
-    }
+    impl<T: RawObj> SimpleObject<T> {
+        pub fn raw(&self) -> *const lv_obj_t {
+            self.0.raw()
+        }
 
-    pub fn raw_mut(&mut self) -> *mut lv_obj_t {
-        self.0.raw_mut()
-    }
+        pub fn raw_mut(&mut self) -> *mut lv_obj_t {
+            self.0.raw_mut()
+        }
 
-    pub fn set_text(&mut self, text: &CStr) {
-        unsafe {
-            lightvgl_sys::lv_label_set_text(self.raw_mut(), text.as_ptr());
+        pub fn set_text(&mut self, text: &CStr) {
+            unsafe {
+                lightvgl_sys::lv_label_set_text(self.raw_mut(), text.as_ptr());
+            }
         }
     }
-}
 
-impl SimpleObject<Widget> {
-    pub fn new() -> Self {
-        unsafe { Self(Widget::from_ptr(lv_label_create(core::ptr::null_mut())).unwrap()) }
-    }
-}
-
-impl WidgetSpec for SimpleObject<Wdg> {
-    fn get_class() -> &'static lv_obj_class_t {
-        unsafe { &lightvgl_sys::lv_label_class }
+    impl SimpleObject<Widget> {
+        pub fn new() -> Self {
+            unsafe { Self(Widget::from_ptr(lv_label_create(core::ptr::null_mut())).unwrap()) }
+        }
     }
 
-    fn from_non_null(ptr: &NonNull<lv_obj_t>) -> Result<&Self, DowncastError> {
-        check_class(ptr.as_ptr(), Self::get_class())?;
-        Ok(unsafe { &*(ptr as *const _ as *const Self) })
+    impl WidgetSpec for SimpleObject<Wdg> {
+        fn get_class() -> &'static lv_obj_class_t {
+            unsafe { &lightvgl_sys::lv_label_class }
+        }
+
+        fn from_non_null(ptr: &NonNull<lv_obj_t>) -> Result<&Self, DowncastError> {
+            check_class(ptr.as_ptr(), Self::get_class())?;
+            Ok(unsafe { &*(core::ptr::from_ref(ptr).cast::<Self>()) })
+        }
+
+        fn from_non_null_mut(ptr: &mut NonNull<lv_obj_t>) -> Result<&mut Self, DowncastError> {
+            check_class(ptr.as_ptr(), Self::get_class())?;
+            Ok(unsafe { &mut *(core::ptr::from_mut(ptr).cast::<Self>()) })
+        }
     }
 
-    fn from_non_null_mut(ptr: &mut NonNull<lv_obj_t>) -> Result<&mut Self, DowncastError> {
-        check_class(ptr.as_ptr(), Self::get_class())?;
-        Ok(unsafe { &mut *(ptr as *mut _ as *mut Self) })
+    impl Deref for SimpleObject<Widget> {
+        type Target = SimpleObject<Wdg>;
+        fn deref(&self) -> &Self::Target {
+            SimpleObject::<Wdg>::from_non_null(&self.0.raw).unwrap()
+        }
     }
-}
 
-impl Deref for SimpleObject<Widget> {
-    type Target = SimpleObject<Wdg>;
-    fn deref(&self) -> &Self::Target {
-        SimpleObject::<Wdg>::from_non_null(&self.0.raw).unwrap()
+    impl DerefMut for SimpleObject<Widget> {
+        fn deref_mut(&mut self) -> &mut Self::Target {
+            SimpleObject::<Wdg>::from_non_null_mut(&mut self.0.raw).unwrap()
+        }
     }
-}
 
-impl DerefMut for SimpleObject<Widget> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        SimpleObject::<Wdg>::from_non_null_mut(&mut self.0.raw).unwrap()
+    impl Deref for SimpleObject<Wdg> {
+        type Target = Wdg;
+        fn deref(&self) -> &Self::Target {
+            Wdg::from_non_null(&self.0.raw)
+        }
     }
-}
 
-impl Deref for SimpleObject<Wdg> {
-    type Target = Wdg;
-    fn deref(&self) -> &Self::Target {
-        Wdg::from_non_null(&self.0.raw)
+    impl DerefMut for SimpleObject<Wdg> {
+        fn deref_mut(&mut self) -> &mut Self::Target {
+            Wdg::from_non_null_mut(&mut self.0.raw)
+        }
     }
-}
 
-impl DerefMut for SimpleObject<Wdg> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        Wdg::from_non_null_mut(&mut self.0.raw)
+    impl From<SimpleObject<Widget>> for Widget {
+        fn from(value: SimpleObject<Widget>) -> Self {
+            value.0
+        }
     }
-}
 
-impl From<SimpleObject<Widget>> for Widget {
-    fn from(value: SimpleObject<Widget>) -> Self {
-        value.0
-    }
-}
-
-impl From<SimpleObject<Wdg>> for Wdg {
-    fn from(value: SimpleObject<Wdg>) -> Self {
-        value.0
+    impl From<SimpleObject<Wdg>> for Wdg {
+        fn from(value: SimpleObject<Wdg>) -> Self {
+            value.0
+        }
     }
 }
 
@@ -513,12 +508,12 @@ macro_rules! impl_widget {
 
             fn from_non_null(ptr: &NonNull<lv_obj_t>) -> Result<&Self, DowncastError> {
                 check_class(ptr.as_ptr(), Self::get_class())?;
-                Ok(unsafe { &*(ptr as *const _ as *const Self) })
+                Ok(unsafe { &*(core::ptr::from_ref(ptr).cast::<Self>()) })
             }
 
             fn from_non_null_mut(ptr: &mut NonNull<lv_obj_t>) -> Result<&mut Self, DowncastError> {
                 check_class(ptr.as_ptr(), Self::get_class())?;
-                Ok(unsafe { &mut *(ptr as *mut _ as *mut Self) })
+                Ok(unsafe { &mut *(core::ptr::from_mut(ptr).cast::<Self>()) })
             }
         }
 
@@ -543,6 +538,12 @@ macro_rules! impl_widget {
 
             pub fn leak(self) -> Wdg {
                 self.0.leak()
+            }
+        }
+
+        impl Default for $t<Widget> {
+            fn default() -> Self {
+                Self::new()
             }
         }
 

@@ -16,7 +16,7 @@ pub enum InputState {
 }
 
 impl InputState {
-    fn as_lv_indev_state(&self) -> lv_indev_state_t {
+    fn as_lv_indev_state(self) -> lv_indev_state_t {
         match self {
             InputState::Pressed => lightvgl_sys::lv_indev_state_t_LV_INDEV_STATE_PRESSED,
             InputState::Released => lightvgl_sys::lv_indev_state_t_LV_INDEV_STATE_RELEASED,
@@ -67,9 +67,9 @@ impl InputType for Pointer {
         lightvgl_sys::lv_indev_type_t_LV_INDEV_TYPE_POINTER
     }
 
-    fn set_lv_indev_data(event: &Self::DataType, data: &mut lightvgl_sys::lv_indev_data_t) {
-        data.point.x = event.x;
-        data.point.y = event.y;
+    fn set_lv_indev_data(event_data: &Self::DataType, data: &mut lightvgl_sys::lv_indev_data_t) {
+        data.point.x = event_data.x;
+        data.point.y = event_data.y;
     }
 }
 
@@ -114,7 +114,6 @@ impl InputType for Button {
     }
 }
 
-#[allow(dead_code)]
 pub struct InputDevice<T: InputType> {
     raw: NonNull<lv_indev_t>,
     r#type: PhantomData<T>,
@@ -169,7 +168,7 @@ unsafe extern "C" fn read_input<F, T>(
                 BufferStatus::Buffered => {
                     (*data).continue_reading = true;
                 }
-            };
+            }
             T::set_lv_indev_data(&event.data, data.as_mut().unwrap());
             (*data).state = event.state.as_lv_indev_state();
         } else {

@@ -47,6 +47,7 @@
 
 use ::alloc::boxed::Box;
 use ::core::{marker::PhantomData, ptr::NonNull};
+use alloc::borrow::ToOwned;
 
 use embedded_graphics::{
     Pixel,
@@ -106,7 +107,8 @@ impl Display {
     /// ## Arguments
     ///  - `buffer` - [DrawBuffer] object that matches the [Display] color format
     ///  - `callback` - Function or closure that pushes the pixels to the screen
-    pub fn register<F, const N: usize, C: LvglColorFormat>(
+    #[expect(clippy::needless_pass_by_value)]
+    pub fn register<F, const N: u32, C: LvglColorFormat>(
         &mut self,
         buffer: DrawBuffer<N, C>,
         callback: F,
@@ -141,7 +143,7 @@ impl Display {
     /// ## Safety
     /// `buffer` must live at least as long as the Display.
     /// Deallocating it earlier will cause a use-after-free.
-    pub unsafe fn register_raw<F, const N: usize, C: LvglColorFormat>(
+    pub unsafe fn register_raw<F, const N: u32, C: LvglColorFormat>(
         &mut self,
         buffer: &mut [u8],
         render_mode: RenderMode,
@@ -151,13 +153,16 @@ impl Display {
     {
         let cf = C::as_lv_color_format_t();
         verify_color_format(cf);
-        assert_eq!(buffer.len(), N);
+        assert_eq!(
+            buffer.len(),
+            N.try_into().expect("N should fit into `usize`")
+        );
         unsafe {
             lightvgl_sys::lv_display_set_buffers(
                 self.raw_mut(),
                 buffer.as_mut_ptr().cast(),
                 ::core::ptr::null_mut(),
-                N as u32,
+                N,
                 render_mode.into(),
             );
             lightvgl_sys::lv_display_set_flush_cb(
@@ -206,6 +211,11 @@ impl Display {
         }
     }
 
+    /// Creates a new `Display` from the given `*mut lv_display_t`
+    ///
+    /// # Safety
+    ///
+    /// `ptr` must be non-null.
     pub unsafe fn from_ptr_unchecked(ptr: *mut lv_display_t) -> Self {
         unsafe {
             Self {
@@ -281,13 +291,14 @@ pub struct Area {
 /// An update to the display information, contains the area that is being
 /// updated and the color of the pixels that need to be updated. The colors
 /// are represented in a contiguous array.
-pub struct DisplayRefresh<'a, const N: usize, C> {
+pub struct DisplayRefresh<'a, const N: u32, C> {
     pub rectangle: Rectangle,
     pub colors: &'a [C],
     pub display: Display,
 }
 
-unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
+#[expect(clippy::arithmetic_side_effects)]
+unsafe extern "C" fn disp_flush_trampoline<F, const N: u32, C>(
     display: *mut lightvgl_sys::lv_display_t,
     area: *const lightvgl_sys::lv_area_t,
     color_p: *mut u8,
@@ -301,12 +312,12 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
 
             let buf = color_p.cast::<C>();
 
-            let w = (*area).x2 - (*area).x1 + 1;
-            let h = (*area).y2 - (*area).y1 + 1;
+            let w = ((*area).x2 - (*area).x1 + 1).cast_unsigned();
+            let h = ((*area).y2 - (*area).y1 + 1).cast_unsigned();
             let rectangle = Rectangle {
                 size: Size {
-                    width: w as u32,
-                    height: h as u32,
+                    width: w,
+                    height: h,
                 },
                 top_left: Point {
                     x: (*area).x1,
@@ -329,7 +340,8 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
     }
 }
 
-impl<const N: usize, C> DisplayRefresh<'_, N, C> {
+impl<const N: u32, C> DisplayRefresh<'_, N, C> {
+    #[expect(clippy::arithmetic_side_effects)]
     pub fn as_pixels<PC>(&self) -> impl IntoIterator<Item = Pixel<PC>>
     where
         C: Clone,
@@ -339,33 +351,32 @@ impl<const N: usize, C> DisplayRefresh<'_, N, C> {
         let top_left = area.top_left;
         let Point { x: x1, y: y1 } = top_left;
         let bottom_right = area.bottom_right().unwrap();
-        let Point { x: x2, y: y2 } = bottom_right;
+        let x2 = bottom_right.x;
 
-        let ys = y1..=y2;
-        let xs = (x1..=x2).enumerate();
-        let x_len = (x2 - x1 + 1) as usize;
-
-        // We use iterators here to ensure that the Rust compiler can apply all possible
-        // optimizations at compile time.
-        ys.enumerate().flat_map(move |(iy, y)| {
-            xs.clone().map(move |(ix, x)| {
-                let color_len = x_len * iy + ix;
-                let raw_color = self.colors[color_len].clone();
-                let color: PC = raw_color.into();
-                Pixel(Point::new(x, y), color)
-            })
+        let mut ix = x1;
+        let mut iy = y1;
+        self.colors.iter().map(move |raw_color| {
+            if ix > x2 {
+                ix = x1;
+                iy += 1;
+            }
+            Pixel(Point::new(ix, iy), raw_color.to_owned().into())
         })
     }
 }
 
-pub struct DrawBuffer<const N: usize, C: LvglColorFormat> {
+pub struct DrawBuffer<const N: u32, C: LvglColorFormat> {
     raw: NonNull<lv_draw_buf_t>,
     color_depth: PhantomData<C>,
 }
 
-impl<const N: usize, C: LvglColorFormat> DrawBuffer<N, C> {
+impl<const N: u32, C: LvglColorFormat> DrawBuffer<N, C> {
     pub fn new(w: u32, h: u32) -> Self {
-        assert_eq!(w * h, N as u32);
+        #[expect(clippy::arithmetic_side_effects)]
+        {
+            assert_eq!(w * h, N);
+        }
+
         let cf = C::as_lv_color_format_t();
         unsafe {
             let raw = NonNull::new(lightvgl_sys::lv_draw_buf_create(w, h, cf, 0)).unwrap();

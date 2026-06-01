@@ -524,9 +524,9 @@ impl LvArg {
                 #ident.raw_mut()
             }
         } else if self.typ.is_mut_void() {
-            quote! {#ident as *mut _ as *mut c_void}
+            quote! {core::ptr::from_mut(#ident).cast::<c_void>()}
         } else if self.typ.is_const_void() {
-            quote! {#ident as *const _ as *const c_void}
+            quote! {core::ptr::from_ref(#ident).cast::<c_void>()}
         } else {
             quote! {
                 #ident
