@@ -1,13 +1,14 @@
+#![allow(clippy::std_instead_of_core, clippy::std_instead_of_alloc)]
+
 use std::{
     cell::RefCell,
-    process::exit,
     rc::Rc,
     sync::{
         Mutex,
         atomic::{AtomicBool, Ordering},
     },
     thread::sleep,
-    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
+    time::{Duration, Instant},
 };
 
 use lv_bevy_ecs::{
@@ -17,7 +18,6 @@ use lv_bevy_ecs::{
     error,
     events::EventCode,
     functions::*,
-    info,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     support::{Align, OpacityLevel},
@@ -37,6 +37,8 @@ use share_rc::share;
 
 #[derive(Component)]
 struct DynamicButton;
+
+static EXIT_SIGNAL: AtomicBool = AtomicBool::new(false);
 
 fn main() {
     lv_init();
@@ -58,21 +60,18 @@ fn main() {
     window.update(&sim_display);
     let window_rc = Rc::new(RefCell::new(window));
 
-    info!("SIMULATOR OK");
     error!("Random error");
 
     let mut display = Display::new(HOR_RES, VER_RES);
 
     let buffer = DrawBuffer::<{ HOR_RES * LINE_HEIGHT }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
-    info!("Display OK");
-
     display.register(
         buffer,
         share!(|refresh| {
             //sim_display.draw_iter(refresh.as_pixels()).unwrap();
             sim_display
-                .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
+                .fill_contiguous(&refresh.rectangle, refresh.colors.iter().copied())
                 .unwrap();
             if refresh.display.flush_is_last() {
                 take!(window_rc.clone()).borrow_mut().update(&sim_display);
@@ -80,29 +79,16 @@ fn main() {
         }),
     );
 
-    info!("Display Driver OK");
-
-    // Register a new input device that's capable of reading the current state of the input
     let _touch_screen = InputDevice::<Pointer>::new(share!(|| get_touch_input(
         take!(window_rc.clone()).borrow().events()
     )));
 
-    info!("Input OK");
-
     drop(window_rc);
 
-    lv_tick_set_cb(|| {
-        let current_time = SystemTime::now();
-        let since_epoch = current_time
-            .duration_since(UNIX_EPOCH)
-            .expect("Time should only go forward");
-        let ms = since_epoch.as_millis() as u32;
-        ms
-    });
+    let start = Instant::now();
+    lv_tick_set_cb(move || start.elapsed().as_millis() as u32);
 
     let world = Rc::new(RefCell::new(LvglWorld::default()));
-
-    info!("ECS OK");
 
     {
         let world_rc = world.clone();
@@ -118,6 +104,7 @@ fn main() {
             OpacityLevel::Transparent as i32,
             OpacityLevel::Cover as i32,
             |obj, val| {
+                #[expect(clippy::cast_sign_loss)]
                 obj.set_style_opa(val as u8, lv_part_t_LV_PART_MAIN as lv_style_selector_t);
             },
         );
@@ -125,30 +112,19 @@ fn main() {
         let world_rc = world_rc.clone();
         button.add_event_cb(EventCode::Clicked, move |_| {
             let mut world = world_rc.borrow_mut();
-            match world
+            if let Ok(entity) = world
                 .query_filtered::<Entity, With<DynamicButton>>()
                 .single(&world)
-                .ok()
             {
-                Some(entity) => {
-                    world.despawn(entity);
-                    /*let mut entities = Vec::new();
-                    for entity in world.query_filtered::<Entity, With<Button>>().iter(&world) {
-                        entities.push(entity);
-                    }
-                    for entity in entities{
-                        world.despawn(entity);
-                    }*/
-                }
-                None => {
-                    let mut dynamic_button = Button::new();
-                    let mut label = Label::new();
-                    dynamic_button.set_align(Align::TopRight.into());
-                    label.set_text(c"This is dynamic");
-                    world
-                        .spawn((DynamicButton, dynamic_button.into_inner()))
-                        .with_child(label.into_inner());
-                }
+                world.despawn(entity);
+            } else {
+                let mut dynamic_button = Button::new();
+                let mut label = Label::new();
+                dynamic_button.set_align(Align::TopRight.into());
+                label.set_text(c"This is dynamic");
+                world
+                    .spawn((DynamicButton, dynamic_button.into_inner()))
+                    .with_child(label.into_inner());
             }
         });
 
@@ -171,15 +147,14 @@ fn main() {
         world.spawn(arc.into_inner());
     }
 
-    info!("Create OK");
-
     loop {
+        if EXIT_SIGNAL.load(Ordering::Relaxed) {
+            break;
+        }
         let start = Instant::now();
         let next_timer_period = lv_timer_handler();
         match next_timer_period {
-            NextTimerPeriod::Ready => {
-                continue;
-            }
+            NextTimerPeriod::Ready => {}
             NextTimerPeriod::AfterMs(next_timer_ms) => {
                 let next_instant = start + Duration::from_millis(next_timer_ms.get().into());
                 sleep(next_instant - Instant::now());
@@ -200,11 +175,9 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
     let mut next_touch_status = None;
 
     for event in events {
+        #[expect(clippy::collapsible_match)]
         match event {
-            SimulatorEvent::MouseButtonDown {
-                mouse_btn: _,
-                point,
-            } => {
+            SimulatorEvent::MouseButtonDown { point, .. } => {
                 next_touch_status = Some(InputEvent {
                     status: BufferStatus::Once,
                     state: InputState::Pressed,
@@ -212,10 +185,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
                 });
                 IS_POINTER_DOWN.store(true, Ordering::Relaxed);
             }
-            SimulatorEvent::MouseButtonUp {
-                mouse_btn: _,
-                point,
-            } => {
+            SimulatorEvent::MouseButtonUp { point, .. } => {
                 next_touch_status = Some(InputEvent {
                     status: BufferStatus::Once,
                     state: InputState::Released,
@@ -232,7 +202,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
                     });
                 }
             }
-            SimulatorEvent::Quit => exit(0),
+            SimulatorEvent::Quit => EXIT_SIGNAL.store(true, Ordering::Relaxed),
             _ => {}
         }
     }
@@ -242,17 +212,17 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
     if let Some(latest_touch_status) = next_touch_status {
         *lock = latest_touch_status;
     }
-    return *lock;
+    *lock
 }
 
 pub fn get_memory_stats(monitor: &mut lv_bevy_ecs::sys::lv_mem_monitor_t) {
     if let Some(stats) = memory_stats::memory_stats() {
         let memory = stats.physical_mem;
         let virtual_memory = stats.virtual_mem;
-        (*monitor).total_size = (virtual_memory) as usize;
-        (*monitor).free_size = (virtual_memory - memory) as usize;
-        (*monitor).max_used = usize::max((memory) as usize, (*monitor).max_used);
-        (*monitor).used_pct = (memory as f64 / virtual_memory as f64 * 100.0) as u8;
+        monitor.total_size = virtual_memory;
+        monitor.free_size = virtual_memory - memory;
+        monitor.max_used = usize::max(memory, monitor.max_used);
+        monitor.used_pct = (memory * 100 / virtual_memory) as u8;
     } else {
         error!("Could not retrieve memory stats");
     }

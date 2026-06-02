@@ -54,13 +54,8 @@ DEP_LV_CONFIG_PATH = { relative = true, value = "." }
 # use lv_bevy_ecs::functions::*;
 # use std::time::{SystemTime, UNIX_EPOCH, Duration};
 #
-lv_tick_set_cb(|| {
-    let current_time = SystemTime::now();
-    let since_epoch = current_time
-        .duration_since(UNIX_EPOCH)
-        .expect("Time should only go forward");
-    since_epoch.as_millis() as u32
-});
+let start = Instant::now();
+lv_tick_set_cb(move || start.elapsed().as_millis() as u32);
 ```
 
 4. Create a global LvglWorld instance with `LvglWorld::new()`:

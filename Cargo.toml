@@ -103,24 +103,21 @@ wildcard_imports = "allow"
 absolute_paths = "allow"
 allow_attributes_without_reason = "allow"
 arbitrary_source_item_ordering = "allow"
-arithmetic_side_effects = "allow"  # TODO check this later
-as_conversions = "allow"  # TODO check this later
 blanket_clippy_restriction_lints = "allow"
 cast_possible_truncation = "allow"
 cast_possible_wrap = "allow"
 clone_on_ref_ptr = "allow"
 default_numeric_fallback = "allow"
-doc_paragraphs_missing_punctuation = "allow"  # TODO check this later
 exhaustive_enums = "allow"
 exhaustive_structs = "allow"
 expect_used = "allow"
 implicit_return = "allow"
 integer_division = "allow"
 integer_division_remainder_used = "allow"
+mem_forget = "allow"
 min_ident_chars = "allow"
 missing_assert_message = "allow"
 missing_docs_in_private_items = "allow"
-missing_inline_in_public_items = "allow"  # TODO check this later
 module_name_repetitions = "allow"
 multiple_unsafe_ops_per_block = "allow"
 pattern_type_mismatch = "allow"
@@ -137,12 +134,16 @@ unreachable = "allow"
 unreadable_literal = "allow"
 unseparated_literal_suffix = "allow"
 unused_trait_names = "allow"
-unwrap_used = "allow"  # TODO check this later
 wildcard_enum_match_arm = "allow"
 
 # Useful in the restriction group
+arithmetic_side_effects = "allow"  # TODO check this later
+as_conversions = "allow"  # TODO check this later
+doc_paragraphs_missing_punctuation = "allow"  # TODO check this later
 exit = "warn"
+missing_inline_in_public_items = "allow"  # TODO check this later
 unneeded_field_pattern = "warn"
+unwrap_used = "allow"  # TODO check this later
 
 [profile.dev]
 opt-level = "z"

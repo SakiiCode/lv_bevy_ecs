@@ -1,6 +1,8 @@
+#![allow(clippy::std_instead_of_core, clippy::std_instead_of_alloc)]
+
 use std::{
     cell::RefCell,
-    ffi::{CStr, CString, c_void},
+    ffi::{CStr, CString},
     rc::Rc,
     str::FromStr,
     sync::{
@@ -11,7 +13,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use lightvgl_sys::{LV_DRAW_BUF_ALIGN, LV_DRAW_BUF_STRIDE_ALIGN, lv_canvas_buf_size};
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, hierarchy::Children, query::With, world::World},
@@ -297,6 +298,7 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
                 OpacityLevel::Cover as i32,
                 OpacityLevel::Percent50 as i32,
                 |widget, value| {
+                    #[expect(clippy::cast_sign_loss)]
                     widget.set_style_opa(value as u8, 0);
                 },
             );
@@ -349,6 +351,10 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
         world.despawn(fourth);
     }
 
+    #[expect(
+        clippy::large_stack_arrays,
+        reason = "Heap allocation breaks this for some reason"
+    )]
     let mut canvas_buf = [0u8; 400 * 100 * 4];
 
     let mut canvas = Canvas::new();
@@ -404,6 +410,7 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
 }
 
 fn opa_anim_cb(widget: &mut Wdg, value: i32) {
+    #[expect(clippy::cast_sign_loss)]
     widget.set_style_opa(value as u8, 0);
 }
 
@@ -538,6 +545,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
     let mut next_touch_status = None;
 
     for event in events {
+        #[expect(clippy::collapsible_match)]
         match event {
             SimulatorEvent::MouseButtonDown { point, .. } => {
                 next_touch_status = Some(InputEvent {
