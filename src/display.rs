@@ -12,9 +12,9 @@
 //! # use lv_bevy_ecs::sys::*;
 //! #
 //! lv_bevy_ecs::functions::lv_init();
-//! const HOR_RES: u32 = 800;
-//! const VER_RES: u32 = 480;
-//! const LINE_HEIGHT: u32 = 10;
+//! const HOR_RES: usize = 800;
+//! const VER_RES: usize = 480;
+//! const LINE_HEIGHT: usize = 10;
 //!
 //! let mut sim_display: SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
 //! let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
@@ -95,7 +95,7 @@ impl From<DisplayRotation> for lightvgl_sys::lv_disp_rotation_t {
 }
 
 impl Display {
-    pub fn new(hor_res: u32, ver_res: u32) -> Self {
+    pub fn new(hor_res: usize, ver_res: usize) -> Self {
         crate::support::assert_lv_is_initialized();
         unsafe {
             let raw = NonNull::new(lightvgl_sys::lv_display_create(
@@ -112,7 +112,7 @@ impl Display {
     ///  - `buffer` - [DrawBuffer] object that matches the [Display] color format
     ///  - `callback` - Function or closure that pushes the pixels to the screen
     #[expect(clippy::needless_pass_by_value)]
-    pub fn register<F, const N: u32, C: LvglColorFormat>(
+    pub fn register<F, const N: usize, C: LvglColorFormat>(
         &mut self,
         buffer: DrawBuffer<N, C>,
         callback: F,
@@ -141,15 +141,12 @@ impl Display {
 
     /// Assigns a callback to `lv_display_set_flush_cb`
     /// ## Arguments
-    ///  * `buffer` - `&mut [u8]` slice that is exactly *N* bytes long
+    ///  * `buffer` - `[u8]` buffer that is exactly *N* bytes long
     ///  * `render_mode` - Specifies the `lv_display_render_mode_t`
     ///  * `callback` - Function or closure that pushes the pixels to the screen
-    /// ## Safety
-    /// `buffer` must live at least as long as the Display.
-    /// Deallocating it earlier will cause a use-after-free.
-    pub unsafe fn register_raw<F, const N: u32, C: LvglColorFormat>(
+    pub fn register_raw<F, const N: usize, C: LvglColorFormat>(
         &mut self,
-        buffer: &mut [u8],
+        buffer: &'static mut [u8],
         render_mode: RenderMode,
         callback: F,
     ) where
@@ -157,16 +154,13 @@ impl Display {
     {
         let cf = C::as_lv_color_format_t();
         verify_color_format(cf);
-        assert_eq!(
-            buffer.len(),
-            N.try_into().expect("N should fit into `usize`")
-        );
+        assert_eq!(buffer.len(), N);
         unsafe {
             lightvgl_sys::lv_display_set_buffers(
                 self.raw_mut(),
                 buffer.as_mut_ptr().cast(),
                 ::core::ptr::null_mut(),
-                N,
+                N.try_into().unwrap(),
                 render_mode.into(),
             );
             lightvgl_sys::lv_display_set_flush_cb(
@@ -295,14 +289,14 @@ pub struct Area {
 /// An update to the display information, contains the area that is being
 /// updated and the color of the pixels that need to be updated. The colors
 /// are represented in a contiguous array.
-pub struct DisplayRefresh<'a, const N: u32, C> {
+pub struct DisplayRefresh<'a, const N: usize, C> {
     pub rectangle: Rectangle,
     pub colors: &'a [C],
     pub display: Display,
 }
 
 #[expect(clippy::arithmetic_side_effects)]
-unsafe extern "C" fn disp_flush_trampoline<F, const N: u32, C>(
+unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
     display: *mut lightvgl_sys::lv_display_t,
     area: *const lightvgl_sys::lv_area_t,
     color_p: *mut u8,
@@ -344,7 +338,7 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: u32, C>(
     }
 }
 
-impl<const N: u32, C> DisplayRefresh<'_, N, C> {
+impl<const N: usize, C> DisplayRefresh<'_, N, C> {
     #[expect(clippy::arithmetic_side_effects)]
     pub fn as_pixels<PC>(&self) -> impl IntoIterator<Item = Pixel<PC>>
     where
@@ -369,13 +363,13 @@ impl<const N: u32, C> DisplayRefresh<'_, N, C> {
     }
 }
 
-pub struct DrawBuffer<const N: u32, C: LvglColorFormat> {
+pub struct DrawBuffer<const N: usize, C: LvglColorFormat> {
     raw: NonNull<lv_draw_buf_t>,
     color_depth: PhantomData<C>,
 }
 
-impl<const N: u32, C: LvglColorFormat> DrawBuffer<N, C> {
-    pub fn new(w: u32, h: u32) -> Self {
+impl<const N: usize, C: LvglColorFormat> DrawBuffer<N, C> {
+    pub fn new(w: usize, h: usize) -> Self {
         #[expect(clippy::arithmetic_side_effects)]
         {
             assert_eq!(w * h, N);
@@ -383,7 +377,13 @@ impl<const N: u32, C: LvglColorFormat> DrawBuffer<N, C> {
 
         let cf = C::as_lv_color_format_t();
         unsafe {
-            let raw = NonNull::new(lightvgl_sys::lv_draw_buf_create(w, h, cf, 0)).unwrap();
+            let raw = NonNull::new(lightvgl_sys::lv_draw_buf_create(
+                w.try_into().unwrap(),
+                h.try_into().unwrap(),
+                cf,
+                0,
+            ))
+            .unwrap();
             Self {
                 raw,
                 color_depth: PhantomData,
@@ -420,9 +420,9 @@ macro_rules! setup_test_display {
         use embedded_graphics_simulator::SimulatorDisplay;
         use lv_bevy_ecs::display::{Display, DrawBuffer};
 
-        const HOR_RES: u32 = 320;
-        const VER_RES: u32 = 240;
-        const LINE_HEIGHT: u32 = 16;
+        const HOR_RES: usize = 320;
+        const VER_RES: usize = 240;
+        const LINE_HEIGHT: usize = 16;
 
         let mut sim_display: SimulatorDisplay<Rgb565> =
             SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));

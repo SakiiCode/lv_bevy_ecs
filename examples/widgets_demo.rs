@@ -32,12 +32,12 @@ fn main() {
     lv_init();
     lv_bevy_ecs::logging::lv_log_init();
 
-    const HOR_RES: u32 = 800;
-    const VER_RES: u32 = 480;
-    const LINE_HEIGHT: u32 = 16;
+    const HOR_RES: usize = 800;
+    const VER_RES: usize = 480;
+    const LINE_HEIGHT: usize = 16;
 
     let mut sim_display: SimulatorDisplay<Rgb565> =
-        SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
+        SimulatorDisplay::new(Size::new(HOR_RES as u32, VER_RES as u32));
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
     let mut window = Window::new("Widgets Demo", &output_settings);

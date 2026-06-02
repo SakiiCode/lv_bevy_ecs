@@ -45,11 +45,12 @@ async fn main() {
     lv_init();
     lv_bevy_ecs::logging::lv_log_init();
 
-    const HOR_RES: u32 = 320;
-    const VER_RES: u32 = 240;
-    const LINE_HEIGHT: u32 = 16;
+    const HOR_RES: usize = 320;
+    const VER_RES: usize = 240;
+    const LINE_HEIGHT: usize = 16;
 
-    let mut sim_display = SimulatorDisplay::<Rgb565>::new(Size::new(HOR_RES, VER_RES));
+    let mut sim_display =
+        SimulatorDisplay::<Rgb565>::new(Size::new(HOR_RES as u32, VER_RES as u32));
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
     let mut window = Window::new("Async Button Example", &output_settings);
