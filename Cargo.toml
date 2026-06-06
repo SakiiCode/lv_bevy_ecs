@@ -36,7 +36,7 @@ constptr = { version = "0.3.1", default-features = false }
 ctor = { version = "1.0.0", default-features = false, features = ["proc_macro"], optional = true }
 defmt = { version = "1.0.1", optional = true }
 embedded-graphics = { version = "0.8.0" }
-lightvgl-sys = { path = "../lightvgl-sys", version = "~9.5.3", default-features = false, features = [
+lightvgl-sys = { path = "../lightvgl-sys", version = "9.5.4-beta", default-features = false, features = [
   "library",
 ] }
 log = { version = "0.4" }
@@ -54,7 +54,7 @@ smol-macros = "0.1.1"
 static_cell = "2.1.1"
 
 [build-dependencies]
-lightvgl-sys = { path = "../lightvgl-sys", version = "~9.5.3", default-features = false, features = [
+lightvgl-sys = { path = "../lightvgl-sys", version = "9.5.4-beta", default-features = false, features = [
   "raw-bindings",
 ] }
 lv_codegen = { path = "lv_codegen", version = "0.4.1" }
@@ -141,7 +141,7 @@ arithmetic_side_effects = "allow"  # TODO check this later
 as_conversions = "allow"  # TODO check this later
 doc_paragraphs_missing_punctuation = "allow"  # TODO check this later
 exit = "warn"
-missing_inline_in_public_items = "allow"  # TODO check this later
+missing_inline_in_public_items = "warn"
 unneeded_field_pattern = "warn"
 unwrap_used = "allow"  # TODO check this later
 
