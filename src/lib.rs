@@ -1,4 +1,4 @@
-#![doc = include_str!("../README.md")]
+#![cfg_attr(doc, doc = include_str!("../README.md"))]
 #![no_std]
 
 extern crate alloc;
@@ -21,7 +21,7 @@ pub mod styles;
 pub mod subjects;
 pub mod support;
 pub mod sys {
-    //! Re-exported modules from lightvgl_sys
+    //! Re-exported modules from `lightvgl_sys`
     pub use lightvgl_sys::*;
 }
 pub mod timers;

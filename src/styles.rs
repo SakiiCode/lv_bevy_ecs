@@ -31,7 +31,10 @@ use ::core::mem::MaybeUninit;
 use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};
 use lightvgl_sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t};
 
-use crate::{info, widgets::Widget};
+use crate::{
+    info,
+    widgets::{RawObj, Widget},
+};
 
 #[derive(Component)]
 #[component(on_insert=add_style)]
@@ -64,6 +67,11 @@ impl Clone for Style {
         result.selector = self.selector;
         result
     }
+
+    fn clone_from(&mut self, source: &Self) {
+        self.copy(source);
+        self.selector = source.selector;
+    }
 }
 
 impl Style {
@@ -76,10 +84,12 @@ impl Style {
         Self { raw, selector }
     }
 
+    #[inline]
     pub fn raw(&self) -> &lightvgl_sys::lv_style_t {
         &self.raw
     }
 
+    #[inline]
     pub fn raw_mut(&mut self) -> &mut lightvgl_sys::lv_style_t {
         &mut self.raw
     }

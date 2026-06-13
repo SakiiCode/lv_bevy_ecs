@@ -48,7 +48,6 @@ use bevy_ecs::{
 };
 use lightvgl_sys::{lv_timer_get_user_data, lv_timer_t};
 
-#[allow(dead_code)]
 #[derive(Component)]
 #[component(storage = "SparseSet")]
 pub struct Timer {
@@ -74,7 +73,7 @@ impl Timer {
         unsafe {
             let timer = lightvgl_sys::lv_timer_create(
                 Some(timer_trampoline),
-                period.as_millis() as u32,
+                u32::try_from(period.as_millis()).unwrap(),
                 Box::into_raw(Box::new((&mut schedule, world))).cast(),
             );
             let ptr = NonNull::new(timer);
@@ -85,6 +84,8 @@ impl Timer {
         }
     }
 
+    #[expect(clippy::impl_trait_in_params)]
+    #[inline]
     pub fn add_systems<M>(&mut self, system: impl IntoScheduleConfigs<ScheduleSystem, M>) {
         self.schedule.add_systems(system);
     }
@@ -142,7 +143,7 @@ where
     }
 }
 
-#[allow(static_mut_refs)]
+#[expect(static_mut_refs)]
 unsafe extern "C" fn tick_callback_trampoline() -> u32 {
     unsafe { (*TICK_CALLBACK.as_mut().unwrap())() }
 }

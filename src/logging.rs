@@ -22,13 +22,6 @@ use ::core::ffi::CStr;
 
 use log::Level;
 
-#[allow(unused)]
-macro_rules! cstr {
-    ($txt:expr) => {
-        ::alloc::ffi::CString::new($txt).unwrap().as_c_str()
-    };
-}
-
 #[macro_export]
 macro_rules! func {
     () => {{
@@ -37,7 +30,11 @@ macro_rules! func {
             core::any::type_name::<T>()
         }
         let name = type_name_of(f);
-        name[..name.len() - 3].split("::").last().unwrap()
+        name.get(..name.len().saturating_sub(3))
+            .unwrap()
+            .split("::")
+            .last()
+            .unwrap()
     }};
 }
 
@@ -84,8 +81,9 @@ pub unsafe extern "C" fn lvgl_defmt(
 
 /// Forward LVGL logging to the `log` crate
 ///
-/// Must not be used together with lv_log_init();
+/// Must not be used together with `lv_log_init()`;
 #[cfg(all(LV_USE_LOG, not(feature = "defmt")))]
+#[inline]
 pub fn connect() {
     crate::support::assert_lv_is_initialized();
     unsafe {
@@ -96,6 +94,9 @@ pub fn connect() {
 /// # Safety
 /// `buf` must be non-null, pointing to a null terminated valid C string
 #[unsafe(no_mangle)]
+#[expect(clippy::shadow_reuse)]
+#[expect(clippy::shadow_unrelated)]
+#[expect(clippy::indexing_slicing)]
 pub unsafe extern "C" fn lvgl_log(
     level: lightvgl_sys::lv_log_level_t,
     buf: *const core::ffi::c_char,
@@ -104,9 +105,9 @@ pub unsafe extern "C" fn lvgl_log(
     let message = message.to_string_lossy();
     let message = message.trim();
     let parts = message.split(':').collect::<Vec<&str>>();
-    let target = parts[0].split(" ").last().unwrap();
+    let target = parts[0].split(' ').next_back().unwrap();
     let message = parts[1..].join(":");
-    match level as u32 {
+    match level.cast_unsigned().into() {
         lightvgl_sys::LV_LOG_LEVEL_TRACE => {
             log::trace!(target:target, "{}", message.trim());
         }
@@ -131,16 +132,17 @@ pub unsafe extern "C" fn lvgl_log(
 #[cfg(LV_USE_LOG)]
 pub fn lv_log_init() {
     crate::support::assert_lv_is_initialized();
+    #[expect(clippy::ignored_unit_patterns)]
     match log::set_logger(&LvglLogger) {
         Ok(_) => log::set_max_level(log::LevelFilter::Trace),
-        Err(err) => log::error!("Could not initialize logging: {}", err),
+        Err(err) => log::error!("Could not initialize logging: {err}"),
     }
 }
 
+#[expect(clippy::cast_possible_truncation)]
 pub fn as_lv_log_level(level: Level) -> lightvgl_sys::lv_log_level_t {
     (match level {
-        Level::Trace => lightvgl_sys::LV_LOG_LEVEL_TRACE,
-        Level::Debug => lightvgl_sys::LV_LOG_LEVEL_TRACE,
+        Level::Trace | Level::Debug => lightvgl_sys::LV_LOG_LEVEL_TRACE,
         Level::Info => lightvgl_sys::LV_LOG_LEVEL_INFO,
         Level::Warn => lightvgl_sys::LV_LOG_LEVEL_WARN,
         Level::Error => lightvgl_sys::LV_LOG_LEVEL_ERROR,
@@ -159,7 +161,7 @@ pub(crate) fn lv_log_add(
         lightvgl_sys::lv_log_add(
             as_lv_log_level(level),
             file.as_ptr(),
-            line as i32,
+            line.cast_signed(),
             func.as_ptr(),
             message.as_ptr(),
         );
@@ -170,7 +172,15 @@ pub(crate) fn lv_log_add(
 pub struct LvglLogger;
 
 #[cfg(LV_USE_LOG)]
+macro_rules! cstr {
+    ($txt:expr) => {
+        ::alloc::ffi::CString::new($txt).unwrap().as_c_str()
+    };
+}
+
+#[cfg(LV_USE_LOG)]
 impl log::Log for LvglLogger {
+    #[inline]
     fn enabled(&self, _metadata: &log::Metadata) -> bool {
         true
     }

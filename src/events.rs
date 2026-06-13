@@ -9,7 +9,7 @@ use core::{
 use ::alloc::boxed::Box;
 use lightvgl_sys::{lv_event_code_t, lv_event_t};
 
-use crate::widgets::Wdg;
+use crate::widgets::{RawObj, Wdg};
 
 /// Events are triggered in LVGL when something happens which might be interesting to
 /// the user, e.g. if an object:
@@ -20,7 +20,7 @@ use crate::widgets::Wdg;
 /// All objects (such as Buttons/Labels/Sliders etc.) receive these generic events
 /// regardless of their type.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
-#[allow(clippy::empty_docs)]
+#[expect(clippy::empty_docs)]
 pub enum EventCode {
     /// The object has been pressed
     Pressed,
@@ -146,8 +146,7 @@ impl From<EventCode> for lv_event_code_t {
             EventCode::DrawPost => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST,
             EventCode::DrawPostBegin => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST_BEGIN,
             EventCode::DrawPostEnd => lightvgl_sys::lv_event_code_t_LV_EVENT_DRAW_POST_END,
-            // TODO: handle all types...
-            _ => lightvgl_sys::lv_event_code_t_LV_EVENT_CLICKED,
+            EventCode::Focused => lightvgl_sys::lv_event_code_t_LV_EVENT_FOCUSED,
         };
         native_event as lv_event_code_t
     }
@@ -185,26 +184,31 @@ pub struct Event {
 
 impl Deref for Event {
     type Target = lv_event_t;
+    #[inline]
     fn deref(&self) -> &Self::Target {
         unsafe { self.raw.as_ref() }
     }
 }
 
 impl DerefMut for Event {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe { self.raw.as_mut() }
     }
 }
 
 impl Event {
+    #[inline]
     pub fn raw(&self) -> *const lv_event_t {
         self.raw.as_ptr().cast_const()
     }
 
+    #[inline]
     pub fn raw_mut(&mut self) -> *mut lv_event_t {
         self.raw.as_ptr()
     }
 
+    #[inline]
     pub fn from_ptr(ptr: *mut lv_event_t) -> Self {
         Self {
             raw: NonNull::new(ptr).unwrap(),

@@ -34,7 +34,7 @@ use ::core::{ffi::c_void, mem::MaybeUninit, ptr::NonNull, time::Duration};
 
 use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};
 
-use crate::widgets::{Wdg, Widget};
+use crate::widgets::{RawObj, Wdg, Widget};
 
 #[derive(Component)]
 #[component(on_insert = add_animation)]
@@ -84,10 +84,12 @@ impl Animation {
         }
     }
 
+    #[inline]
     pub fn raw(&self) -> &lightvgl_sys::lv_anim_t {
         &self.raw
     }
 
+    #[inline]
     pub fn raw_mut(&mut self) -> &mut lightvgl_sys::lv_anim_t {
         &mut self.raw
     }
@@ -117,14 +119,14 @@ fn add_animation(mut world: DeferredWorld, ctx: HookContext) {
     crate::info!("Added Animation");
 }
 
-unsafe extern "C" fn animator_trampoline<F>(obj: *mut c_void, val: i32)
+unsafe extern "C" fn animator_trampoline<F>(ptr: *mut c_void, val: i32)
 where
     F: FnMut(&mut Wdg, i32),
 {
     unsafe {
-        let ptr = lightvgl_sys::lv_anim_get(obj, None);
-        let anim = NonNull::new(ptr).unwrap();
-        let obj = obj.cast();
+        let anim_ptr = lightvgl_sys::lv_anim_get(ptr, None);
+        let anim = NonNull::new(anim_ptr).unwrap();
+        let obj = ptr.cast();
         let user_data = lightvgl_sys::lv_anim_get_user_data(anim.as_ref());
         if user_data.is_null() {
             crate::warn!("Animation user data was null, this should never happen!");

@@ -1,7 +1,8 @@
+#![allow(clippy::std_instead_of_core, clippy::std_instead_of_alloc)]
+
 use std::{
     cell::RefCell,
     ffi::{CStr, CString},
-    process::exit,
     rc::Rc,
     str::FromStr,
     sync::{
@@ -9,7 +10,7 @@ use std::{
         atomic::{AtomicBool, Ordering},
     },
     thread::sleep,
-    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
+    time::{Duration, Instant},
 };
 
 use lv_bevy_ecs::{
@@ -30,7 +31,7 @@ use lv_bevy_ecs::{
         lv_anim_set_repeat_count, lv_area_t, lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
         lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED,
         lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X, lv_chart_type_t_LV_CHART_TYPE_BAR,
-        lv_chart_type_t_LV_CHART_TYPE_LINE, lv_color_format_t_LV_COLOR_FORMAT_RGB565, lv_color_t,
+        lv_chart_type_t_LV_CHART_TYPE_LINE, lv_color_format_t_LV_COLOR_FORMAT_RGB565,
         lv_draw_buf_align, lv_draw_image_dsc_t, lv_draw_line_dsc_t,
         lv_flex_flow_t_LV_FLEX_FLOW_COLUMN, lv_font_montserrat_24,
         lv_grid_align_t_LV_GRID_ALIGN_CENTER, lv_grid_align_t_LV_GRID_ALIGN_START,
@@ -40,7 +41,7 @@ use lv_bevy_ecs::{
         lv_style_selector_t, lv_subject_get_int, lv_subject_t,
     },
     widgets::{
-        Button, Buttonmatrix, Canvas, Chart, Dropdown, Image, Label, LvglWorld, Wdg, Widget,
+        Button, Buttonmatrix, Canvas, Chart, Dropdown, Image, Label, LvglWorld, RawObj, Wdg, Widget,
     },
 };
 
@@ -58,6 +59,8 @@ use static_cell::StaticCell;
 #[derive(Component)]
 struct DynamicLabel;
 
+static EXIT_SIGNAL: AtomicBool = AtomicBool::new(false);
+
 fn main() {
     lv_init();
     lv_bevy_ecs::logging::lv_log_init();
@@ -65,12 +68,12 @@ fn main() {
     #[cfg(feature = "rust-alloc")]
     lv_bevy_ecs::malloc::set_mem_monitor(get_memory_stats);
 
-    const HOR_RES: u32 = 800;
-    const VER_RES: u32 = 480;
-    const LINE_HEIGHT: u32 = 10;
+    const HOR_RES: usize = 800;
+    const VER_RES: usize = 480;
+    const LINE_HEIGHT: usize = 10;
 
     let mut sim_display: SimulatorDisplay<Rgb565> =
-        SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
+        SimulatorDisplay::new(Size::new(HOR_RES as u32, VER_RES as u32));
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
     let mut window = Window::new("Bindings Test Example", &output_settings);
@@ -78,17 +81,16 @@ fn main() {
     window.update(&sim_display);
     let window_rc = Rc::new(RefCell::new(window));
 
-    let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
+    let mut display = Display::new(HOR_RES, VER_RES);
 
-    let buffer =
-        DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
+    let buffer = DrawBuffer::<{ HOR_RES * LINE_HEIGHT }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
     display.register(
         buffer,
         share!(|refresh| {
             //sim_display.draw_iter(refresh.as_pixels()).unwrap();
             sim_display
-                .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
+                .fill_contiguous(&refresh.rectangle, refresh.colors.iter().copied())
                 .unwrap();
             if refresh.display.flush_is_last() {
                 take!(window_rc.clone()).borrow_mut().update(&sim_display);
@@ -102,25 +104,21 @@ fn main() {
     }));
     drop(window_rc);
 
-    lv_tick_set_cb(|| {
-        let current_time = SystemTime::now();
-        let since_epoch = current_time
-            .duration_since(UNIX_EPOCH)
-            .expect("Time should only go forward");
-        since_epoch.as_millis() as u32
-    });
+    let start = Instant::now();
+    lv_tick_set_cb(move || start.elapsed().as_millis() as u32);
 
     let world_rc = Rc::new(RefCell::new(LvglWorld::default()));
 
     create_ui(world_rc);
 
     loop {
+        if EXIT_SIGNAL.load(Ordering::Relaxed) {
+            break;
+        }
         let start = Instant::now();
         let next_timer_period = lv_timer_handler();
         match next_timer_period {
-            NextTimerPeriod::Ready => {
-                continue;
-            }
+            NextTimerPeriod::Ready => {}
             NextTimerPeriod::AfterMs(next_timer_ms) => {
                 let next_instant = start + Duration::from_millis(next_timer_ms.get().into());
                 sleep(next_instant - Instant::now());
@@ -132,11 +130,13 @@ fn main() {
     }
 }
 
+#[expect(clippy::too_many_lines)]
+#[expect(clippy::needless_pass_by_value)]
 fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
     let mut world = world_rc.borrow_mut();
-    let c1: lv_color_t = lv_color_hex(0xff0000);
-    let c2: lv_color_t = lv_palette_darken(lv_palette_t_LV_PALETTE_BLUE, 2);
-    let c3: lv_color_t = lv_color_mix(c1, c2, OpacityLevel::Percent60 as u8);
+    let c1 = lv_color_hex(0xff0000);
+    let c2 = lv_palette_darken(lv_palette_t_LV_PALETTE_BLUE, 2);
+    let c3 = lv_color_mix(c1, c2, OpacityLevel::Percent60 as u8);
 
     let mut style_big_font = Style::default();
     unsafe {
@@ -298,6 +298,7 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
                 OpacityLevel::Cover as i32,
                 OpacityLevel::Percent50 as i32,
                 |widget, value| {
+                    #[expect(clippy::cast_sign_loss)]
                     widget.set_style_opa(value as u8, 0);
                 },
             );
@@ -350,6 +351,10 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
         world.despawn(fourth);
     }
 
+    #[expect(
+        clippy::large_stack_arrays,
+        reason = "Heap allocation breaks this for some reason"
+    )]
     let mut canvas_buf = [0u8; 400 * 100 * 4];
 
     let mut canvas = Canvas::new();
@@ -367,6 +372,7 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
             canvas_buf.as_mut_ptr().cast(),
             lv_color_format_t_LV_COLOR_FORMAT_RGB565,
         );
+        log::info!("aligned buf:{:#x}", buf.addr());
         canvas.set_buffer(
             buf.as_mut().unwrap(),
             400,
@@ -404,6 +410,7 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
 }
 
 fn opa_anim_cb(widget: &mut Wdg, value: i32) {
+    #[expect(clippy::cast_sign_loss)]
     widget.set_style_opa(value as u8, 0);
 }
 
@@ -457,7 +464,7 @@ fn list_button_create(world: &mut World, parent: Entity) -> Entity {
     let file_icon = file_icon_str.to_string_lossy();
 
     label.set_text(
-        CString::new(format!("{} Item {}", file_icon, idx))
+        CString::from_vec_with_nul(format!("{file_icon} Item {idx}\0").into())
             .unwrap()
             .as_c_str(),
     );
@@ -538,11 +545,9 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
     let mut next_touch_status = None;
 
     for event in events {
+        #[expect(clippy::collapsible_match)]
         match event {
-            SimulatorEvent::MouseButtonDown {
-                mouse_btn: _,
-                point,
-            } => {
+            SimulatorEvent::MouseButtonDown { point, .. } => {
                 next_touch_status = Some(InputEvent {
                     status: BufferStatus::Once,
                     state: InputState::Pressed,
@@ -550,10 +555,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
                 });
                 IS_POINTER_DOWN.store(true, Ordering::Relaxed);
             }
-            SimulatorEvent::MouseButtonUp {
-                mouse_btn: _,
-                point,
-            } => {
+            SimulatorEvent::MouseButtonUp { point, .. } => {
                 next_touch_status = Some(InputEvent {
                     status: BufferStatus::Once,
                     state: InputState::Released,
@@ -570,7 +572,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
                     });
                 }
             }
-            SimulatorEvent::Quit => exit(0),
+            SimulatorEvent::Quit => EXIT_SIGNAL.store(true, Ordering::Relaxed),
             _ => {}
         }
     }
@@ -580,17 +582,17 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
     if let Some(latest_touch_status) = next_touch_status {
         *lock = latest_touch_status;
     }
-    return *lock;
+    *lock
 }
 
 pub fn get_memory_stats(monitor: &mut lv_bevy_ecs::sys::lv_mem_monitor_t) {
     if let Some(stats) = memory_stats::memory_stats() {
         let memory = stats.physical_mem;
         let virtual_memory = stats.virtual_mem;
-        (*monitor).total_size = (virtual_memory) as usize;
-        (*monitor).free_size = (virtual_memory - memory) as usize;
-        (*monitor).max_used = usize::max((memory) as usize, (*monitor).max_used);
-        (*monitor).used_pct = (memory as f64 / virtual_memory as f64 * 100.0) as u8;
+        monitor.total_size = virtual_memory;
+        monitor.free_size = virtual_memory - memory;
+        monitor.max_used = usize::max(memory, monitor.max_used);
+        monitor.used_pct = (memory * 100 / virtual_memory) as u8;
     } else {
         error!("Could not retrieve memory stats");
     }

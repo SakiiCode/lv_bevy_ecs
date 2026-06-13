@@ -9,6 +9,7 @@ Safe Rust bindings to the LVGL library using bevy_ecs. Compatible with `#![no_st
 
 > [!NOTE]
 > This crate is under heavy development and the API has not settled yet. Expect several breaking changes in every 0.x release.
+> Check the [CHANGELOG.md](https://github.com/SakiiCode/lv_bevy_ecs/blob/master/CHANGELOG.md) for help with migration.
 
 ## What is an ECS?
 
@@ -51,16 +52,11 @@ DEP_LV_CONFIG_PATH = { relative = true, value = "." }
    _For other frameworks (like ESP-IDF or Embassy), you should [use its tick counter](https://docs.lvgl.io/9.5/integration/overview.html#tick-interface) instead to get precise and constant framerate._
 
 ```rust
-# use lv_bevy_ecs::functions::*;
-# use std::time::{SystemTime, UNIX_EPOCH, Duration};
-#
-lv_tick_set_cb(|| {
-    let current_time = SystemTime::now();
-    let since_epoch = current_time
-        .duration_since(UNIX_EPOCH)
-        .expect("Time should only go forward");
-    since_epoch.as_millis() as u32
-});
+use lv_bevy_ecs::functions::lv_tick_set_cb;
+use std::time::Instant;
+
+let start = Instant::now();
+lv_tick_set_cb(move || start.elapsed().as_millis() as u32);
 ```
 
 4. Create a global LvglWorld instance with `LvglWorld::new()`:
@@ -70,7 +66,7 @@ lv_tick_set_cb(|| {
 // -- Option 1: Lazy-initialized global Mutex
 static WORLD: LazyLock<Mutex<LvglWorld>> = LazyLock::new(|| Mutex::new(LvglWorld::new()));
 
-// -- Option 2: Local Rc<RefCell<T>> or Arc<Mutex<T>>
+// -- Option 2: Rc<RefCell<T>> or Arc<Mutex<T>>
 fn main(){
     let world_rc = Rc::new(RefCell::new(LvglWorld::new()));
     some_other_function(world.clone());

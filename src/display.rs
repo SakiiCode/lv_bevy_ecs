@@ -12,12 +12,12 @@
 //! # use lv_bevy_ecs::sys::*;
 //! #
 //! lv_bevy_ecs::functions::lv_init();
-//! const HOR_RES: u32 = 800;
-//! const VER_RES: u32 = 480;
-//! const LINE_HEIGHT: u32 = 10;
+//! const HOR_RES: usize = 800;
+//! const VER_RES: usize = 480;
+//! const LINE_HEIGHT: usize = 10;
 //!
-//! let mut sim_display: SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
-//! let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
+//! let mut sim_display: SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(HOR_RES as u32, VER_RES as u32));
+//! let mut display = Display::new(HOR_RES, VER_RES);
 //!
 //! let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 //! display.register(buffer, move |refresh| {
@@ -47,6 +47,7 @@
 
 use ::alloc::boxed::Box;
 use ::core::{marker::PhantomData, ptr::NonNull};
+use alloc::borrow::ToOwned;
 
 use embedded_graphics::{
     Pixel,
@@ -73,6 +74,7 @@ pub enum RenderMode {
 }
 
 impl From<RenderMode> for lightvgl_sys::lv_display_render_mode_t {
+    #[inline]
     fn from(value: RenderMode) -> Self {
         value as Self
     }
@@ -88,16 +90,21 @@ pub enum DisplayRotation {
 }
 
 impl From<DisplayRotation> for lightvgl_sys::lv_disp_rotation_t {
+    #[inline]
     fn from(value: DisplayRotation) -> Self {
         value as Self
     }
 }
 
 impl Display {
-    pub fn new(hor_res: i32, ver_res: i32) -> Self {
+    pub fn new(hor_res: usize, ver_res: usize) -> Self {
         crate::support::assert_lv_is_initialized();
         unsafe {
-            let raw = NonNull::new(lightvgl_sys::lv_display_create(hor_res, ver_res)).unwrap();
+            let raw = NonNull::new(lightvgl_sys::lv_display_create(
+                hor_res.try_into().unwrap(),
+                ver_res.try_into().unwrap(),
+            ))
+            .unwrap();
             Self { raw }
         }
     }
@@ -106,6 +113,7 @@ impl Display {
     /// ## Arguments
     ///  - `buffer` - [DrawBuffer] object that matches the [Display] color format
     ///  - `callback` - Function or closure that pushes the pixels to the screen
+    #[expect(clippy::needless_pass_by_value)]
     pub fn register<F, const N: usize, C: LvglColorFormat>(
         &mut self,
         buffer: DrawBuffer<N, C>,
@@ -135,15 +143,12 @@ impl Display {
 
     /// Assigns a callback to `lv_display_set_flush_cb`
     /// ## Arguments
-    ///  * `buffer` - `&mut [u8]` slice that is exactly *N* bytes long
+    ///  * `buffer` - `[u8]` buffer that is exactly *N* bytes long
     ///  * `render_mode` - Specifies the `lv_display_render_mode_t`
     ///  * `callback` - Function or closure that pushes the pixels to the screen
-    /// ## Safety
-    /// `buffer` must live at least as long as the Display.
-    /// Deallocating it earlier will cause a use-after-free.
-    pub unsafe fn register_raw<F, const N: usize, C: LvglColorFormat>(
+    pub fn register_raw<F, const N: usize, C: LvglColorFormat>(
         &mut self,
-        buffer: &mut [u8],
+        buffer: &'static mut [u8],
         render_mode: RenderMode,
         callback: F,
     ) where
@@ -157,7 +162,7 @@ impl Display {
                 self.raw_mut(),
                 buffer.as_mut_ptr().cast(),
                 ::core::ptr::null_mut(),
-                N as u32,
+                N.try_into().unwrap(),
                 render_mode.into(),
             );
             lightvgl_sys::lv_display_set_flush_cb(
@@ -172,12 +177,14 @@ impl Display {
         crate::info!("Display Registered");
     }
 
+    #[inline]
     pub fn set_flush_wait_cb(&mut self, callback: Option<unsafe extern "C" fn(*mut lv_display_t)>) {
         unsafe {
             lightvgl_sys::lv_display_set_flush_wait_cb(self.raw_mut(), callback);
         }
     }
 
+    #[inline]
     pub fn get_default() -> Self {
         unsafe {
             Self {
@@ -186,26 +193,36 @@ impl Display {
         }
     }
 
+    #[inline]
     pub fn set_rotation(&mut self, rotation: DisplayRotation) {
         unsafe {
             lightvgl_sys::lv_display_set_rotation(self.raw_mut(), rotation.into());
         }
     }
 
+    #[inline]
     pub fn raw(&self) -> *const lv_display_t {
         self.raw.as_ptr().cast_const()
     }
 
+    #[inline]
     pub fn raw_mut(&mut self) -> *mut lv_display_t {
         self.raw.as_ptr()
     }
 
+    #[inline]
     pub fn from_ptr(ptr: *mut lv_display_t) -> Self {
         Self {
             raw: NonNull::new(ptr).unwrap(),
         }
     }
 
+    /// Creates a new `Display` from the given `*mut lv_display_t`
+    ///
+    /// # Safety
+    ///
+    /// `ptr` must be non-null.
+    #[inline]
     pub unsafe fn from_ptr_unchecked(ptr: *mut lv_display_t) -> Self {
         unsafe {
             Self {
@@ -287,6 +304,7 @@ pub struct DisplayRefresh<'a, const N: usize, C> {
     pub display: Display,
 }
 
+#[expect(clippy::arithmetic_side_effects)]
 unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
     display: *mut lightvgl_sys::lv_display_t,
     area: *const lightvgl_sys::lv_area_t,
@@ -301,12 +319,12 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
 
             let buf = color_p.cast::<C>();
 
-            let w = (*area).x2 - (*area).x1 + 1;
-            let h = (*area).y2 - (*area).y1 + 1;
+            let w = ((*area).x2 - (*area).x1 + 1).cast_unsigned();
+            let h = ((*area).y2 - (*area).y1 + 1).cast_unsigned();
             let rectangle = Rectangle {
                 size: Size {
-                    width: w as u32,
-                    height: h as u32,
+                    width: w,
+                    height: h,
                 },
                 top_left: Point {
                     x: (*area).x1,
@@ -330,6 +348,7 @@ unsafe extern "C" fn disp_flush_trampoline<F, const N: usize, C>(
 }
 
 impl<const N: usize, C> DisplayRefresh<'_, N, C> {
+    #[expect(clippy::arithmetic_side_effects)]
     pub fn as_pixels<PC>(&self) -> impl IntoIterator<Item = Pixel<PC>>
     where
         C: Clone,
@@ -339,21 +358,16 @@ impl<const N: usize, C> DisplayRefresh<'_, N, C> {
         let top_left = area.top_left;
         let Point { x: x1, y: y1 } = top_left;
         let bottom_right = area.bottom_right().unwrap();
-        let Point { x: x2, y: y2 } = bottom_right;
+        let x2 = bottom_right.x;
 
-        let ys = y1..=y2;
-        let xs = (x1..=x2).enumerate();
-        let x_len = (x2 - x1 + 1) as usize;
-
-        // We use iterators here to ensure that the Rust compiler can apply all possible
-        // optimizations at compile time.
-        ys.enumerate().flat_map(move |(iy, y)| {
-            xs.clone().map(move |(ix, x)| {
-                let color_len = x_len * iy + ix;
-                let raw_color = self.colors[color_len].clone();
-                let color: PC = raw_color.into();
-                Pixel(Point::new(x, y), color)
-            })
+        let mut ix = x1;
+        let mut iy = y1;
+        self.colors.iter().map(move |raw_color| {
+            if ix > x2 {
+                ix = x1;
+                iy += 1;
+            }
+            Pixel(Point::new(ix, iy), raw_color.to_owned().into())
         })
     }
 }
@@ -364,11 +378,21 @@ pub struct DrawBuffer<const N: usize, C: LvglColorFormat> {
 }
 
 impl<const N: usize, C: LvglColorFormat> DrawBuffer<N, C> {
-    pub fn new(w: u32, h: u32) -> Self {
-        assert_eq!(w * h, N as u32);
+    pub fn new(w: usize, h: usize) -> Self {
+        #[expect(clippy::arithmetic_side_effects)]
+        {
+            assert_eq!(w * h, N);
+        }
+
         let cf = C::as_lv_color_format_t();
         unsafe {
-            let raw = NonNull::new(lightvgl_sys::lv_draw_buf_create(w, h, cf, 0)).unwrap();
+            let raw = NonNull::new(lightvgl_sys::lv_draw_buf_create(
+                w.try_into().unwrap(),
+                h.try_into().unwrap(),
+                cf,
+                0,
+            ))
+            .unwrap();
             Self {
                 raw,
                 color_depth: PhantomData,
@@ -376,6 +400,7 @@ impl<const N: usize, C: LvglColorFormat> DrawBuffer<N, C> {
         }
     }
 
+    #[inline]
     pub fn from_raw(raw: NonNull<lv_draw_buf_t>) -> Self {
         Self {
             raw,
@@ -383,10 +408,12 @@ impl<const N: usize, C: LvglColorFormat> DrawBuffer<N, C> {
         }
     }
 
+    #[inline]
     pub fn raw(&mut self) -> *const lv_draw_buf_t {
         self.raw.as_ptr().cast_const()
     }
 
+    #[inline]
     pub fn raw_mut(&mut self) -> *mut lv_draw_buf_t {
         self.raw.as_ptr()
     }
@@ -405,19 +432,18 @@ macro_rules! setup_test_display {
         use embedded_graphics_simulator::SimulatorDisplay;
         use lv_bevy_ecs::display::{Display, DrawBuffer};
 
-        const HOR_RES: u32 = 320;
-        const VER_RES: u32 = 240;
-        const LINE_HEIGHT: u32 = 16;
+        const HOR_RES: usize = 320;
+        const VER_RES: usize = 240;
+        const LINE_HEIGHT: usize = 16;
 
         let mut sim_display: SimulatorDisplay<Rgb565> =
-            SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
+            SimulatorDisplay::new(Size::new(HOR_RES as u32, VER_RES as u32));
 
         lv_bevy_ecs::functions::lv_init();
 
-        let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
+        let mut display = Display::new(HOR_RES, VER_RES);
 
-        let buffer =
-            DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
+        let buffer = DrawBuffer::<{ HOR_RES * LINE_HEIGHT }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
         display.register(buffer, move |refresh| {
             //sim_display.draw_iter(refresh.as_pixels()).unwrap();

@@ -36,7 +36,7 @@ constptr = { version = "0.3.1", default-features = false }
 ctor = { version = "1.0.0", default-features = false, features = ["proc_macro"], optional = true }
 defmt = { version = "1.0.1", optional = true }
 embedded-graphics = { version = "0.8.0" }
-lightvgl-sys = { path = "../lightvgl-sys", version = "~9.5.3", default-features = false, features = [
+lightvgl-sys = { path = "../lightvgl-sys", version = "9.5.4-beta", default-features = false, features = [
   "library",
 ] }
 log = { version = "0.4" }
@@ -54,7 +54,7 @@ smol-macros = "0.1.1"
 static_cell = "2.1.1"
 
 [build-dependencies]
-lightvgl-sys = { path = "../lightvgl-sys", version = "~9.5.3", default-features = false, features = [
+lightvgl-sys = { path = "../lightvgl-sys", version = "9.5.4-beta", default-features = false, features = [
   "raw-bindings",
 ] }
 lv_codegen = { path = "lv_codegen", version = "0.4.1" }
@@ -83,6 +83,67 @@ rust-alloc = ["defmt?/alloc"]
 serde = ["bevy_ecs/serialize"]
 # Needed for the docs-rs generator
 use-vendored-config = ["lightvgl-sys/use-vendored-config"]
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+restriction = { level = "warn", priority = -1 }
+
+# Pedantic lints
+borrow_as_ptr = "allow"
+doc_markdown = "allow"  # TODO check this later
+if_not_else = "allow"
+items_after_statements = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"  # TODO check this later
+must_use_candidate = "allow"
+semicolon_if_nothing_returned = "allow"
+wildcard_imports = "allow"
+
+# Restriction lints
+absolute_paths = "allow"
+allow_attributes_without_reason = "allow"
+arbitrary_source_item_ordering = "allow"
+blanket_clippy_restriction_lints = "allow"
+cast_possible_truncation = "allow"
+cast_possible_wrap = "allow"
+clone_on_ref_ptr = "allow"
+default_numeric_fallback = "allow"
+exhaustive_enums = "allow"
+exhaustive_structs = "allow"
+expect_used = "allow"
+implicit_return = "allow"
+integer_division = "allow"
+integer_division_remainder_used = "allow"
+mem_forget = "allow"
+min_ident_chars = "allow"
+missing_assert_message = "allow"
+missing_docs_in_private_items = "allow"
+module_name_repetitions = "allow"
+multiple_unsafe_ops_per_block = "allow"
+pattern_type_mismatch = "allow"
+pub_use = "allow"
+pub_with_shorthand = "allow"
+question_mark_used = "allow"
+semicolon_outside_block = "allow"
+shadow_reuse = "allow"
+shadow_unrelated = "allow"
+single_call_fn = "allow"
+single_char_lifetime_names = "allow"
+undocumented_unsafe_blocks = "allow"
+unreachable = "allow"
+unreadable_literal = "allow"
+unseparated_literal_suffix = "allow"
+unused_trait_names = "allow"
+wildcard_enum_match_arm = "allow"
+
+# Useful in the restriction group
+arithmetic_side_effects = "allow"  # TODO check this later
+as_conversions = "allow"  # TODO check this later
+doc_paragraphs_missing_punctuation = "allow"  # TODO check this later
+exit = "warn"
+missing_inline_in_public_items = "allow"  # Done
+unneeded_field_pattern = "warn"
+unwrap_used = "allow"  # TODO check this later
 
 [profile.dev]
 opt-level = "z"
