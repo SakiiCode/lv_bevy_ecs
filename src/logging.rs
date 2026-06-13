@@ -197,10 +197,11 @@ impl log::Log for LvglLogger {
     fn flush(&self) {}
 }
 
-cfg_if::cfg_if! {
-    if #[cfg(feature = "defmt")] {
+cfg_select! {
+    feature = "defmt" => {
         pub use defmt::{trace as trace_, info as info_, warn as warn_, error as error_};
-    }else {
+    }
+    _=>{
 
         #[macro_export]
         macro_rules! trace_ {
@@ -234,7 +235,5 @@ cfg_if::cfg_if! {
         pub use trace_;
         pub use warn_;
         pub use error_;
-
-
     }
 }

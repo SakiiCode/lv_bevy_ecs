@@ -2,10 +2,7 @@
 #![allow(clippy::let_unit_value)]
 #![allow(clippy::multiple_inherent_impl)]
 #![allow(clippy::allow_attributes)]
-use ::core::{
-    ffi::{CStr, c_void},
-    num::NonZero,
-};
+use ::core::{ffi::CStr, num::NonZero};
 
 use crate::styles::Style;
 use crate::widgets::Wdg;

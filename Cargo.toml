@@ -2,6 +2,7 @@
 name = "lv_bevy_ecs"
 version = "0.11.0-alpha.0"
 edition = "2024"
+rust-version = "1.95"
 description = "Safe Rust bindings to the LVGL graphics library using Bevy's ECS framework"
 readme = "README.md"
 homepage = "https://github.com/SakiiCode/lv_bevy_ecs"
@@ -31,15 +32,14 @@ required-features = ["demos"]
 
 [dependencies]
 bevy_ecs = { version = "0.18.0", default-features = false }
-cfg-if = "1.0.4"
 constptr = { version = "0.3.1", default-features = false }
 ctor = { version = "1.0.0", default-features = false, features = ["proc_macro"], optional = true }
 defmt = { version = "1.0.1", optional = true }
-embedded-graphics = { version = "0.8.0" }
+embedded-graphics = { version = "0.8.1" }
 lightvgl-sys = { path = "../lightvgl-sys", version = "9.5.4-beta", default-features = false, features = [
   "library",
 ] }
-log = { version = "0.4" }
+log = { version = "0.4.28" }
 thiserror = { version = "2.0.18", default-features = false }
 
 [dev-dependencies]
@@ -57,7 +57,7 @@ static_cell = "2.1.1"
 lightvgl-sys = { path = "../lightvgl-sys", version = "9.5.4-beta", default-features = false, features = [
   "raw-bindings",
 ] }
-lv_codegen = { path = "lv_codegen", version = "0.4.1" }
+lv_codegen = { path = "lv_codegen", version = "0.4.2" }
 prettyplease = "0.2.37"
 proc-macro2 = "1.0.95"
 quote = "1.0.40"
