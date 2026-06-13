@@ -521,9 +521,9 @@ impl LvArg {
                 #ident.raw_mut()
             }
         } else if self.typ.is_mut_void() {
-            quote! {core::ptr::from_mut(#ident).cast::<c_void>()}
+            quote! {core::ptr::from_mut(#ident).cast()}
         } else if self.typ.is_const_void() {
-            quote! {core::ptr::from_ref(#ident).cast::<c_void>()}
+            quote! {core::ptr::from_ref(#ident).cast()}
         } else {
             quote! {
                 #ident
@@ -950,6 +950,7 @@ mod test {
         let code = arc_set_bg_end_angle.code(&arc_widget).unwrap();
         let expected_code = quote! {
             impl Arc<Wdg>{
+                #[inline]
                 pub fn set_bg_end_angle(&mut self, end: u16) {
                     unsafe {
                         lightvgl_sys::lv_arc_set_bg_end_angle(self.raw_mut(), end)
@@ -981,6 +982,7 @@ mod test {
         let expected_code = quote! {
             impl Label<Wdg> {
                 #[cfg_attr(not(doctest), doc = "Set a new text for a label. Memory will be allocated to store the text by the label.\n\n@param obj           pointer to a label object\n\n@param text          '\\\\0' terminated character string. NULL to refresh with the current text.\n\n@note If `LV_USE_ARABIC_PERSIAN_CHARS` is enabled the text will be modified to have the correct Arabic\n\ncharacters in it.")]
+                #[inline]
                 pub fn set_text(&mut self, text: &CStr) {
                     unsafe {
                         lightvgl_sys::lv_label_set_text(
@@ -1018,6 +1020,7 @@ mod test {
         let code = dropdown_get_selected_str.code(&parent_widget).unwrap();
         let expected_code = quote! {
             impl Roller<Wdg> {
+                #[inline]
                 pub fn get_option_str(
                     &self,
                     option: u32,
@@ -1060,6 +1063,7 @@ mod test {
         let code = arc_rotate_obj_to_angle.code(&parent_widget).unwrap();
         let expected_code = quote! {
             impl Arc<Wdg> {
+                #[inline]
                 pub fn rotate_obj_to_angle(&self, obj_to_rotate: &mut Wdg, r_offset: lv_coord_t) {
                     unsafe {
                         lightvgl_sys::lv_arc_rotate_obj_to_angle(
@@ -1097,6 +1101,7 @@ mod test {
                     not(doctest),
                     doc = "Stop event from bubbling.\n\nThis is only valid when called in the middle of an event processing chain.\n\n@param e     pointer to the event descriptor"
                 )]
+                #[inline]
                 pub fn stop_bubbling(&mut self) {
                     unsafe {
                         lightvgl_sys::lv_event_stop_bubbling(
@@ -1132,8 +1137,9 @@ mod test {
                     not(doctest),
                     doc = "Set the user_data field of the object\n\n@param obj   pointer to an object\n\n@param user_data   pointer to the new user_data."
                 )]
+                #[inline]
                 pub fn set_user_data(&mut self, user_data: &mut dyn Any) {
-                    unsafe { lightvgl_sys::lv_obj_set_user_data(self.raw_mut(), user_data as *mut _ as *mut c_void) }
+                    unsafe { lightvgl_sys::lv_obj_set_user_data(self.raw_mut(), core::ptr::from_mut(user_data).cast()) }
                 }
             }
         };
@@ -1168,9 +1174,10 @@ mod test {
                     not(doctest),
                     doc = "Add button to a list\n\n@param list      pointer to a list, it will be the parent of the new button\n\n@param icon      icon for the button, when NULL it will have no icon\n\n@param txt       text of the new button, when NULL no text will be added\n\n@return          pointer to the created button"
                 )]
+                #[inline]
                 pub fn add_button(&mut self, icon: &dyn Any, txt: &CStr) -> Option<Wdg> {
                     unsafe {
-                        let pointer = lightvgl_sys::lv_list_add_button(self.raw_mut(), icon as *const _ as *const c_void, txt.as_ptr());
+                        let pointer = lightvgl_sys::lv_list_add_button(self.raw_mut(), core::ptr::from_ref(icon).cast(), txt.as_ptr());
                         Wdg::try_from_ptr(pointer)
                     }
                 }
@@ -1203,6 +1210,7 @@ mod test {
                     not(doctest),
                     doc = "Set a new map. Buttons will be created/deleted according to the map. The\n\nbutton matrix keeps a reference to the map and so the string array must not\n\nbe deallocated during the life of the matrix.\n\n@param obj       pointer to a button matrix object\n\n@param map       pointer a string array. The last string has to be: \\\"\\\". Use \\\"\\\\n\\\" to make a line break."
                 )]
+                #[inline]
                 pub fn set_map(&mut self, map: &[*const ::core::ffi::c_char]) {
                     unsafe { lightvgl_sys::lv_buttonmatrix_set_map(self.raw_mut(), map.as_ptr()) }
                 }
@@ -1238,6 +1246,7 @@ mod test {
                     not(doctest),
                     doc = "Set the name of the days\n\n@param obj           pointer to a calendar object\n\n@param day_names     pointer to an array with the names.\n\n                     E.g. `const char * days[7] = {\\\"Sun\\\", \\\"Mon\\\", ...}`\n\n                     Only the pointer will be saved so this variable can't be local which will be destroyed later."
                 )]
+                #[inline]
                 pub fn set_day_names(&mut self, day_names: &mut [*const ::core::ffi::c_char]) {
                     unsafe { lightvgl_sys::lv_calendar_set_day_names(self.raw_mut(), day_names.as_mut_ptr()) }
                 }
@@ -1267,6 +1276,7 @@ mod test {
         let expected_code = quote! {
             impl Label<Wdg> {
                 #[cfg_attr(not(doctest), doc = "Set a new text for a label. Memory will be allocated to store the text by the label.\n\n@param obj           pointer to a label object\n\n@param text          '\\\\0' terminated character string. NULL to refresh with the current text.\n\n@note If `LV_USE_ARABIC_PERSIAN_CHARS` is enabled the text will be modified to have the correct Arabic\n\ncharacters in it.")]
+                #[inline]
                 pub fn set_text(&mut self, text: &CStr) {
                     unsafe {
                         lightvgl_sys::lv_label_set_text(
@@ -1299,6 +1309,7 @@ mod test {
         let code = label_get_recolor.code(&parent_widget).unwrap();
         let expected_code = quote! {
             impl Label<Wdg>{
+                #[inline]
                 pub fn get_recolor(&mut self) -> bool {
                     unsafe {
                         lightvgl_sys::lv_label_get_recolor(self.raw_mut())
@@ -1328,6 +1339,7 @@ mod test {
         let code = label_get_text_selection_start.code(&parent_widget).unwrap();
         let expected_code = quote! {
             impl Label<Wdg>{
+                #[inline]
                 pub fn get_text_selection_start(&mut self) -> u32 {
                     unsafe {
                         lightvgl_sys::lv_label_get_text_selection_start(self.raw_mut())
@@ -1357,6 +1369,7 @@ mod test {
         let code = dropdown_get_list.code(&parent_widget).unwrap();
         let expected_code = quote! {
             impl Dropdown<Wdg>{
+                #[inline]
                 pub fn get_list(&mut self) -> Option<Wdg> {
                     unsafe {
                         let pointer = lightvgl_sys::lv_dropdown_get_list(self.raw_mut());
@@ -1387,6 +1400,7 @@ mod test {
         let code = label_get_text.code(&parent_widget).unwrap();
         let expected_code = quote! {
             impl Label<Wdg> {
+                #[inline]
                 pub fn get_text(&self) -> &CStr {
                     unsafe {
                         let pointer = lightvgl_sys::lv_label_get_text(self.raw());
@@ -1422,6 +1436,7 @@ mod test {
                     not(doctest),
                     doc = "Get the today's date\n\n@param calendar  pointer to a calendar object\n\n@return          return pointer to an `lv_calendar_date_t` variable containing the date of today."
                 )]
+                #[inline]
                 pub fn get_today_date(&self) -> Option<ConstPtr<lv_calendar_date_t>> {
                     unsafe {
                         let pointer = lightvgl_sys::lv_calendar_get_today_date(self.raw());
@@ -1457,6 +1472,7 @@ mod test {
                     not(doctest),
                     doc = "Get the highlighted dates\n\n@param calendar  pointer to a calendar object\n\n@return          pointer to an `lv_calendar_date_t` array containing the dates."
                 )]
+                #[inline]
                 pub fn get_highlighted_dates(&self) -> Option<NonNull<lv_calendar_date_t>> {
                     unsafe {
                         let pointer = lightvgl_sys::lv_calendar_get_highlighted_dates(self.raw());
