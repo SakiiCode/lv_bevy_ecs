@@ -101,10 +101,12 @@ impl Subject {
         }
     }
 
+    #[inline]
     pub fn raw_mut(&mut self) -> &mut lv_subject_t {
         &mut self.raw
     }
 
+    #[inline]
     pub fn raw(&self) -> &lv_subject_t {
         &self.raw
     }

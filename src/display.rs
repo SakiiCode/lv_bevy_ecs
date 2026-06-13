@@ -74,6 +74,7 @@ pub enum RenderMode {
 }
 
 impl From<RenderMode> for lightvgl_sys::lv_display_render_mode_t {
+    #[inline]
     fn from(value: RenderMode) -> Self {
         value as Self
     }
@@ -89,6 +90,7 @@ pub enum DisplayRotation {
 }
 
 impl From<DisplayRotation> for lightvgl_sys::lv_disp_rotation_t {
+    #[inline]
     fn from(value: DisplayRotation) -> Self {
         value as Self
     }
@@ -175,12 +177,14 @@ impl Display {
         crate::info!("Display Registered");
     }
 
+    #[inline]
     pub fn set_flush_wait_cb(&mut self, callback: Option<unsafe extern "C" fn(*mut lv_display_t)>) {
         unsafe {
             lightvgl_sys::lv_display_set_flush_wait_cb(self.raw_mut(), callback);
         }
     }
 
+    #[inline]
     pub fn get_default() -> Self {
         unsafe {
             Self {
@@ -189,20 +193,24 @@ impl Display {
         }
     }
 
+    #[inline]
     pub fn set_rotation(&mut self, rotation: DisplayRotation) {
         unsafe {
             lightvgl_sys::lv_display_set_rotation(self.raw_mut(), rotation.into());
         }
     }
 
+    #[inline]
     pub fn raw(&self) -> *const lv_display_t {
         self.raw.as_ptr().cast_const()
     }
 
+    #[inline]
     pub fn raw_mut(&mut self) -> *mut lv_display_t {
         self.raw.as_ptr()
     }
 
+    #[inline]
     pub fn from_ptr(ptr: *mut lv_display_t) -> Self {
         Self {
             raw: NonNull::new(ptr).unwrap(),
@@ -214,6 +222,7 @@ impl Display {
     /// # Safety
     ///
     /// `ptr` must be non-null.
+    #[inline]
     pub unsafe fn from_ptr_unchecked(ptr: *mut lv_display_t) -> Self {
         unsafe {
             Self {
@@ -391,6 +400,7 @@ impl<const N: usize, C: LvglColorFormat> DrawBuffer<N, C> {
         }
     }
 
+    #[inline]
     pub fn from_raw(raw: NonNull<lv_draw_buf_t>) -> Self {
         Self {
             raw,
@@ -398,10 +408,12 @@ impl<const N: usize, C: LvglColorFormat> DrawBuffer<N, C> {
         }
     }
 
+    #[inline]
     pub fn raw(&mut self) -> *const lv_draw_buf_t {
         self.raw.as_ptr().cast_const()
     }
 
+    #[inline]
     pub fn raw_mut(&mut self) -> *mut lv_draw_buf_t {
         self.raw.as_ptr()
     }

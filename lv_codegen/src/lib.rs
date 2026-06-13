@@ -279,8 +279,7 @@ impl Rusty for LvFunc {
 
         // Generate the arguments being passed into the FFI interface
         //
-        // - The first argument will be always self.core.raw().as_mut() (see quote! when arg_idx == 0), it's most likely a pointer to lv_obj_t
-        //   TODO: When handling getters this should be self.raw().as_ptr() instead, this also requires updating args_decl
+        // - The first argument will be always self.raw_mut() (see quote! when arg_idx == 0), it's most likely a pointer to lv_obj_t
         // - The arguments will be appended to the accumulator (args_accumulator) as they are generated in the closure
         let ffi_args = self
             .args
@@ -369,6 +368,7 @@ impl Rusty for LvFunc {
         Ok(quote! {
             impl #impl_name {
                 #doc_tokens
+                #[inline]
                 pub fn #func_name(#args_decl) #return_tokens {
                     unsafe {
                         #args_preprocessing
@@ -449,9 +449,6 @@ impl LvArg {
     }
 
     pub fn get_preprocessing(&self) -> TokenStream {
-        // TODO: A better way to handle this, instead of `is_sometype()`, is using the Rust
-        //       type system itself.
-
         if self.get_type().is_mut_str() {
             // Convert CString to *mut i8
             let name = format_ident!("{}", &self.name);
@@ -579,6 +576,8 @@ impl LvType {
             self.literal_name.replacen("* const ", "", 1)
         }
     }
+
+    // TODO investigate if it is feasible to replace these functions with Rust types
 
     pub fn is_const(&self) -> bool {
         self.literal_name.starts_with("const ")
@@ -924,7 +923,7 @@ mod test {
             .iter()
             .map(|w| w.name.clone())
             .collect::<HashSet<String>>();
-        // TODO sysmon should be also filtered out
+        // TODO filter out sysmon as it takes lv_display_t as its first parameter
         assert_eq!(
             widget_names,
             HashSet::from(["obj", "btn", "style", "sysmon"].map(|s| s.to_string()))

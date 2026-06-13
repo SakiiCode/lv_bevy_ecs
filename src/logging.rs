@@ -83,6 +83,7 @@ pub unsafe extern "C" fn lvgl_defmt(
 ///
 /// Must not be used together with `lv_log_init()`;
 #[cfg(all(LV_USE_LOG, not(feature = "defmt")))]
+#[inline]
 pub fn connect() {
     crate::support::assert_lv_is_initialized();
     unsafe {
@@ -179,6 +180,7 @@ macro_rules! cstr {
 
 #[cfg(LV_USE_LOG)]
 impl log::Log for LvglLogger {
+    #[inline]
     fn enabled(&self, _metadata: &log::Metadata) -> bool {
         true
     }

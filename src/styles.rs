@@ -84,10 +84,12 @@ impl Style {
         Self { raw, selector }
     }
 
+    #[inline]
     pub fn raw(&self) -> &lightvgl_sys::lv_style_t {
         &self.raw
     }
 
+    #[inline]
     pub fn raw_mut(&mut self) -> &mut lightvgl_sys::lv_style_t {
         &mut self.raw
     }

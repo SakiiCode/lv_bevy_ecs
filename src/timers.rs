@@ -85,6 +85,7 @@ impl Timer {
     }
 
     #[expect(clippy::impl_trait_in_params)]
+    #[inline]
     pub fn add_systems<M>(&mut self, system: impl IntoScheduleConfigs<ScheduleSystem, M>) {
         self.schedule.add_systems(system);
     }

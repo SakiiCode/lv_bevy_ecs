@@ -184,26 +184,31 @@ pub struct Event {
 
 impl Deref for Event {
     type Target = lv_event_t;
+    #[inline]
     fn deref(&self) -> &Self::Target {
         unsafe { self.raw.as_ref() }
     }
 }
 
 impl DerefMut for Event {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe { self.raw.as_mut() }
     }
 }
 
 impl Event {
+    #[inline]
     pub fn raw(&self) -> *const lv_event_t {
         self.raw.as_ptr().cast_const()
     }
 
+    #[inline]
     pub fn raw_mut(&mut self) -> *mut lv_event_t {
         self.raw.as_ptr()
     }
 
+    #[inline]
     pub fn from_ptr(ptr: *mut lv_event_t) -> Self {
         Self {
             raw: NonNull::new(ptr).unwrap(),

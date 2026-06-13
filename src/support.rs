@@ -27,24 +27,28 @@ pub trait LvglColorFormat {
 }
 
 impl LvglColorFormat for Rgb565 {
+    #[inline]
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
         lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB565
     }
 }
 
 impl LvglColorFormat for Rgb888 {
+    #[inline]
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
         lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB888
     }
 }
 
 impl LvglColorFormat for Gray8 {
+    #[inline]
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
         lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_L8
     }
 }
 
 impl LvglColorFormat for BinaryColor {
+    #[inline]
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
         crate::warn!("Monochrome buffers are not supported. Proceed with caution!");
         lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_I1
@@ -77,6 +81,7 @@ pub enum Align {
 }
 
 impl From<Align> for lightvgl_sys::lv_align_t {
+    #[inline]
     fn from(value: Align) -> lightvgl_sys::lv_align_t {
         let native = match value {
             Align::Center => lightvgl_sys::lv_align_t_LV_ALIGN_CENTER,
@@ -135,6 +140,7 @@ pub enum LabelLongMode {
 }
 
 impl From<LabelLongMode> for lightvgl_sys::lv_label_long_mode_t {
+    #[inline]
     fn from(value: LabelLongMode) -> Self {
         value as lightvgl_sys::lv_label_long_mode_t
     }
@@ -157,6 +163,7 @@ pub enum OpacityLevel {
 }
 
 impl From<OpacityLevel> for lightvgl_sys::_lv_opacity_level_t {
+    #[inline]
     fn from(value: OpacityLevel) -> Self {
         value as lightvgl_sys::_lv_opacity_level_t
     }

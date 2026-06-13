@@ -84,10 +84,12 @@ impl Animation {
         }
     }
 
+    #[inline]
     pub fn raw(&self) -> &lightvgl_sys::lv_anim_t {
         &self.raw
     }
 
+    #[inline]
     pub fn raw_mut(&mut self) -> &mut lightvgl_sys::lv_anim_t {
         &mut self.raw
     }

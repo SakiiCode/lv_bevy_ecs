@@ -141,7 +141,7 @@ arithmetic_side_effects = "allow"  # TODO check this later
 as_conversions = "allow"  # TODO check this later
 doc_paragraphs_missing_punctuation = "allow"  # TODO check this later
 exit = "warn"
-missing_inline_in_public_items = "warn"
+missing_inline_in_public_items = "allow"  # Done
 unneeded_field_pattern = "warn"
 unwrap_used = "allow"  # TODO check this later
 

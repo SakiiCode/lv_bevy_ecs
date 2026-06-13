@@ -134,7 +134,7 @@ use bevy_ecs::{
 };
 #[cfg(feature = "no_ecs")]
 use lightvgl_sys::lv_style_selector_t;
-use lightvgl_sys::{lv_label_create, lv_obj_class_t, lv_obj_get_class, lv_obj_t};
+use lightvgl_sys::{lv_obj_class_t, lv_obj_get_class, lv_obj_t};
 use thiserror::Error;
 
 #[cfg(feature = "no_ecs")]
@@ -153,9 +153,12 @@ use crate::{
 pub struct UnsafeLvglWorld(MaybeUninit<LvglWorld>);
 
 impl UnsafeLvglWorld {
+    #[inline]
     pub const fn new() -> Self {
         Self(MaybeUninit::uninit())
     }
+
+    #[inline]
     pub fn init(&mut self) {
         self.0.write(LvglWorld::default());
     }
@@ -170,12 +173,14 @@ impl Default for UnsafeLvglWorld {
 
 impl Deref for UnsafeLvglWorld {
     type Target = LvglWorld;
+    #[inline]
     fn deref(&self) -> &Self::Target {
         unsafe { self.0.assume_init_ref() }
     }
 }
 
 impl DerefMut for UnsafeLvglWorld {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe { self.0.assume_init_mut() }
     }
@@ -193,12 +198,14 @@ impl Default for LvglWorld {
 
 impl Deref for LvglWorld {
     type Target = World;
+    #[inline]
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
 impl DerefMut for LvglWorld {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
@@ -217,12 +224,14 @@ pub struct Widget {
 }
 
 impl Widget {
+    #[inline]
     pub fn from_ptr(ptr: *mut lv_obj_t) -> Option<Self> {
         Some(Self {
             raw: NonNull::new(ptr)?,
         })
     }
 
+    #[inline]
     pub fn from_non_null(ptr: NonNull<lv_obj_t>) -> Self {
         Self { raw: ptr }
     }
@@ -241,6 +250,7 @@ impl Widget {
 }
 
 impl Default for Widget {
+    #[inline]
     fn default() -> Self {
         unsafe {
             Widget::from_ptr(lightvgl_sys::lv_obj_create(lightvgl_sys::lv_screen_active())).unwrap()
@@ -303,6 +313,7 @@ impl Wdg {
     ///
     /// If null pointer was given, this funcion will panic.
     /// For checked version, use `try_from_ptr`.
+    #[inline]
     pub fn from_ptr(ptr: *mut lv_obj_t) -> Self {
         Self {
             raw: NonNull::new(ptr).unwrap(),
@@ -310,28 +321,34 @@ impl Wdg {
     }
 
     /// Convert LVGL Obj pointer to Some(Wdg) or None if null pointer was given.
+    #[inline]
     pub fn try_from_ptr(ptr: *mut lv_obj_t) -> Option<Self> {
         Some(Self {
             raw: NonNull::new(ptr)?,
         })
     }
 
+    #[inline]
     pub fn from_non_null(ptr: &NonNull<lv_obj_t>) -> &Self {
         unsafe { &*(core::ptr::from_ref(ptr).cast::<Self>()) }
     }
 
+    #[inline]
     pub fn from_non_null_mut(ptr: &mut NonNull<lv_obj_t>) -> &mut Self {
         unsafe { &mut *(core::ptr::from_mut(ptr).cast::<Self>()) }
     }
 
+    #[inline]
     pub fn downcast<T: WidgetSpec>(&self) -> Result<&T, DowncastError> {
         T::from_non_null(&self.raw)
     }
 
+    #[inline]
     pub fn downcast_mut<T: WidgetSpec>(&mut self) -> Result<&mut T, DowncastError> {
         T::from_non_null_mut(&mut self.raw)
     }
 
+    #[inline]
     pub fn add_event_cb<F>(&mut self, filter: EventCode, callback: F)
     where
         F: FnMut(Event) + 'static,
@@ -345,11 +362,13 @@ impl Wdg {
     /// use-after-free.
     ///
     /// For example `Box::leak(Box::new(style))` can be used to prevent dropping it.
+    #[inline]
     pub unsafe fn add_style(&mut self, style: &mut Style, selector: lv_style_selector_t) {
         unsafe { lightvgl_sys::lv_obj_add_style(self.raw_mut(), style.raw_mut(), selector) }
     }
 
     #[cfg(feature = "no_ecs")]
+    #[inline]
     pub fn set_parent(&mut self, parent: &mut Wdg) {
         unsafe { lightvgl_sys::lv_obj_set_parent(self.raw_mut(), parent.raw_mut()) }
     }
@@ -374,12 +393,14 @@ fn check_class(obj: *const lv_obj_t, other_class: &lv_obj_class_t) -> Result<(),
 
 impl Deref for Widget {
     type Target = Wdg;
+    #[inline]
     fn deref(&self) -> &Self::Target {
         Wdg::from_non_null(&self.raw)
     }
 }
 
 impl DerefMut for Widget {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         Wdg::from_non_null_mut(&mut self.raw)
     }
@@ -391,103 +412,109 @@ pub trait RawObj {
 }
 
 impl RawObj for Widget {
+    #[inline]
     fn raw(&self) -> *const lv_obj_t {
         self.raw.as_ptr().cast_const()
     }
+
+    #[inline]
     fn raw_mut(&mut self) -> *mut lv_obj_t {
         self.raw.as_ptr()
     }
 }
 
 impl RawObj for Wdg {
+    #[inline]
     fn raw(&self) -> *const lv_obj_t {
         self.raw.as_ptr().cast_const()
     }
+
+    #[inline]
     fn raw_mut(&mut self) -> *mut lv_obj_t {
         self.raw.as_ptr()
     }
 }
 
-mod testing {
-    use crate::widgets::*;
-    pub struct SimpleObject<T: RawObj>(T);
+// mod testing {
+//     use crate::widgets::*;
+//     pub struct SimpleObject<T: RawObj>(T);
 
-    impl<T: RawObj> SimpleObject<T> {
-        pub fn raw(&self) -> *const lv_obj_t {
-            self.0.raw()
-        }
+//     impl<T: RawObj> SimpleObject<T> {
+//         pub fn raw(&self) -> *const lv_obj_t {
+//             self.0.raw()
+//         }
 
-        pub fn raw_mut(&mut self) -> *mut lv_obj_t {
-            self.0.raw_mut()
-        }
+//         pub fn raw_mut(&mut self) -> *mut lv_obj_t {
+//             self.0.raw_mut()
+//         }
 
-        pub fn set_text(&mut self, text: &CStr) {
-            unsafe {
-                lightvgl_sys::lv_label_set_text(self.raw_mut(), text.as_ptr());
-            }
-        }
-    }
+//         pub fn set_text(&mut self, text: &CStr) {
+//             unsafe {
+//                 lightvgl_sys::lv_label_set_text(self.raw_mut(), text.as_ptr());
+//             }
+//         }
+//     }
 
-    impl SimpleObject<Widget> {
-        pub fn new() -> Self {
-            unsafe { Self(Widget::from_ptr(lv_label_create(core::ptr::null_mut())).unwrap()) }
-        }
-    }
+//     impl SimpleObject<Widget> {
+//         pub fn new() -> Self {
+//             unsafe { Self(Widget::from_ptr(lv_label_create(core::ptr::null_mut())).unwrap()) }
+//         }
+//     }
 
-    impl WidgetSpec for SimpleObject<Wdg> {
-        fn get_class() -> &'static lv_obj_class_t {
-            unsafe { &lightvgl_sys::lv_label_class }
-        }
+//     impl WidgetSpec for SimpleObject<Wdg> {
+//         fn get_class() -> &'static lv_obj_class_t {
+//             unsafe { &lightvgl_sys::lv_label_class }
+//         }
 
-        fn from_non_null(ptr: &NonNull<lv_obj_t>) -> Result<&Self, DowncastError> {
-            check_class(ptr.as_ptr(), Self::get_class())?;
-            Ok(unsafe { &*(core::ptr::from_ref(ptr).cast::<Self>()) })
-        }
+//         fn from_non_null(ptr: &NonNull<lv_obj_t>) -> Result<&Self, DowncastError> {
+//             check_class(ptr.as_ptr(), Self::get_class())?;
+//             Ok(unsafe { &*(core::ptr::from_ref(ptr).cast::<Self>()) })
+//         }
 
-        fn from_non_null_mut(ptr: &mut NonNull<lv_obj_t>) -> Result<&mut Self, DowncastError> {
-            check_class(ptr.as_ptr(), Self::get_class())?;
-            Ok(unsafe { &mut *(core::ptr::from_mut(ptr).cast::<Self>()) })
-        }
-    }
+//         fn from_non_null_mut(ptr: &mut NonNull<lv_obj_t>) -> Result<&mut Self, DowncastError> {
+//             check_class(ptr.as_ptr(), Self::get_class())?;
+//             Ok(unsafe { &mut *(core::ptr::from_mut(ptr).cast::<Self>()) })
+//         }
+//     }
 
-    impl Deref for SimpleObject<Widget> {
-        type Target = SimpleObject<Wdg>;
-        fn deref(&self) -> &Self::Target {
-            SimpleObject::<Wdg>::from_non_null(&self.0.raw).unwrap()
-        }
-    }
+//     impl Deref for SimpleObject<Widget> {
+//         type Target = SimpleObject<Wdg>;
+//         fn deref(&self) -> &Self::Target {
+//             SimpleObject::<Wdg>::from_non_null(&self.0.raw).unwrap()
+//         }
+//     }
 
-    impl DerefMut for SimpleObject<Widget> {
-        fn deref_mut(&mut self) -> &mut Self::Target {
-            SimpleObject::<Wdg>::from_non_null_mut(&mut self.0.raw).unwrap()
-        }
-    }
+//     impl DerefMut for SimpleObject<Widget> {
+//         fn deref_mut(&mut self) -> &mut Self::Target {
+//             SimpleObject::<Wdg>::from_non_null_mut(&mut self.0.raw).unwrap()
+//         }
+//     }
 
-    impl Deref for SimpleObject<Wdg> {
-        type Target = Wdg;
-        fn deref(&self) -> &Self::Target {
-            Wdg::from_non_null(&self.0.raw)
-        }
-    }
+//     impl Deref for SimpleObject<Wdg> {
+//         type Target = Wdg;
+//         fn deref(&self) -> &Self::Target {
+//             Wdg::from_non_null(&self.0.raw)
+//         }
+//     }
 
-    impl DerefMut for SimpleObject<Wdg> {
-        fn deref_mut(&mut self) -> &mut Self::Target {
-            Wdg::from_non_null_mut(&mut self.0.raw)
-        }
-    }
+//     impl DerefMut for SimpleObject<Wdg> {
+//         fn deref_mut(&mut self) -> &mut Self::Target {
+//             Wdg::from_non_null_mut(&mut self.0.raw)
+//         }
+//     }
 
-    impl From<SimpleObject<Widget>> for Widget {
-        fn from(value: SimpleObject<Widget>) -> Self {
-            value.0
-        }
-    }
+//     impl From<SimpleObject<Widget>> for Widget {
+//         fn from(value: SimpleObject<Widget>) -> Self {
+//             value.0
+//         }
+//     }
 
-    impl From<SimpleObject<Wdg>> for Wdg {
-        fn from(value: SimpleObject<Wdg>) -> Self {
-            value.0
-        }
-    }
-}
+//     impl From<SimpleObject<Wdg>> for Wdg {
+//         fn from(value: SimpleObject<Wdg>) -> Self {
+//             value.0
+//         }
+//     }
+// }
 
 pub trait WidgetSpec {
     fn get_class() -> &'static lv_obj_class_t;
@@ -502,15 +529,18 @@ macro_rules! impl_widget {
         pub struct $t<T: RawObj>(T);
 
         impl<T: RawObj> WidgetSpec for $t<T> {
+            #[inline]
             fn get_class() -> &'static lv_obj_class_t {
                 unsafe { &$class }
             }
 
+            #[inline]
             fn from_non_null(ptr: &NonNull<lv_obj_t>) -> Result<&Self, DowncastError> {
                 check_class(ptr.as_ptr(), Self::get_class())?;
                 Ok(unsafe { &*(core::ptr::from_ref(ptr).cast::<Self>()) })
             }
 
+            #[inline]
             fn from_non_null_mut(ptr: &mut NonNull<lv_obj_t>) -> Result<&mut Self, DowncastError> {
                 check_class(ptr.as_ptr(), Self::get_class())?;
                 Ok(unsafe { &mut *(core::ptr::from_mut(ptr).cast::<Self>()) })
@@ -518,16 +548,19 @@ macro_rules! impl_widget {
         }
 
         impl<T: RawObj> $t<T> {
+            #[inline]
             pub fn into_inner(self) -> T {
                 self.0
             }
         }
 
         impl $t<Widget> {
+            #[inline]
             pub fn new() -> Self {
                 Self::try_new().expect("Could not create widget")
             }
 
+            #[inline]
             pub fn try_new() -> Option<Self> {
                 unsafe {
                     let current_screen = lightvgl_sys::lv_screen_active();
@@ -536,12 +569,14 @@ macro_rules! impl_widget {
                 }
             }
 
+            #[inline]
             pub fn leak(self) -> Wdg {
                 self.0.leak()
             }
         }
 
         impl Default for $t<Widget> {
+            #[inline]
             fn default() -> Self {
                 Self::new()
             }
@@ -549,12 +584,14 @@ macro_rules! impl_widget {
 
         impl Deref for $t<Widget> {
             type Target = $t<Wdg>;
+            #[inline]
             fn deref(&self) -> &Self::Target {
                 $t::from_non_null(&self.0.raw).unwrap()
             }
         }
 
         impl DerefMut for $t<Widget> {
+            #[inline]
             fn deref_mut(&mut self) -> &mut Self::Target {
                 $t::from_non_null_mut(&mut self.0.raw).unwrap()
             }
@@ -562,36 +599,42 @@ macro_rules! impl_widget {
 
         impl Deref for $t<Wdg> {
             type Target = Wdg;
+            #[inline]
             fn deref(&self) -> &Self::Target {
                 Wdg::from_non_null(&self.0.raw)
             }
         }
 
         impl DerefMut for $t<Wdg> {
+            #[inline]
             fn deref_mut(&mut self) -> &mut Self::Target {
                 Wdg::from_non_null_mut(&mut self.0.raw)
             }
         }
 
         impl<T: RawObj> AsRef<T> for $t<T> {
+            #[inline]
             fn as_ref(&self) -> &T {
                 &self.0
             }
         }
 
         impl<T: RawObj> AsMut<T> for $t<T> {
+            #[inline]
             fn as_mut(&mut self) -> &mut T {
                 &mut self.0
             }
         }
 
         impl From<$t<Widget>> for Widget {
+            #[inline]
             fn from(value: $t<Widget>) -> Self {
                 value.0
             }
         }
 
         impl From<$t<Wdg>> for Wdg {
+            #[inline]
             fn from(value: $t<Wdg>) -> Self {
                 value.0
             }
