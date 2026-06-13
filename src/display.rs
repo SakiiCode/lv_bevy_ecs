@@ -16,8 +16,8 @@
 //! const VER_RES: usize = 480;
 //! const LINE_HEIGHT: usize = 10;
 //!
-//! let mut sim_display: SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
-//! let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
+//! let mut sim_display: SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(HOR_RES as u32, VER_RES as u32));
+//! let mut display = Display::new(HOR_RES, VER_RES);
 //!
 //! let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 //! display.register(buffer, move |refresh| {
@@ -437,14 +437,13 @@ macro_rules! setup_test_display {
         const LINE_HEIGHT: usize = 16;
 
         let mut sim_display: SimulatorDisplay<Rgb565> =
-            SimulatorDisplay::new(Size::new(HOR_RES, VER_RES));
+            SimulatorDisplay::new(Size::new(HOR_RES as u32, VER_RES as u32));
 
         lv_bevy_ecs::functions::lv_init();
 
-        let mut display = Display::new(HOR_RES as i32, VER_RES as i32);
+        let mut display = Display::new(HOR_RES, VER_RES);
 
-        let buffer =
-            DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
+        let buffer = DrawBuffer::<{ HOR_RES * LINE_HEIGHT }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
 
         display.register(buffer, move |refresh| {
             //sim_display.draw_iter(refresh.as_pixels()).unwrap();
