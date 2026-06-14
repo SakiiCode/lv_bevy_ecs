@@ -367,7 +367,9 @@ impl<const N: usize, C> DisplayRefresh<'_, N, C> {
                 ix = x1;
                 iy += 1;
             }
-            Pixel(Point::new(ix, iy), raw_color.to_owned().into())
+            let point = Point::new(ix, iy);
+            ix += 1;
+            Pixel(point, raw_color.to_owned().into())
         })
     }
 }
