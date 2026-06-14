@@ -200,7 +200,7 @@ codegen-units = 1
 - [x] "no_ecs" mode
 - [x] #![no_std] compatibility
 - [x] LVGL docstrings
-- [x] Cross-language LTO
+- [x] Cross-language LTO support
 - [x] Defmt support
 - [x] OOP-style function calls
 - [ ] Auto-generated enums
@@ -215,6 +215,7 @@ codegen-units = 1
 
 | lv_bevy_ecs | bevy_ecs | lightvgl-sys |
 | ----------- | -------- | ------------ |
+| 0.11.x      | 0.18.x   | 9.5.x        |
 | 0.10.x      | 0.18.x   | 9.5.x        |
 | 0.9.x       | 0.18.x   | 9.5.x        |
 | 0.8.x       | 0.18.x   | 9.5.x        |
