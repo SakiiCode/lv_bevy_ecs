@@ -9,7 +9,7 @@ homepage = "https://github.com/SakiiCode/lv_bevy_ecs"
 repository = "https://github.com/SakiiCode/lv_bevy_ecs"
 license = "MIT"
 keywords = ["bevy", "ecs", "embedded", "graphics", "lvgl"]
-categories = ["embedded", "graphics", "gui", "no-std"]
+categories = ["api-bindings", "embedded", "graphics", "gui", "no-std"]
 
 [package.metadata.docs.rs]
 features = ["use-vendored-config"]
@@ -62,7 +62,6 @@ prettyplease = "0.2.37"
 proc-macro2 = "1.0.95"
 quote = "1.0.40"
 syn = { version = "2.0.111", default-features = false, features = ["parsing"] }
-which = "8.0.0"
 
 [features]
 # Use critical-section instead of spin
