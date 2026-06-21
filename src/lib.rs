@@ -34,7 +34,13 @@ unsafe fn init() {
     crate::functions::lv_init();
 }
 
-pub use logging::error_ as error;
-pub use logging::info_ as info;
-pub use logging::trace_ as trace;
-pub use logging::warn_ as warn;
+#[cfg(feature = "defmt")]
+pub use defmt::debug;
+#[cfg(feature = "defmt")]
+pub use defmt::error;
+#[cfg(feature = "defmt")]
+pub use defmt::info;
+#[cfg(feature = "defmt")]
+pub use defmt::trace;
+#[cfg(feature = "defmt")]
+pub use defmt::warn;

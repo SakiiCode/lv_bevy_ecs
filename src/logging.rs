@@ -197,43 +197,34 @@ impl log::Log for LvglLogger {
     fn flush(&self) {}
 }
 
-cfg_select! {
-    feature = "defmt" => {
-        pub use defmt::{trace as trace_, info as info_, warn as warn_, error as error_};
-    }
-    _=>{
+#[cfg(not(feature = "defmt"))]
+#[macro_export]
+macro_rules! trace {
+    ($($arg:tt)*) => {
+        ::log::trace!(target:$crate::func!(), $($arg)*);
+    };
+}
 
-        #[macro_export]
-        macro_rules! trace_ {
-            ($($arg:tt)*) => {
-                log::trace!(target:$crate::func!(), $($arg)*);
-            };
-        }
+#[cfg(not(feature = "defmt"))]
+#[macro_export]
+macro_rules! info {
+    ($($arg:tt)*) => {
+        ::log::info!(target:$crate::func!(), $($arg)*);
+    };
+}
 
-        #[macro_export]
-        macro_rules! info_ {
-            ($($arg:tt)*) => {
-                log::info!(target:$crate::func!(), $($arg)*);
-            };
-        }
+#[cfg(not(feature = "defmt"))]
+#[macro_export]
+macro_rules! warn {
+    ($($arg:tt)*) => {
+        ::log::warn!(target:$crate::func!(), $($arg)*);
+    };
+}
 
-        #[macro_export]
-        macro_rules! warn_ {
-            ($($arg:tt)*) => {
-                log::warn!(target:$crate::func!(), $($arg)*);
-            };
-        }
-
-        #[macro_export]
-        macro_rules! error_ {
-            ($($arg:tt)*) => {
-                log::error!(target:$crate::func!(), $($arg)*);
-            };
-        }
-
-        pub use info_;
-        pub use trace_;
-        pub use warn_;
-        pub use error_;
-    }
+#[cfg(not(feature = "defmt"))]
+#[macro_export]
+macro_rules! error {
+    ($($arg:tt)*) => {
+        ::log::error!(target:$crate::func!(), $($arg)*);
+    };
 }

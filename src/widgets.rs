@@ -137,12 +137,9 @@ use lightvgl_sys::lv_style_selector_t;
 use lightvgl_sys::{lv_obj_class_t, lv_obj_get_class, lv_obj_t};
 use thiserror::Error;
 
+use crate::events::{Event, EventCode};
 #[cfg(feature = "no_ecs")]
 use crate::styles::Style;
-use crate::{
-    events::{Event, EventCode},
-    info,
-};
 
 /// An [`LvglWorld`] wrapper that is `const` compatible, but it must be initalized manually before first use using `.init()`
 ///
@@ -264,7 +261,7 @@ unsafe impl Sync for Widget {}
 impl Drop for Widget {
     fn drop(&mut self) {
         unsafe {
-            info!("Dropping Obj");
+            crate::info!("Dropping Obj");
             // Async is needed to prevent double-freeing child objects
             lightvgl_sys::lv_obj_delete_async(self.raw.as_ptr());
         }
@@ -297,7 +294,7 @@ fn on_insert_parent(
     unsafe {
         lightvgl_sys::lv_obj_set_parent(child_ptr, parent_ptr);
     }
-    info!("On Insert Parent");
+    crate::info!("On Insert Parent");
 }
 
 /// Represents a borrowed Widget.

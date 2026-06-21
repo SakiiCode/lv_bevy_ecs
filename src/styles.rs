@@ -31,10 +31,7 @@ use ::core::mem::MaybeUninit;
 use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};
 use lightvgl_sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t};
 
-use crate::{
-    info,
-    widgets::{RawObj, Widget},
-};
+use crate::widgets::{RawObj, Widget};
 
 #[derive(Component)]
 #[component(on_insert=add_style)]
@@ -97,7 +94,7 @@ impl Style {
 
 impl Drop for Style {
     fn drop(&mut self) {
-        info!("Dropping Style");
+        crate::info!("Dropping Style");
     }
 }
 
@@ -113,7 +110,7 @@ fn add_style(mut world: DeferredWorld, ctx: HookContext) {
     unsafe {
         lightvgl_sys::lv_obj_add_style(widget, &style.raw, style.selector);
     }
-    info!("Added Style");
+    crate::info!("Added Style");
 }
 
 fn remove_style(mut world: DeferredWorld, ctx: HookContext) {
@@ -125,5 +122,5 @@ fn remove_style(mut world: DeferredWorld, ctx: HookContext) {
     unsafe {
         lightvgl_sys::lv_obj_remove_style(widget, &style.raw, style.selector);
     }
-    info!("Removed Style");
+    crate::info!("Removed Style");
 }
