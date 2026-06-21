@@ -60,38 +60,58 @@ lv_tick_set_cb(move || start.elapsed().as_millis() as u32);
 ```
 
 4. Create a global LvglWorld instance with `LvglWorld::new()`:
+   - **Option 1:** Lazy-initialized global Mutex
 
-```rust,ignore
+   ```rust
+   # use std::sync::{LazyLock, Mutex};
+   # use lv_bevy_ecs::widgets::LvglWorld;
+   #
+   static WORLD: LazyLock<Mutex<LvglWorld>> = LazyLock::new(|| Mutex::new(LvglWorld::new()));
+   ```
 
-// -- Option 1: Lazy-initialized global Mutex
-static WORLD: LazyLock<Mutex<LvglWorld>> = LazyLock::new(|| Mutex::new(LvglWorld::new()));
+   - **Option 2:** `Rc<RefCell<T>>` or `Arc<Mutex<T>>`
 
-// -- Option 2: Rc<RefCell<T>> or Arc<Mutex<T>>
-fn main(){
-    let world_rc = Rc::new(RefCell::new(LvglWorld::new()));
-    some_other_function(world.clone());
-}
+   ```rust
+   # use std::rc::Rc;
+   # use std::cell::RefCell;
+   # use lv_bevy_ecs::events::EventCode;
+   # use lv_bevy_ecs::widgets::*;
+   #
+   fn main(){
+   #   lv_bevy_ecs::setup_test_display!();
+   #
+      let world_rc = Rc::new(RefCell::new(LvglWorld::new()));
+      some_other_function(world_rc.clone());
+   }
 
-fn some_other_function(world_rc: Rc<RefCell<LvglWorld>>){
-    let world = world_rc.clone();
-    some_button.add_event_cb(EventCode::Pressed, move |mut event| {
-        world.borrow_mut().spawn(some_label);
-    });
+   fn some_other_function(world_rc: Rc<RefCell<LvglWorld>>){
+      let world = world_rc.clone();
+      let mut button = Button::new();
+      button.add_event_cb(EventCode::Pressed, move |event| {
+           let label = Label::new();
+           world.borrow_mut().spawn(label.into_inner());
+      });
 
-}
+   }
+   ```
 
-// -- Option 3: Manually initialized global Mutex
-static WORLD: Mutex<UnsafeLvglWorld> = Mutex::new(UnsafeLvglWorld::new());
+   - **Option 3**: Manually initialized global Mutex
 
-fn main(){
-    // Make sure to run `.init()` before first use!
-    WORLD.lock().unwrap().init();
-}
-```
+   ```rust
+   # use std::sync::Mutex;
+   # use lv_bevy_ecs::widgets::UnsafeLvglWorld;
+   #
+   static WORLD: Mutex<UnsafeLvglWorld> = Mutex::new(UnsafeLvglWorld::new());
 
-5. Last thing is to call `lv_timer_handler()` periodically.
+   fn main(){
+       // Make sure to run `.init()` before the first use!
+       WORLD.lock().unwrap().init();
+   }
+   ```
 
-```rust,no_run
+5. The last step is to call `lv_timer_handler()` periodically.
+
+```rust
 # use lv_bevy_ecs::functions::*;
 # use std::thread::sleep;
 # use std::time::{Duration, Instant};
@@ -99,6 +119,7 @@ fn main(){
 loop {
     let start = Instant::now();
     let next_timer_period = lv_timer_handler();
+#   break;
     match next_timer_period {
         NextTimerPeriod::Ready => {
             // yield or continue
@@ -109,7 +130,7 @@ loop {
             sleep(next_instant - Instant::now());
         }
         NextTimerPeriod::Never => {
-           sleep(Duration::from_secs(5));
+            sleep(Duration::from_secs(5));
         }
     }
 }
@@ -147,17 +168,6 @@ This needs `LV_USE_STDLIB_MALLOC` set to `LV_STDLIB_CUSTOM` in `lv_conf.h`.
 
 Additionally, an optional implementation of the `get_memory_stats(&mut lv_mem_monitor_t)` function can be provided.
 Check the examples and sample projects for reference implementation.
-
-```rust,ignore
-pub fn get_memory_stats(monitor: &mut lv_mem_monitor_t) {
-    // ...
-}
-
-fn main() {
-    // ...
-    lv_bevy_ecs::malloc::set_mem_monitor(get_memory_stats);
-}
-```
 
 ### Minimizing binary size
 
@@ -235,11 +245,7 @@ so open to API improvement ideas as well.
 
 ### Unable to generate bindings: fatal error: 'inttypes.h' file not found
 
-Try adding this environment variable to `.cargo/config.toml`:
-
-```toml
-BINDGEN_EXTRA_CLANG_ARGS = "-I/usr/include"
-```
+Check if your bindgen sysroot is correctly set with the `LV_SYSROOT` environment variable.
 
 ## Thanks
 

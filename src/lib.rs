@@ -3,13 +3,12 @@
 
 extern crate alloc;
 
+pub use bevy_ecs as bevy;
+pub use lightvgl_sys as sys;
+
 #[cfg(feature = "lvgl-alloc")]
 pub mod allocator;
 pub mod animation;
-pub mod bevy {
-    //! Re-exported modules from bevy_ecs
-    pub use bevy_ecs::*;
-}
 pub mod display;
 pub mod events;
 pub mod functions;
@@ -20,10 +19,6 @@ pub mod malloc;
 pub mod styles;
 pub mod subjects;
 pub mod support;
-pub mod sys {
-    //! Re-exported modules from `lightvgl_sys`
-    pub use lightvgl_sys::*;
-}
 pub mod timers;
 #[macro_use]
 pub mod widgets;

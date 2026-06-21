@@ -13,9 +13,8 @@
 //! Don't forget to adjust the logging level on both sides!
 //!
 //! See `examples/custom_logging.rs` for sample code.
-//!
-//! # TODO add docs for defmt logging
-//!
+
+// TODO add docs for defmt logging
 
 use ::alloc::vec::Vec;
 use ::core::ffi::CStr;

@@ -19,7 +19,7 @@
 //! let mut label_entity = world.spawn(label.into_inner());
 //! ```
 //!
-//! To create widgets, you have to use the specific struct (Arc, Label, Button, ...) `new()` function that
+//! To create widgets, you have to use the `new()` function of the specific struct (Arc, Label, Button, ...) to
 //! create `Something<Widget>` objects. These structs can be generic over `<Widget>` or `<Wdg>` depending on
 //! whether they are owned or borrowed.
 //!
@@ -141,7 +141,7 @@ use crate::events::{Event, EventCode};
 #[cfg(feature = "no_ecs")]
 use crate::styles::Style;
 
-/// An [`LvglWorld`] wrapper that is `const` compatible, but it must be initalized manually before first use using `.init()`
+/// An [`LvglWorld`] newtype that is `const` compatible, but it must be initalized manually before first use using `.init()`
 ///
 /// It never checks whether the underlying data has been initialized, potentially causing undefined behaviour.
 ///

@@ -1,3 +1,18 @@
+//! # Rust `alloc` as LVGL memory allocator
+//!
+//! Setting up the memory monitor:
+//!
+//!
+//! ```rust
+//! pub fn get_memory_stats(monitor: &mut lv_mem_monitor_t) {
+//!     // ...
+//! }
+//!
+//! fn main() {
+//!     // ...
+//!     lv_bevy_ecs::malloc::set_mem_monitor(get_memory_stats);
+//! }
+
 use ::core::{alloc::Layout, ffi::c_void};
 
 use ::alloc::alloc::{alloc, dealloc, realloc};

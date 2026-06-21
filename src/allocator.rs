@@ -9,7 +9,7 @@ static ALLOCATOR: LvglAlloc = LvglAlloc;
 /// LVGL allocator. Enabled by toggling the `lvgl-alloc` feature.
 pub struct LvglAlloc;
 
-const MAX_ALIGN_BYTES: usize = 16;
+const MIN_ALIGN_BYTES: usize = 16;
 
 unsafe impl GlobalAlloc for LvglAlloc {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
@@ -31,7 +31,7 @@ unsafe impl GlobalAlloc for LvglAlloc {
             /// however, `hashbrown` sometimes requires 16-byte alignment
             ///
             /// so just make everything 16-byte aligned
-            const EXTRA_BYTES: usize = USIZE_BYTES + MAX_ALIGN_BYTES;
+            const EXTRA_BYTES: usize = USIZE_BYTES + MIN_ALIGN_BYTES;
 
             let raw = lightvgl_sys::lv_malloc(layout.size() + EXTRA_BYTES).cast::<u8>();
             if raw.is_null() {
@@ -39,7 +39,7 @@ unsafe impl GlobalAlloc for LvglAlloc {
             }
 
             let raw_shifted = raw.add(USIZE_BYTES);
-            let offset = raw_shifted.align_offset(MAX_ALIGN_BYTES);
+            let offset = raw_shifted.align_offset(MIN_ALIGN_BYTES);
             let aligned = raw_shifted.add(offset);
             *((aligned.cast::<usize>()).sub(1)) = offset + USIZE_BYTES;
             aligned
