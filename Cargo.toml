@@ -1,8 +1,7 @@
 [package]
 name = "lv_bevy_ecs"
-version = "0.11.0-beta.0"
+version = "0.11.0"
 edition = "2024"
-rust-version = "1.95"
 description = "Safe Rust bindings to the LVGL graphics library using Bevy's ECS framework"
 readme = "README.md"
 homepage = "https://github.com/SakiiCode/lv_bevy_ecs"

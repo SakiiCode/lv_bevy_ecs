@@ -933,7 +933,7 @@ checksum = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
 
 [[package]]
 name = "lv_bevy_ecs"
-version = "0.11.0-beta.0"
+version = "0.11.0"
 dependencies = [
  "bevy_ecs",
  "constptr",
