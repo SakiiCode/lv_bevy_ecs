@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking changes
 
 - Added the `Void<T>` type to ensure `*c_void` buffers are passed correctly to LVGL
+- Updated `bevy_ecs` to `0.19.0`
 
 ## [0.11.0] - 2026-06-22
 

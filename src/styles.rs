@@ -35,7 +35,7 @@ use crate::widgets::{RawObj, Widget};
 
 #[derive(Component)]
 #[component(on_insert=add_style)]
-#[component(on_replace=remove_style)]
+#[component(on_discard=remove_style)]
 #[component(storage = "SparseSet")] // TODO investigate why styles don't get applied without this
 pub struct Style {
     raw: lightvgl_sys::lv_style_t,
