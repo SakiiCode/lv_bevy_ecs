@@ -1,5 +1,11 @@
 //! Utility structs and functions
 
+use core::{
+    ffi::c_void,
+    marker::PhantomData,
+    ops::{Deref, DerefMut},
+};
+
 use embedded_graphics::pixelcolor::{BinaryColor, Gray8, Rgb565, Rgb888};
 
 pub const LV_SIZE_CONTENT: u32 = lightvgl_sys::LV_COORD_MAX | lightvgl_sys::LV_COORD_TYPE_SPEC;
@@ -166,5 +172,58 @@ impl From<OpacityLevel> for lightvgl_sys::_lv_opacity_level_t {
     #[inline]
     fn from(value: OpacityLevel) -> Self {
         value as lightvgl_sys::_lv_opacity_level_t
+    }
+}
+
+pub trait Mutability {}
+
+pub struct Mut;
+
+impl Mutability for Mut {}
+
+pub struct Const;
+
+impl Mutability for Const {}
+
+pub struct Void<T: Mutability> {
+    addr: usize,
+    phantom: PhantomData<T>,
+}
+
+impl Void<Const> {
+    pub fn as_c_void(self) -> *const c_void {
+        core::ptr::with_exposed_provenance(self.addr)
+    }
+}
+
+impl Void<Mut> {
+    pub fn as_c_void(self) -> *mut c_void {
+        core::ptr::with_exposed_provenance_mut(self.addr)
+    }
+}
+
+pub trait ToVoid {
+    fn to_void(&self) -> Void<Const>;
+}
+
+pub trait ToVoidMut {
+    fn to_void_mut(&mut self) -> Void<Mut>;
+}
+
+impl<T: ?Sized + Deref> ToVoid for T {
+    fn to_void(&self) -> Void<Const> {
+        Void {
+            addr: (&raw const **self).expose_provenance(),
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<T: ?Sized + DerefMut> ToVoidMut for T {
+    fn to_void_mut(&mut self) -> Void<Mut> {
+        Void {
+            addr: (&raw mut **self).expose_provenance(),
+            phantom: PhantomData,
+        }
     }
 }

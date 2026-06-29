@@ -28,7 +28,6 @@ fn main() {
 
     let code = quote! {
         use ::core::ptr::NonNull;
-        use ::core::any::Any;
         #[allow(unused_imports)]
         use ::alloc::ffi::CString;
         use constptr::ConstPtr;
@@ -37,6 +36,8 @@ fn main() {
         use crate::events::Event;
         use crate::subjects::Subject;
         use crate::display::Display;
+        #[allow(unused_imports)]
+        use crate::support::{Void, Mut, Const};
 
         #(#widgets_impl)*
     };

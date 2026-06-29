@@ -45,7 +45,7 @@ thiserror = { version = "2.0.18", default-features = false }
 defmt-stdout = "0.1.2"
 embedded-graphics-simulator = { git = "https://github.com/embedded-graphics/simulator.git", rev = "cb6825e4a2460dcc0c7c7600fc27a27ea96645ac" }
 macro_rules_attribute = "0.2.2"
-memory-stats = "1.2.0"
+memory-stats = { git = "https://github.com/SakiiCode/memory-stats.git", rev = "44f28e023dfcd89969e1f1ad2325e77fce1ccabb" }
 share-rc = "0.1.0"
 simple_logger = "5.1.0"
 smol = "2.0.2"
@@ -65,20 +65,28 @@ syn = { version = "2.0.111", default-features = false, features = ["parsing"] }
 [features]
 # Use critical-section instead of spin
 critical-section = ["bevy_ecs/critical-section"]
+
 # Automatically call lv_init() at startup
 ctor = ["dep:ctor"]
+
 # Use defmt instead of log
 defmt = ["dep:defmt"]
+
 # Include LVGL demos (requires LV_BUILD_DEMOS)
 demos = ["lightvgl-sys/demos"]
+
 # Set LVGL allocator as Rust global allocator
 lvgl-alloc = ["defmt?/alloc"]
+
 # Enable functions that should not be used in the ECS environment
 no_ecs = ["lv_codegen/no_ecs"]
+
 # Use Rust allocator as LVGL allocator (requires LV_USE_STDLIB_MALLOC = CUSTOM)
 rust-alloc = ["defmt?/alloc"]
+
 # Enable serde support
 serde = ["bevy_ecs/serialize"]
+
 # Needed for the docs-rs generator
 use-vendored-config = ["lightvgl-sys/use-vendored-config"]
 

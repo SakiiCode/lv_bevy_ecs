@@ -521,9 +521,9 @@ impl LvArg {
                 #ident.raw_mut()
             }
         } else if self.typ.is_mut_void() {
-            quote! {core::ptr::from_mut(#ident).cast()}
+            quote! {#ident.as_c_void()}
         } else if self.typ.is_const_void() {
-            quote! {core::ptr::from_ref(#ident).cast()}
+            quote! {#ident.as_c_void()}
         } else {
             quote! {
                 #ident
@@ -692,9 +692,9 @@ impl Rusty for LvType {
         } else if self.is_mut_display() {
             quote!(&mut Display)
         } else if self.is_mut_void() {
-            quote!(&mut dyn Any)
+            quote!(Void<Mut>)
         } else if self.is_const_void() {
-            quote!(&dyn Any)
+            quote!(Void<Const>)
         } else {
             let raw_name = self.raw_name();
 

@@ -24,7 +24,7 @@ use lv_bevy_ecs::{
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     subjects::Subject,
-    support::{LV_SIZE_CONTENT, OpacityLevel},
+    support::{LV_SIZE_CONTENT, OpacityLevel, ToVoid, ToVoidMut},
     sys::{
         LV_ANIM_REPEAT_INFINITE, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST, LV_SYMBOL_FILE,
         lv_align_t_LV_ALIGN_BOTTOM_RIGHT, lv_anim_path_ease_out, lv_anim_set_path_cb,
@@ -374,7 +374,7 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
         );
         log::info!("aligned buf:{:#x}", buf.addr());
         canvas.set_buffer(
-            buf.as_mut().unwrap(),
+            buf.as_mut().unwrap().to_void_mut(),
             400,
             100,
             lv_color_format_t_LV_COLOR_FORMAT_RGB565,
@@ -393,14 +393,14 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
     let test_img_lvgl_logo_jpg = unsafe { test_img_lvgl_logo_jpg_path.as_ptr().as_ref().unwrap() };
 
     let mut img = Image::new();
-    img.set_src(test_img_lvgl_logo_jpg);
+    img.set_src(test_img_lvgl_logo_jpg.to_void());
 
     img.align(lv_align_t_LV_ALIGN_BOTTOM_RIGHT, -20, -20);
     img.add_flag(lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
     world.spawn(img.into_inner());
 
     let mut img = Image::new();
-    img.set_src(test_img_lvgl_logo_png);
+    img.set_src(test_img_lvgl_logo_png.to_void());
 
     img.set_pos(500, 420);
     img.add_flag(lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
