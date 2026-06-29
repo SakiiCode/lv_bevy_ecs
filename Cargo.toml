@@ -1,6 +1,6 @@
 [package]
 name = "lv_bevy_ecs"
-version = "0.11.0"
+version = "0.12.0-alpha.0"
 edition = "2024"
 description = "Safe Rust bindings to the LVGL graphics library using Bevy's ECS framework"
 readme = "README.md"
@@ -56,7 +56,7 @@ static_cell = "2.1.1"
 lightvgl-sys = { path = "../lightvgl-sys", version = "~9.5.4", default-features = false, features = [
   "raw-bindings",
 ] }
-lv_codegen = { path = "lv_codegen", version = "0.4.2" }
+lv_codegen = { path = "lv_codegen", version = "0.5.0" }
 prettyplease = "0.2.37"
 proc-macro2 = "1.0.95"
 quote = "1.0.40"

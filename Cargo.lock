@@ -360,7 +360,7 @@ dependencies = [
  "bitflags 2.13.0",
  "cexpr",
  "clang-sys",
- "itertools 0.13.0",
+ "itertools",
  "proc-macro2",
  "quote",
  "regex",
@@ -895,15 +895,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itertools"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
-dependencies = [
- "either",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -971,7 +962,7 @@ checksum = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
 
 [[package]]
 name = "lv_bevy_ecs"
-version = "0.11.0"
+version = "0.12.0-alpha.0"
 dependencies = [
  "bevy_ecs",
  "constptr",
@@ -999,11 +990,10 @@ dependencies = [
 
 [[package]]
 name = "lv_codegen"
-version = "0.4.2"
+version = "0.5.0"
 dependencies = [
  "Inflector",
  "constptr",
- "itertools 0.14.0",
  "proc-macro2",
  "quote",
  "regex",
@@ -1286,9 +1276,9 @@ checksum = "e0c5ccf5294c6ccd63a74f1565028353830a9c2f5eb0c682c355c471726a6e3f"
 
 [[package]]
 name = "quote"
-version = "1.0.45"
+version = "1.0.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41f2619966050689382d2b44f664f4bc593e129785a36d6ee376ddf37259b924"
+checksum = "dfbc457d0c7a0759a614551b11a6409e5951f6c7537be1f1b7682b9ae9230368"
 dependencies = [
  "proc-macro2",
 ]
@@ -1417,9 +1407,9 @@ dependencies = [
 
 [[package]]
 name = "share-rc"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37a663f2ca8bd7fc480aee3c50d6ddf4f6983544d6d1a9753c149660b9ed32c3"
+checksum = "9be4aa5ce9cea5227f9139c6f032f6d63145b32068b068842d625301dcc07d73"
 dependencies = [
  "proc-macro2",
  "quote",
