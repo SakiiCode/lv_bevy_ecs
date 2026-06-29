@@ -1,5 +1,4 @@
 use inflector::{Inflector, cases::pascalcase::to_pascal_case};
-use itertools::Itertools;
 use proc_macro2::{Ident, TokenStream};
 use quote::{ToTokens, format_ident, quote};
 use regex::Regex;
@@ -418,7 +417,7 @@ impl From<ForeignItemFn> for LvFunc {
                         None
                     }
                 })
-                .join("\n\n")
+                .fold(String::new(), |acc, next| acc + &next + "\n\n")
                 .trim()
                 .to_owned(),
         )
@@ -1138,8 +1137,8 @@ mod test {
                     doc = "Set the user_data field of the object\n\n@param obj   pointer to an object\n\n@param user_data   pointer to the new user_data."
                 )]
                 #[inline]
-                pub fn set_user_data(&mut self, user_data: &mut dyn Any) {
-                    unsafe { lightvgl_sys::lv_obj_set_user_data(self.raw_mut(), core::ptr::from_mut(user_data).cast()) }
+                pub fn set_user_data(&mut self, user_data: Void<Mut>) {
+                    unsafe { lightvgl_sys::lv_obj_set_user_data(self.raw_mut(), user_data.as_c_void()) }
                 }
             }
         };
@@ -1175,9 +1174,9 @@ mod test {
                     doc = "Add button to a list\n\n@param list      pointer to a list, it will be the parent of the new button\n\n@param icon      icon for the button, when NULL it will have no icon\n\n@param txt       text of the new button, when NULL no text will be added\n\n@return          pointer to the created button"
                 )]
                 #[inline]
-                pub fn add_button(&mut self, icon: &dyn Any, txt: &CStr) -> Option<Wdg> {
+                pub fn add_button(&mut self, icon: Void<Const>, txt: &CStr) -> Option<Wdg> {
                     unsafe {
-                        let pointer = lightvgl_sys::lv_list_add_button(self.raw_mut(), core::ptr::from_ref(icon).cast(), txt.as_ptr());
+                        let pointer = lightvgl_sys::lv_list_add_button(self.raw_mut(), icon.as_c_void(), txt.as_ptr());
                         Wdg::try_from_ptr(pointer)
                     }
                 }

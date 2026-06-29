@@ -1,6 +1,6 @@
 [package]
 name = "lv_codegen"
-version = "0.4.2"
+version = "0.5.0"
 edition = "2024"
 description = "Code generation companion to lightvgl-sys"
 license = "MIT"
@@ -8,7 +8,6 @@ license = "MIT"
 [dependencies]
 Inflector = "0.11.4"
 constptr = "0.3.1"
-itertools = "0.14.0"
 proc-macro2 = "1.0.95"
 quote = "1.0.40"
 regex = "1.11.1"
