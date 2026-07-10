@@ -152,12 +152,12 @@ fn main() {
             button.add_style(&mut style, lv_part_t_LV_PART_MAIN as lv_style_selector_t);
         }
 
-        button.leak();
-        label.leak();
+        Button::leak(button);
+        Label::leak(label);
 
         let mut arc = Arc::new();
         arc.set_align(Align::BottomMid.into());
-        arc.leak();
+        Arc::leak(arc);
     }
 
     info!("Create OK");

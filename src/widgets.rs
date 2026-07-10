@@ -234,9 +234,10 @@ impl Widget {
     }
 
     #[expect(clippy::mem_forget)]
-    pub fn leak(self) -> Wdg {
-        let wdg = Wdg::from_ptr(self.raw.as_ptr());
-        ::core::mem::forget(self);
+    #[inline]
+    pub fn leak(mut widget: Widget) -> Wdg {
+        let wdg = Wdg::from_ptr(widget.raw_mut());
+        ::core::mem::forget(widget);
         wdg
     }
 
@@ -567,8 +568,8 @@ macro_rules! impl_widget {
             }
 
             #[inline]
-            pub fn leak(self) -> Wdg {
-                self.0.leak()
+            pub fn leak(widget: Self) -> Wdg {
+                Widget::leak(widget.into_inner())
             }
         }
 

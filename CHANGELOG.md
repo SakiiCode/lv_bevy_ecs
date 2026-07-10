@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added the `Void<T>` type to ensure `*c_void` buffers are passed correctly to LVGL
 - Updated `bevy_ecs` to `0.19.0`
+- `leak()` is now an associated function, use `Widgetclass::leak(widget)` or `Widget::leak(widget.into_inner())`.\
+  _(Same principle as `Box::leak()`)_
 
 ## [0.11.0] - 2026-06-22
 
@@ -18,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Callbacks require `'static` lifetime
 - `DrawBuffer` takes `const N: usize` instead of `const N: u32`
-- `Display::new` takes `(usize,usize)` instead of `(i32,i32)`
+- `Display::new(usize,usize)` instead of `Display::new(i32,i32)`
 
 ### Added
 

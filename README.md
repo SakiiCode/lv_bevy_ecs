@@ -24,7 +24,7 @@ so that they don't go out of scope and get deallocated. Bevy's Observers will mi
 Enabling the `no_ecs` feature unlocks some functions that allow you to bring your own storage solution.
 
 If you don't care about storage at all, and know in advance that a Widget will live for the rest of the program's execution,
-you can call `Widget::leak()` to leak memory and prevent calling the destructor.
+you can call `Widgetclass::leak(mywidget)` or `Widget::leak(mywidget.into_inner())` to leak memory and prevent calling the destructor.
 
 Check out [no_ecs.rs](https://github.com/SakiiCode/lv_bevy_ecs/blob/master/examples/no_ecs.rs) on how to use these.
 
