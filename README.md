@@ -28,173 +28,6 @@ you can call `Widgetclass::leak(mywidget)` or `Widget::leak(mywidget.into_inner(
 
 Check out [no_ecs.rs](https://github.com/SakiiCode/lv_bevy_ecs/blob/master/examples/no_ecs.rs) on how to use these.
 
-## Usage
-
-It is highly recommended to read [Chapter 14 of the Unofficial Bevy Cheat Book](https://bevy-cheatbook.github.io/programming.html) before using this library.
-
-1.  Create a project with `cargo new` or `esp-generate`, then
-
-```sh
-        cargo add lv_bevy_ecs
-```
-
-2.  This package depends on [lightvgl-sys](https://crates.io/crates/lightvgl-sys) to generate the raw unsafe bindings.
-    It needs an environment variable called `DEP_LV_CONFIG_PATH` that specifies the path to the folder containing `lv_conf.h` file.
-
-    It is recommended to add it inside `.cargo/config.toml`
-
-```toml
-[env]
-DEP_LV_CONFIG_PATH = { relative = true, value = "." }
-```
-
-3. Assign a tick callback that measures elapsed time in milliseconds. This must be done **before** creating the UI.
-   _For other frameworks (like ESP-IDF or Embassy), you should [use its tick counter](https://docs.lvgl.io/9.5/integration/overview.html#tick-interface) instead to get precise and constant framerate._
-
-```rust
-use lv_bevy_ecs::functions::lv_tick_set_cb;
-use std::time::Instant;
-
-let start = Instant::now();
-lv_tick_set_cb(move || start.elapsed().as_millis() as u32);
-```
-
-4. Create a global LvglWorld instance with `LvglWorld::new()`:
-   - **Option 1:** Lazy-initialized global Mutex
-
-   ```rust
-   # use std::sync::{LazyLock, Mutex};
-   # use lv_bevy_ecs::widgets::LvglWorld;
-   #
-   static WORLD: LazyLock<Mutex<LvglWorld>> = LazyLock::new(|| Mutex::new(LvglWorld::new()));
-   ```
-
-   - **Option 2:** `Rc<RefCell<T>>` or `Arc<Mutex<T>>`
-
-   ```rust
-   # use std::rc::Rc;
-   # use std::cell::RefCell;
-   # use lv_bevy_ecs::events::EventCode;
-   # use lv_bevy_ecs::widgets::*;
-   #
-   fn main(){
-   #   lv_bevy_ecs::setup_test_display!();
-   #
-      let world_rc = Rc::new(RefCell::new(LvglWorld::new()));
-      some_other_function(world_rc.clone());
-   }
-
-   fn some_other_function(world_rc: Rc<RefCell<LvglWorld>>){
-      let world = world_rc.clone();
-      let mut button = Button::new();
-      button.add_event_cb(EventCode::Pressed, move |event| {
-           let label = Label::new();
-           world.borrow_mut().spawn(label.into_inner());
-      });
-
-   }
-   ```
-
-   - **Option 3**: Manually initialized global Mutex
-
-   ```rust
-   # use std::sync::Mutex;
-   # use lv_bevy_ecs::widgets::UnsafeLvglWorld;
-   #
-   static WORLD: Mutex<UnsafeLvglWorld> = Mutex::new(UnsafeLvglWorld::new());
-
-   fn main(){
-       // Make sure to run `.init()` before the first use!
-       WORLD.lock().unwrap().init();
-   }
-   ```
-
-5. The last step is to call `lv_timer_handler()` periodically.
-
-```rust
-# use lv_bevy_ecs::functions::*;
-# use std::thread::sleep;
-# use std::time::{Duration, Instant};
-#
-loop {
-    let start = Instant::now();
-    let next_timer_period = lv_timer_handler();
-#   break;
-    match next_timer_period {
-        NextTimerPeriod::Ready => {
-            // yield or continue
-            continue;
-        }
-        NextTimerPeriod::AfterMs(next_timer_ms) => {
-            let next_instant = start + Duration::from_millis(next_timer_ms.get().into());
-            sleep(next_instant - Instant::now());
-        }
-        NextTimerPeriod::Never => {
-            sleep(Duration::from_secs(5));
-        }
-    }
-}
-```
-
-Check the [documentation](https://docs.rs/crate/lv_bevy_ecs/latest) and the [examples](https://github.com/SakiiCode/lv_bevy_ecs/tree/master/examples) for further usage.
-
-## Running the demo
-
-```sh
-sudo apt install libsdl2-dev
-
-git clone git@github.com:SakiiCode/lv_bevy_ecs.git
-cd lv_bevy_ecs
-cargo run --example basic
-```
-
-On Windows, you have to [install SDL2](https://github.com/Rust-SDL2/rust-sdl2#windows-msvc).
-
-## Building for embedded
-
-Example projects are available targeting ESP32 and ESP32-P4 with `std` enabled: [lvgl-bevy-demo](https://github.com/SakiiCode/lvgl-bevy-demo), [lvgl-bevy-demo-dsi](https://github.com/SakiiCode/lvgl-bevy-demo-dsi)
-
-### Heap Allocation
-
-#### `lvgl-alloc` feature
-
-If you don't have an allocator, a [GlobalAlloc](https://github.com/SakiiCode/lv_bevy_ecs/blob/master/src/allocator.rs) for Rust leveraging the [LVGL memory allocator](https://docs.lvgl.io/9.5/API/stdlib/lv_mem_h.html) is provided, but not enabled by default.
-Can be enabled with the feature `lvgl-alloc`. This will make all dynamic memory to be allocated by LVGL internal memory manager.
-
-#### `rust-alloc` feature
-
-If you already have an allocator, you can enable the `rust-alloc` feature to forward the LVGL memory allocator functions to the Rust `alloc` crate.
-This needs `LV_USE_STDLIB_MALLOC` set to `LV_STDLIB_CUSTOM` in `lv_conf.h`.
-
-Additionally, an optional implementation of the `get_memory_stats(&mut lv_mem_monitor_t)` function can be provided.
-Check the examples and sample projects for reference implementation.
-
-### Minimizing binary size
-
-In order to remove even more unused functions, the [Cross-language Link-Time Optimization](https://doc.rust-lang.org/rustc/linker-plugin-lto.html) functionality of LLVM can be enabled. Unfortunately, this is not available on every platform, especially on those that use `gcc` as the linker.
-Make sure to match your clang version with your rustc version.
-
-`.cargo/config.toml`
-
-```toml
-[target.YOUR-TARGET-TRIPLE]
-rustflags = ["-C", "linker-plugin-lto", "-C", "link-arg=-fuse-ld=lld"]
-linker = "clang-21"
-
-[env]
-LV_COMPILE_ARGS = "-flto=full"
-CC = "clang-21"
-```
-
-`Cargo.toml`
-
-```toml
-[profile.dev]
-opt-level = "z"
-lto = "fat"
-codegen-units = 1
-```
-
 ## Features
 
 - [x] Displays
@@ -220,6 +53,41 @@ codegen-units = 1
 - [ ] Non-widget functions
 - [ ] Layouts
 - [ ] XML UI
+
+## Usage
+
+Check the [documentation](https://docs.rs/crate/lv_bevy_ecs/latest) and the [examples](https://github.com/SakiiCode/lv_bevy_ecs/tree/master/examples).
+
+## Running the demos
+
+```sh
+sudo apt install libsdl2-dev
+
+git clone git@github.com:SakiiCode/lv_bevy_ecs.git
+cd lv_bevy_ecs
+cargo run --example basic
+```
+
+On Windows, you have to [install SDL2](https://github.com/Rust-SDL2/rust-sdl2#windows-msvc).
+
+## Building for embedded
+
+Example projects are available targeting ESP32 and ESP32-P4: [lvgl-bevy-demo](https://github.com/SakiiCode/lvgl-bevy-demo), [lvgl-bevy-demo-dsi](https://github.com/SakiiCode/lvgl-bevy-demo-dsi)
+
+### Heap Allocation
+
+#### `lvgl-alloc` feature
+
+If you don't have an allocator, a [GlobalAlloc](https://github.com/SakiiCode/lv_bevy_ecs/blob/master/src/allocator.rs) for Rust leveraging the [LVGL memory allocator](https://docs.lvgl.io/9.5/API/stdlib/lv_mem_h.html) is provided, but not enabled by default.
+Can be enabled with the feature `lvgl-alloc`. This will make all dynamic memory to be allocated by LVGL internal memory manager.
+
+#### `rust-alloc` feature
+
+If you already have an allocator, you can enable the `rust-alloc` feature to forward the LVGL memory allocator functions to the Rust `alloc` crate.
+This needs `LV_USE_STDLIB_MALLOC` set to `LV_STDLIB_CUSTOM` in `lv_conf.h`.
+
+Additionally, an optional implementation of the `get_memory_stats(&mut lv_mem_monitor_t)` function can be provided.
+Check the examples and sample projects for reference implementation.
 
 ## Compatibility table
 

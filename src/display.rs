@@ -1,6 +1,7 @@
 //! # Display
 //!
-//! The `embedded-graphics` crate is used to drive the screens. Examples use `embedded-graphics-simulator` to try them on PC.
+//! The [embedded-graphics](https://crates.io/crates/embedded-graphics) crate is used to drive the screens.
+//! The examples use [embedded-graphics-simulator](https://crates.io/crates/embedded-graphics-simulator) to try them on PC.
 //!
 //! ## Simulator
 //! ```

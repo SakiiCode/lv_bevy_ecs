@@ -1,9 +1,9 @@
 //! # Widgets
 //!
-//! The most basic type is the `Widget` struct that represents an owned `lv_obj_t`. If it goes out of scope,
-//! the widget will be deleted. Its borrowed form is the `Wdg` struct, it does not delete the widget upon drop.
+//! The most basic type is the [`Widget`] struct that represents an owned `lv_obj_t`. If it goes out of scope,
+//! the widget will be deleted. Its borrowed form is the [`Wdg`] struct, it does not delete the widget upon drop.
 //!
-//! `Widget` and `Wdg` can be mutable or immutable, exclusive access is not enforced. If you happen to have a
+//! Both [`Widget`] and [`Wdg`] can be mutable or immutable, exclusive access is not enforced. If you happen to have a
 //! `*mut lv_obj_t` you can turn it into a `Wdg` with `Wdg::from_ptr(*mut lv_obj_t)`. Alternatively, `Widget::from_ptr(*mut lv_obj_t)`
 //! can be used, but that will destroy the widget if goes out of scope.
 //!
@@ -23,7 +23,7 @@
 //! create `Something<Widget>` objects. These structs can be generic over `<Widget>` or `<Wdg>` depending on
 //! whether they are owned or borrowed.
 //!
-//! To convert a `Widget` or `Wdg` back to a specific type, the `.downcast()` or `.downcast_mut()` method can be used.
+//! To convert a [`Widget`] or [`Wdg`] back to a specific type, the [`.downcast()`](crate::widgets::Wdg::downcast) or [`.downcast_mut()`](crate::widgets::Wdg::downcast_mut) method can be used.
 //!
 //! #### Widget functions
 //!
@@ -37,7 +37,7 @@
 //! As explained in the readme, widgets should be moved to a storage system so that they will be accessible from elsewhere and don't get deallocated.
 //!
 //! In case of `bevy_ecs`, this is done using the `LvglWorld.spawn(Widget)` function. Since you usually have a generic `Something<Widget>`, which
-//! does not implement `Component`, it needs to be converted back to a `Widget` using the `.to_inner()` function.
+//! does not implement [`Component`](../../bevy_ecs/component/trait.Component.html), it needs to be converted back to a [`Widget`] using the [`.into_inner()`](crate::widgets::Button::into_inner) function.
 //!
 //! #### Modifying Widgets
 //!

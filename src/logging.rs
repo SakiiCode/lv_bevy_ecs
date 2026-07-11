@@ -1,7 +1,7 @@
 //! # Logging
-//! You can forward LVGL logs to the `log` crate by calling `lv_bevy_ecs::logging::connect();` during startup.
+//! You can forward LVGL logs to the `log` crate by calling [`lv_bevy_ecs::logging::connect();`](crate::logging::connect) during startup.
 //!
-//! Or the other way around, calling `lv_bevy_ecs::logging::lv_log_init();` will forward the `log` crate macros
+//! Or the other way around, calling [`lv_bevy_ecs::logging::lv_log_init();`](crate::logging::lv_log_init) will forward the `log` crate macros
 //! to LVGL's logger. This way you also have line numbers at the end of each message by default.
 //!
 //! Using both will create an infinite recursion and stack overflow.

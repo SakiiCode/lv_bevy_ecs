@@ -1,4 +1,4 @@
-//! Input
+//! Input devices
 use ::alloc::boxed::Box;
 use ::core::{marker::PhantomData, ptr::NonNull};
 use lightvgl_sys::{lv_indev_get_user_data, lv_indev_state_t, lv_indev_t, lv_indev_type_t};

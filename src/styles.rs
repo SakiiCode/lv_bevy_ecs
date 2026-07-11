@@ -1,7 +1,7 @@
 //! # Styles
 //!
 //! Styles are components that need to be added to entities.
-//! Right now a Style can only be applied to a single widget, but they are cloneable.
+//! Right now a [`Style`] can only be applied to a single widget, but they are cloneable.
 //!
 //! ```rust
 //! # use lv_bevy_ecs::functions::*;

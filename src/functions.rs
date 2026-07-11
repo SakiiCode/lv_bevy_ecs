@@ -2,6 +2,8 @@
 #![allow(clippy::let_unit_value)]
 #![allow(clippy::multiple_inherent_impl)]
 #![allow(clippy::allow_attributes)]
+#![allow(rustdoc::invalid_rust_codeblocks)]
+#![allow(rustdoc::broken_intra_doc_links)]
 use ::core::{ffi::CStr, num::NonZero};
 
 use crate::styles::Style;
