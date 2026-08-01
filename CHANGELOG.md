@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `leak()` is now an associated function, use `Widgetclass::leak(widget)` or `Widget::leak(widget.into_inner())`.\
   _(Same principle as `Box::leak()`)_
 
+### Added
+
+- `lv_init()` check to `DrawBuffer::new()`
+
 ## [0.11.0] - 2026-06-22
 
 ### Breaking changes

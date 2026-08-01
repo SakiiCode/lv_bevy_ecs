@@ -386,6 +386,7 @@ impl<const N: usize, C: LvglColorFormat> DrawBuffer<N, C> {
         {
             assert_eq!(w * h, N);
         }
+        crate::support::assert_lv_is_initialized();
 
         let cf = C::as_lv_color_format_t();
         unsafe {
