@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `bevy_ecs` to `0.19.0`
 - `leak()` is now an associated function, use `Widgetclass::leak(widget)` or `Widget::leak(widget.into_inner())`.\
   _(Same principle as `Box::leak()`)_
+- Removed `<{const N: usize}>` from `DrawBuffer` and `DisplayRefresh`
 
 ### Added
 

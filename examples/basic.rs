@@ -64,12 +64,12 @@ fn main() {
 
     let mut display = Display::new(HOR_RES, VER_RES);
 
-    let buffer = DrawBuffer::<{ HOR_RES * LINE_HEIGHT }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
+    let buffer = DrawBuffer::new(HOR_RES, LINE_HEIGHT);
 
     display.register(
         buffer,
         share!(|refresh| {
-            //sim_display.draw_iter(refresh.as_pixels()).unwrap();
+            // sim_display.draw_iter(refresh.as_pixels()).unwrap();
             sim_display
                 .fill_contiguous(&refresh.rectangle, refresh.colors.iter().copied())
                 .unwrap();

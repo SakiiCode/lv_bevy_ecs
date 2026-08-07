@@ -72,7 +72,7 @@ fn main() {
 
     let mut display = Display::new(HOR_RES, VER_RES);
 
-    let buffer = DrawBuffer::<{ HOR_RES * LINE_HEIGHT }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
+    let buffer = DrawBuffer::new(HOR_RES, LINE_HEIGHT);
 
     info!("Display OK");
 
