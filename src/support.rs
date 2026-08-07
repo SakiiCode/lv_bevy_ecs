@@ -51,9 +51,9 @@ impl From<Gray8> for LvGray8 {
     }
 }
 
-impl Into<Gray8> for LvGray8 {
-    fn into(self) -> Gray8 {
-        RawU8::new(self.0).into()
+impl From<LvGray8> for Gray8 {
+    fn from(value: LvGray8) -> Self {
+        RawU8::new(value.0).into()
     }
 }
 
@@ -73,9 +73,9 @@ impl From<Rgb565> for LvRgb565 {
     }
 }
 
-impl Into<Rgb565> for LvRgb565 {
-    fn into(self) -> Rgb565 {
-        RawU16::new(self.0).into()
+impl From<LvRgb565> for Rgb565 {
+    fn from(value: LvRgb565) -> Self {
+        RawU16::new(value.0).into()
     }
 }
 
@@ -98,9 +98,9 @@ impl From<Rgb888> for LvRgb888 {
     }
 }
 
-impl Into<Rgb888> for LvRgb888 {
-    fn into(self) -> Rgb888 {
-        Rgb888::new(self.0.2, self.0.1, self.0.0)
+impl From<LvRgb888> for Rgb888 {
+    fn from(value: LvRgb888) -> Self {
+        Rgb888::new(value.0.2, value.0.1, value.0.0)
     }
 }
 
