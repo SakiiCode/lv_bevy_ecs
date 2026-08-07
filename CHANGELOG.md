@@ -14,10 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `leak()` is now an associated function, use `Widgetclass::leak(widget)` or `Widget::leak(widget.into_inner())`.\
   _(Same principle as `Box::leak()`)_
 - Removed `<{const N: usize}>` from `DrawBuffer` and `DisplayRefresh`
+- Reworked color formats, DrawBuffer now takes own datatypes like `LvRgb565`
 
 ### Added
 
 - `lv_init()` check to `DrawBuffer::new()`
+
+### Fixed
+
+- Rgb888 had a length mismatch and not working
 
 ## [0.11.0] - 2026-06-22
 

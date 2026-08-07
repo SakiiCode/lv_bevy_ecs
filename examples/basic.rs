@@ -20,7 +20,7 @@ use lv_bevy_ecs::{
     functions::*,
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
-    support::{Align, OpacityLevel},
+    support::{Align, LvRgb565, OpacityLevel},
     sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t},
     widgets::{Arc, Button, Label, LvglWorld},
 };
@@ -64,14 +64,17 @@ fn main() {
 
     let mut display = Display::new(HOR_RES, VER_RES);
 
-    let buffer = DrawBuffer::new(HOR_RES, LINE_HEIGHT);
+    let buffer = DrawBuffer::<LvRgb565>::new(HOR_RES, LINE_HEIGHT);
 
     display.register(
         buffer,
         share!(|refresh| {
             // sim_display.draw_iter(refresh.as_pixels()).unwrap();
             sim_display
-                .fill_contiguous(&refresh.rectangle, refresh.colors.iter().copied())
+                .fill_contiguous(
+                    &refresh.rectangle,
+                    refresh.colors.iter().map(|px| (*px).into()),
+                )
                 .unwrap();
             if refresh.display.flush_is_last() {
                 take!(window_rc.clone()).borrow_mut().update(&sim_display);

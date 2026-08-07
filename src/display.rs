@@ -9,7 +9,7 @@
 //! # use embedded_graphics::prelude::*;
 //! # use embedded_graphics_simulator::*;
 //! # use lv_bevy_ecs::display::{DrawBuffer, Display};
-//! # use lv_bevy_ecs::support::LvglColorFormat;
+//! # use lv_bevy_ecs::support::{LvglColorFormat, LvRgb565};
 //! # use lv_bevy_ecs::sys::*;
 //! #
 //! lv_bevy_ecs::functions::lv_init();
@@ -20,11 +20,11 @@
 //! let mut sim_display: SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(HOR_RES as u32, VER_RES as u32));
 //! let mut display = Display::new(HOR_RES, VER_RES);
 //!
-//! let buffer = DrawBuffer::<{ (HOR_RES * LINE_HEIGHT) as usize }, Rgb565>::new(HOR_RES, LINE_HEIGHT);
+//! let buffer = DrawBuffer::<LvRgb565>::new(HOR_RES, LINE_HEIGHT);
 //! display.register(buffer, move |refresh| {
 //!     // alternative (slower): sim_display.draw_iter(refresh.as_pixels()).unwrap();
 //!     sim_display
-//!         .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
+//!         .fill_contiguous(&refresh.rectangle, refresh.colors.iter().map(|px|(*px).into()))
 //!         .unwrap();
 //! });
 //!
@@ -32,7 +32,7 @@
 //!     let mut default_display = Display::get_default();
 //!     assert_eq!(default_display.get_horizontal_resolution(), HOR_RES as i32);
 //!     assert_eq!(default_display.get_vertical_resolution(), VER_RES as i32);
-//!     assert_eq!(default_display.get_color_format(), Rgb565::as_lv_color_format_t());
+//!     assert_eq!(default_display.get_color_format(), LvRgb565::as_lv_color_format_t());
 //! }
 //! ```
 //!
@@ -56,7 +56,7 @@ use embedded_graphics::{
     primitives::Rectangle,
 };
 use lightvgl_sys::{
-    lv_color_format_t, lv_display_flush_ready, lv_display_get_user_data, lv_display_t,
+    lv_color_format_get_size, lv_display_flush_ready, lv_display_get_user_data, lv_display_t,
     lv_draw_buf_t,
 };
 
@@ -119,8 +119,7 @@ impl Display {
     where
         F: FnMut(&mut DisplayRefresh<C>) + 'static,
     {
-        let cf = C::as_lv_color_format_t();
-        verify_color_format(cf);
+        verify_color_format::<C>();
         unsafe {
             lightvgl_sys::lv_display_set_draw_buffers(
                 self.raw_mut(),
@@ -141,7 +140,7 @@ impl Display {
 
     /// Assigns a callback to `lv_display_set_flush_cb`
     /// ## Arguments
-    ///  * `buffer` - `[u8]` buffer that is exactly *N* bytes long
+    ///  * `buffer` - `&'static mut [u8]` buffer
     ///  * `render_mode` - Specifies the `lv_display_render_mode_t`
     ///  * `callback` - Function or closure that pushes the pixels to the screen
     pub fn register_raw<F, C: LvglColorFormat>(
@@ -152,8 +151,7 @@ impl Display {
     ) where
         F: FnMut(&mut DisplayRefresh<C>) + 'static,
     {
-        let cf = C::as_lv_color_format_t();
-        verify_color_format(cf);
+        verify_color_format::<C>();
         unsafe {
             lightvgl_sys::lv_display_set_buffers(
                 self.raw_mut(),
@@ -229,7 +227,16 @@ impl Display {
     }
 }
 
-fn verify_color_format(cf: lv_color_format_t) {
+fn verify_color_format<C: LvglColorFormat>() {
+    let cf = C::as_lv_color_format_t();
+    let container_pixel_size = size_of::<C>();
+    let expected_pixel_size = unsafe { lv_color_format_get_size(cf) };
+    assert_eq!(
+        container_pixel_size,
+        expected_pixel_size.into(),
+        "The specified type ({}) should not be used with this color format",
+        core::any::type_name::<C>()
+    );
     // these are not checked by LVGL, just produce a black screen
     match cf {
         lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_L8 => {
@@ -427,6 +434,7 @@ macro_rules! setup_test_display {
         use embedded_graphics::prelude::{Point, Size};
         use embedded_graphics_simulator::SimulatorDisplay;
         use lv_bevy_ecs::display::{Display, DrawBuffer};
+        use lv_bevy_ecs::support::LvRgb565;
 
         const HOR_RES: usize = 320;
         const VER_RES: usize = 240;
@@ -439,12 +447,15 @@ macro_rules! setup_test_display {
 
         let mut display = Display::new(HOR_RES, VER_RES);
 
-        let buffer = DrawBuffer::<Rgb565>::new(HOR_RES, LINE_HEIGHT);
+        let buffer = DrawBuffer::<LvRgb565>::new(HOR_RES, LINE_HEIGHT);
 
         display.register(buffer, move |refresh| {
             //sim_display.draw_iter(refresh.as_pixels()).unwrap();
             sim_display
-                .fill_contiguous(&refresh.rectangle, refresh.colors.iter().cloned())
+                .fill_contiguous(
+                    &refresh.rectangle,
+                    refresh.colors.iter().map(|px| (*px).into()),
+                )
                 .unwrap();
         });
     };

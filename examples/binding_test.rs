@@ -24,7 +24,7 @@ use lv_bevy_ecs::{
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     subjects::Subject,
-    support::{LV_SIZE_CONTENT, OpacityLevel, ToVoid, ToVoidMut},
+    support::{LV_SIZE_CONTENT, LvRgb565, OpacityLevel, ToVoid, ToVoidMut},
     sys::{
         LV_ANIM_REPEAT_INFINITE, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST, LV_SYMBOL_FILE,
         lv_align_t_LV_ALIGN_BOTTOM_RIGHT, lv_anim_path_ease_out, lv_anim_set_path_cb,
@@ -83,14 +83,17 @@ fn main() {
 
     let mut display = Display::new(HOR_RES, VER_RES);
 
-    let buffer = DrawBuffer::new(HOR_RES, LINE_HEIGHT);
+    let buffer = DrawBuffer::<LvRgb565>::new(HOR_RES, LINE_HEIGHT);
 
     display.register(
         buffer,
         share!(|refresh| {
             //sim_display.draw_iter(refresh.as_pixels()).unwrap();
             sim_display
-                .fill_contiguous(&refresh.rectangle, refresh.colors.iter().copied())
+                .fill_contiguous(
+                    &refresh.rectangle,
+                    refresh.colors.iter().map(|px| (*px).into()),
+                )
                 .unwrap();
             if refresh.display.flush_is_last() {
                 take!(window_rc.clone()).borrow_mut().update(&sim_display);

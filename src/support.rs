@@ -6,7 +6,10 @@ use core::{
     ops::{Deref, DerefMut},
 };
 
-use embedded_graphics::pixelcolor::{BinaryColor, Gray8, Rgb565, Rgb888};
+use embedded_graphics::pixelcolor::{
+    Gray8, IntoStorage, Rgb565, Rgb888, RgbColor,
+    raw::{RawU8, RawU16},
+};
 
 pub const LV_SIZE_CONTENT: u32 = lightvgl_sys::LV_COORD_MAX | lightvgl_sys::LV_COORD_TYPE_SPEC;
 
@@ -32,32 +35,72 @@ pub trait LvglColorFormat {
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t;
 }
 
-impl LvglColorFormat for Rgb565 {
-    #[inline]
-    fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
-        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB565
-    }
-}
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
+pub struct LvGray8(u8);
 
-impl LvglColorFormat for Rgb888 {
-    #[inline]
-    fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
-        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB888
-    }
-}
-
-impl LvglColorFormat for Gray8 {
+impl LvglColorFormat for LvGray8 {
     #[inline]
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
         lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_L8
     }
 }
 
-impl LvglColorFormat for BinaryColor {
+impl From<Gray8> for LvGray8 {
+    fn from(value: Gray8) -> Self {
+        Self(value.into_storage())
+    }
+}
+
+impl Into<Gray8> for LvGray8 {
+    fn into(self) -> Gray8 {
+        RawU8::new(self.0).into()
+    }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
+pub struct LvRgb565(u16);
+
+impl LvglColorFormat for LvRgb565 {
     #[inline]
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
-        crate::warn!("Monochrome buffers are not supported. Proceed with caution!");
-        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_I1
+        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB565
+    }
+}
+
+impl From<Rgb565> for LvRgb565 {
+    fn from(value: Rgb565) -> Self {
+        Self(value.into_storage())
+    }
+}
+
+impl Into<Rgb565> for LvRgb565 {
+    fn into(self) -> Rgb565 {
+        RawU16::new(self.0).into()
+    }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
+pub struct U24(u8, u8, u8);
+
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
+pub struct LvRgb888(U24);
+
+impl LvglColorFormat for LvRgb888 {
+    #[inline]
+    fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
+        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB888
+    }
+}
+
+impl From<Rgb888> for LvRgb888 {
+    fn from(value: Rgb888) -> Self {
+        Self(U24(value.r(), value.g(), value.b()))
+    }
+}
+
+impl Into<Rgb888> for LvRgb888 {
+    fn into(self) -> Rgb888 {
+        Rgb888::new(self.0.2, self.0.1, self.0.0)
     }
 }
 
