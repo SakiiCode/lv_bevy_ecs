@@ -12,6 +12,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use lightvgl_sys::lv_font_montserrat_14;
 use lv_bevy_ecs::{
     display::{Display, DrawBuffer},
     error,
@@ -49,7 +50,7 @@ fn main() {
         SimulatorDisplay::new(Size::new(HOR_RES as u32, VER_RES as u32));
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
-    let mut window = Window::new("E-Paper simulation", &output_settings);
+    let mut window = Window::new("E-Paper Simulator", &output_settings);
     window.set_max_fps(0);
     window.update(&sim_display);
     let window_rc = Rc::new(RefCell::new(window));
@@ -98,35 +99,47 @@ fn main() {
         let world_rc = world.clone();
         let mut world = world_rc.borrow_mut();
 
-        // let mut button = Button::new();
-        let mut label = Label::new();
-        label.set_pos(10, 10);
-        label.set_text(c"This is the default font in a best-case scenario");
-        world.spawn(label.into_inner());
-
         let fonts = unsafe {
             [
-                ("Verdana", &verdana),
-                ("Atkinson Hyperlegible", &atkinson),
-                ("Noto Sans", &notosans),
-                ("IBM Plex Sans", &ibmplexsans),
-                ("Source Sans 3", &sourcesans3),
-                ("Lato", &lato),
-                ("Montserrat", &montserrat),
+                (
+                    "This is the default font in a best-case scenario",
+                    &lv_font_montserrat_14,
+                ),
+                (
+                    "This font is Verdana created with the lv_font_conv tool and no autohinting",
+                    &verdana,
+                ),
+                (
+                    "This font is Atkinson Hyperlegible created with the lv_font_conv tool and default settings",
+                    &atkinson,
+                ),
+                (
+                    "This font is Noto Sans created with the lv_font_conv tool and default settings",
+                    &notosans,
+                ),
+                (
+                    "This font is IBM Plex Sans created with the lv_font_conv tool and default settings",
+                    &ibmplexsans,
+                ),
+                (
+                    "This font is Source Sans 3 created with the lv_font_conv tool and no autohinting",
+                    &sourcesans3,
+                ),
+                (
+                    "This font is Lato created with the lv_font_conv tool and default settings",
+                    &lato,
+                ),
+                (
+                    "This font is Montserrat created with the lv_font_conv tool and default settings",
+                    &montserrat,
+                ),
             ]
         };
 
-        for (idx, (name, font)) in fonts.iter().enumerate() {
+        for (idx, (text, font)) in fonts.iter().enumerate() {
             let mut label = Label::new();
-            label.set_text(Box::leak(
-                CString::new(format!(
-                    "This font is {} created with the lv_font_conv tool",
-                    name
-                ))
-                .unwrap()
-                .into_boxed_c_str(),
-            ));
-            label.set_pos(10, 40 + idx as i32 * 30);
+            label.set_text(Box::leak(CString::new(*text).unwrap().into_boxed_c_str()));
+            label.set_pos(10, 10 + idx as i32 * 30);
             label.set_style_text_font(font, 0);
             world.spawn(label.into_inner());
         }
