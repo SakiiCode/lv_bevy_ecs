@@ -2,6 +2,7 @@
 
 use std::{
     cell::RefCell,
+    ffi::CString,
     rc::Rc,
     sync::{
         Mutex,
@@ -11,33 +12,25 @@ use std::{
     time::{Duration, Instant},
 };
 
-use lightvgl_sys::verdana;
 use lv_bevy_ecs::{
-    animation::Animation,
-    bevy::{component::Component, entity::Entity, query::With},
     display::{Display, DrawBuffer},
     error,
-    events::EventCode,
-    functions::*,
+    functions::{NextTimerPeriod, lv_init, lv_tick_set_cb, lv_timer_handler},
     input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
-    styles::Style,
-    support::{Align, LvGray8, LvRgb565, OpacityLevel},
-    sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t},
-    widgets::{Arc, Button, Label, LvglWorld},
+    support::LvGray8,
+    sys::{atkinson, ibmplexsans, lato, montserrat, notosans, sourcesans3, verdana},
+    widgets::{Label, LvglWorld},
 };
 
 use embedded_graphics::{
     draw_target::DrawTarget,
-    pixelcolor::{BinaryColor, Gray8, GrayColor, Rgb565},
+    pixelcolor::{BinaryColor, Gray8, GrayColor},
     prelude::{Point, Size},
 };
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
 use share_rc::share;
-
-#[derive(Component)]
-struct DynamicButton;
 
 static EXIT_SIGNAL: AtomicBool = AtomicBool::new(false);
 
@@ -56,7 +49,7 @@ fn main() {
         SimulatorDisplay::new(Size::new(HOR_RES as u32, VER_RES as u32));
 
     let output_settings = OutputSettingsBuilder::new().scale(1).build();
-    let mut window = Window::new("Button Example", &output_settings);
+    let mut window = Window::new("E-Paper simulation", &output_settings);
     window.set_max_fps(0);
     window.update(&sim_display);
     let window_rc = Rc::new(RefCell::new(window));
@@ -75,7 +68,8 @@ fn main() {
                 .fill_contiguous(
                     &refresh.rectangle,
                     refresh.colors.iter().map(|px| {
-                        if Gray8::from(*px).luma() > 188 {
+                        //Gray8::from(*px)
+                        if Gray8::from(*px).luma() > 96 {
                             BinaryColor::On
                         } else {
                             BinaryColor::Off
@@ -103,11 +97,39 @@ fn main() {
     {
         let world_rc = world.clone();
         let mut world = world_rc.borrow_mut();
+
         // let mut button = Button::new();
         let mut label = Label::new();
-        label.set_text(c"This is some small text with jagged edges\nabcdefghijklmnopqrstuvxyz");
-        //lv_obj_align(&mut button, LV_ALIGN_CENTER as u8, 10, 10);
-        let label_entity = world.spawn(label.into_inner()).id();
+        label.set_pos(10, 10);
+        label.set_text(c"This is the default font in a best-case scenario");
+        world.spawn(label.into_inner());
+
+        let fonts = unsafe {
+            [
+                ("Verdana", &verdana),
+                ("Atkinson Hyperlegible", &atkinson),
+                ("Noto Sans", &notosans),
+                ("IBM Plex Sans", &ibmplexsans),
+                ("Source Sans 3", &sourcesans3),
+                ("Lato", &lato),
+                ("Montserrat", &montserrat),
+            ]
+        };
+
+        for (idx, (name, font)) in fonts.iter().enumerate() {
+            let mut label = Label::new();
+            label.set_text(Box::leak(
+                CString::new(format!(
+                    "This font is {} created with the lv_font_conv tool",
+                    name
+                ))
+                .unwrap()
+                .into_boxed_c_str(),
+            ));
+            label.set_pos(10, 40 + idx as i32 * 30);
+            label.set_style_text_font(font, 0);
+            world.spawn(label.into_inner());
+        }
     }
 
     loop {
