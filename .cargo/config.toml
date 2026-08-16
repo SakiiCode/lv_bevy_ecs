@@ -1,16 +1,9 @@
 [env]
-DEP_LV_CONFIG_PATH = { relative = true, value = "." }
-RUST_LOG = "info"
 DEFMT_LOG = "trace"
-LV_EXTRA_C_FILES = { relative = true, value = "examples/fonts" }
+LV_CONFIG_DIR = { value = ".", relative = true }
+LV_EXTRA_C_FILES = { value = "examples/fonts", relative = true }
+RUST_LOG = "info"
 
 [target.x86_64-unknown-linux-musl]
-rustflags = [
-  "-C",
-  "relocation-model=static",
-  "-C",
-  "link-arg=-T/usr/lib/x86_64-linux-gnu/ldscripts/elf_x86_64.x",
-  "-C",
-  "link-arg=-Tdefmt.x"
-]
 runner = "./defmt_runner.sh"
+rustflags = ["-C", "relocation-model=static", "-C", "link-arg=-T/usr/lib/x86_64-linux-gnu/ldscripts/elf_x86_64.x", "-C", "link-arg=-Tdefmt.x"]

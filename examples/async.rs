@@ -18,18 +18,17 @@ use embedded_graphics::{
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
+use lightvgl_sys::{lv_align_t, lv_event_code_t, lv_indev_state_t, lv_part_t};
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, query::With},
     display::{Display, DrawBuffer},
     error,
-    events::EventCode,
     functions::*,
     info,
-    input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
+    input::{BufferStatus, InputDevice, InputEvent, Pointer},
     styles::Style,
-    support::{Align, LvRgb565, OpacityLevel},
-    sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t},
+    support::{LvRgb565, OpacityLevel},
     widgets::{Arc, Button, Label, UnsafeLvglWorld},
 };
 use macro_rules_attribute::apply;
@@ -112,11 +111,11 @@ async fn main() {
             OpacityLevel::Cover as i32,
             |obj, val| {
                 #[expect(clippy::cast_sign_loss)]
-                obj.set_style_opa(val as u8, lv_part_t_LV_PART_MAIN as lv_style_selector_t);
+                obj.set_style_opa(val as u8, lv_part_t::LV_PART_MAIN.0);
             },
         );
 
-        button.add_event_cb(EventCode::Clicked, |_| {
+        button.add_event_cb(lv_event_code_t::LV_EVENT_CLICKED, |_| {
             let mut world = WORLD.lock().unwrap();
             if let Ok(entity) = world
                 .query_filtered::<Entity, With<DynamicButton>>()
@@ -126,7 +125,7 @@ async fn main() {
             } else {
                 let mut dynamic_button = Button::new();
                 let mut label = Label::new();
-                dynamic_button.set_align(Align::TopRight.into());
+                dynamic_button.set_align(lv_align_t::LV_ALIGN_TOP_RIGHT);
                 label.set_text(c"This is dynamic");
                 world
                     .spawn((DynamicButton, dynamic_button.into_inner()))
@@ -140,7 +139,7 @@ async fn main() {
 
         let mut style = Style::default();
         style.set_opa(OpacityLevel::Percent50 as u8);
-        style.set_align(Align::TopLeft.into());
+        style.set_align(lv_align_t::LV_ALIGN_TOP_LEFT);
         style.set_bg_color(lv_color_make(255, 0, 0));
 
         button_entity.insert(style);
@@ -148,7 +147,7 @@ async fn main() {
         // button_entity.insert(style);
 
         let mut arc = Arc::new();
-        arc.set_align(Align::BottomMid.into());
+        arc.set_align(lv_align_t::LV_ALIGN_BOTTOM_MID);
 
         world.spawn(arc.into_inner());
     }
@@ -189,7 +188,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
             SimulatorEvent::MouseButtonDown { point, .. } => {
                 next_touch_status = Some(InputEvent {
                     status: BufferStatus::Once,
-                    state: InputState::Pressed,
+                    state: lv_indev_state_t::LV_INDEV_STATE_PRESSED,
                     data: point,
                 });
                 IS_POINTER_DOWN.store(true, Ordering::Relaxed);
@@ -197,7 +196,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
             SimulatorEvent::MouseButtonUp { point, .. } => {
                 next_touch_status = Some(InputEvent {
                     status: BufferStatus::Once,
-                    state: InputState::Released,
+                    state: lv_indev_state_t::LV_INDEV_STATE_RELEASED,
                     data: point,
                 });
                 IS_POINTER_DOWN.store(false, Ordering::Relaxed);
@@ -206,7 +205,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
                 if IS_POINTER_DOWN.load(Ordering::Relaxed) {
                     next_touch_status = Some(InputEvent {
                         status: BufferStatus::Once,
-                        state: InputState::Pressed,
+                        state: lv_indev_state_t::LV_INDEV_STATE_PRESSED,
                         data: point,
                     });
                 }

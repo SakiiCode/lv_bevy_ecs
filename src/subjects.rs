@@ -20,15 +20,15 @@
 //!         let mut chart_wdg = Wdg::from_ptr(lv_observer_get_target(observer).cast());
 //!         let chart: &mut Chart<Wdg> = chart_wdg.downcast_mut().unwrap();
 //!         let chart_type = if v == 0 {
-//!             lv_chart_type_t_LV_CHART_TYPE_LINE
+//!             lv_chart_type_t::LV_CHART_TYPE_LINE
 //!         } else {
-//!             lv_chart_type_t_LV_CHART_TYPE_BAR
+//!             lv_chart_type_t::LV_CHART_TYPE_BAR
 //!         };
 //!         chart.set_type(chart_type);
 //! });
 //! chart_type_subject.set_int(1);
 //!
-//! assert_eq!(chart.get_type(), lv_chart_type_t_LV_CHART_TYPE_BAR);
+//! assert_eq!(chart.get_type(), lv_chart_type_t::LV_CHART_TYPE_BAR);
 //! ```
 
 use ::core::{

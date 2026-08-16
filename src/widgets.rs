@@ -137,7 +137,7 @@ use bevy_ecs::{
 };
 #[cfg(not(feature = "ecs"))]
 use lightvgl_sys::lv_style_selector_t;
-use lightvgl_sys::{lv_obj_class_t, lv_obj_get_class, lv_obj_t};
+use lightvgl_sys::{lv_event_code_t, lv_obj_class_t, lv_obj_get_class, lv_obj_t};
 use thiserror::Error;
 
 use crate::events::{Event, EventCode};
@@ -362,7 +362,7 @@ impl Wdg {
     }
 
     #[inline]
-    pub fn add_event_cb<F>(&mut self, filter: EventCode, callback: F)
+    pub fn add_event_cb<F>(&mut self, filter: lv_event_code_t, callback: F)
     where
         F: FnMut(Event) + 'static,
     {

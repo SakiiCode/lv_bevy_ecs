@@ -11,17 +11,16 @@ use std::{
     time::{Duration, Instant},
 };
 
+use lightvgl_sys::{lv_align_t, lv_event_code_t, lv_indev_state_t, lv_part_t};
 use lv_bevy_ecs::{
     animation::Animation,
     display::{Display, DrawBuffer},
     error,
-    events::EventCode,
     functions::*,
     info,
-    input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
+    input::{BufferStatus, InputDevice, InputEvent, Pointer},
     styles::Style,
-    support::{Align, LvRgb565, OpacityLevel},
-    sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t},
+    support::{LvRgb565, OpacityLevel},
     trace,
     widgets::{Arc, Button, Label, Widget},
 };
@@ -119,13 +118,13 @@ fn main() {
             OpacityLevel::Transparent as i32,
             OpacityLevel::Cover as i32,
             |obj, val| {
-                obj.set_style_opa(val as u8, lv_part_t_LV_PART_MAIN as lv_style_selector_t);
+                obj.set_style_opa(val as u8, lv_part_t::LV_PART_MAIN.0);
             },
         );
 
         anim.set_widget(&mut button);
 
-        button.add_event_cb(EventCode::Clicked, |_| {
+        button.add_event_cb(lv_event_code_t::LV_EVENT_CLICKED, |_| {
             let mut objects = OBJECTS.lock().unwrap();
             match &objects.dynamic_button {
                 Some(_widget) => {
@@ -135,7 +134,7 @@ fn main() {
                 None => {
                     let mut dynamic_button = Button::new();
                     let mut dynamic_label = Label::new();
-                    dynamic_button.set_align(Align::TopRight.into());
+                    dynamic_button.set_align(lv_align_t::LV_ALIGN_TOP_RIGHT);
                     dynamic_label.set_text(c"This is dynamic");
                     dynamic_label.set_parent(&mut dynamic_button);
                     objects.dynamic_button = Some(dynamic_button);
@@ -149,17 +148,17 @@ fn main() {
 
         let mut style = Box::leak(Box::new(Style::default()));
         style.set_opa(OpacityLevel::Transparent as u8);
-        style.set_align(Align::TopLeft.into());
+        style.set_align(lv_align_t::LV_ALIGN_TOP_LEFT);
         style.set_bg_color(lv_color_make(255, 0, 0));
         unsafe {
-            button.add_style(&mut style, lv_part_t_LV_PART_MAIN as lv_style_selector_t);
+            button.add_style(&mut style, lv_part_t::LV_PART_MAIN.0);
         }
 
         Button::leak(button);
         Label::leak(label);
 
         let mut arc = Arc::new();
-        arc.set_align(Align::BottomMid.into());
+        arc.set_align(lv_align_t::LV_ALIGN_BOTTOM_MID);
         Arc::leak(arc);
     }
 
@@ -198,7 +197,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
             SimulatorEvent::MouseButtonDown { point, .. } => {
                 next_touch_status = Some(InputEvent {
                     status: BufferStatus::Once,
-                    state: InputState::Pressed,
+                    state: lv_indev_state_t::LV_INDEV_STATE_PRESSED,
                     data: point,
                 });
                 IS_POINTER_DOWN.store(true, Ordering::Relaxed);
@@ -206,7 +205,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
             SimulatorEvent::MouseButtonUp { point, .. } => {
                 next_touch_status = Some(InputEvent {
                     status: BufferStatus::Once,
-                    state: InputState::Released,
+                    state: lv_indev_state_t::LV_INDEV_STATE_RELEASED,
                     data: point,
                 });
                 IS_POINTER_DOWN.store(false, Ordering::Relaxed);
@@ -215,7 +214,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
                 if IS_POINTER_DOWN.load(Ordering::Relaxed) {
                     next_touch_status = Some(InputEvent {
                         status: BufferStatus::Once,
-                        state: InputState::Pressed,
+                        state: lv_indev_state_t::LV_INDEV_STATE_PRESSED,
                         data: point,
                     });
                 }

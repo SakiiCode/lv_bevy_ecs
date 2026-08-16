@@ -13,32 +13,28 @@ use std::{
     time::{Duration, Instant},
 };
 
+use lightvgl_sys::{
+    lv_align_t, lv_chart_axis_t, lv_chart_type_t, lv_color_format_t, lv_event_code_t,
+    lv_flex_flow_t, lv_grid_align_t, lv_indev_state_t, lv_layer_t, lv_obj_flag_t,
+    lv_observer_get_target, lv_observer_t, lv_palette_t, lv_part_t, lv_state_t,
+};
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, hierarchy::Children, query::With, world::World},
     display::{Display, DrawBuffer},
     error,
-    events::{Event, EventCode},
+    events::Event,
     functions::*,
     info,
-    input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
+    input::{BufferStatus, InputDevice, InputEvent, Pointer},
     styles::Style,
     subjects::Subject,
     support::{LV_SIZE_CONTENT, LvRgb565, OpacityLevel, ToVoid, ToVoidMut},
     sys::{
         LV_ANIM_REPEAT_INFINITE, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST, LV_SYMBOL_FILE,
-        lv_align_t_LV_ALIGN_BOTTOM_RIGHT, lv_anim_path_ease_out, lv_anim_set_path_cb,
-        lv_anim_set_repeat_count, lv_area_t, lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
-        lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED,
-        lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X, lv_chart_type_t_LV_CHART_TYPE_BAR,
-        lv_chart_type_t_LV_CHART_TYPE_LINE, lv_color_format_t_LV_COLOR_FORMAT_RGB565,
-        lv_draw_buf_align, lv_draw_image_dsc_t, lv_draw_line_dsc_t,
-        lv_flex_flow_t_LV_FLEX_FLOW_COLUMN, lv_font_montserrat_24,
-        lv_grid_align_t_LV_GRID_ALIGN_CENTER, lv_grid_align_t_LV_GRID_ALIGN_START,
-        lv_grid_align_t_LV_GRID_ALIGN_STRETCH, lv_layer_t, lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN,
-        lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT, lv_observer_get_target, lv_observer_t,
-        lv_palette_t_LV_PALETTE_BLUE, lv_part_t_LV_PART_ITEMS, lv_state_t_LV_STATE_CHECKED,
-        lv_style_selector_t, lv_subject_get_int, lv_subject_t,
+        lv_anim_path_ease_out, lv_anim_set_path_cb, lv_anim_set_repeat_count, lv_area_t,
+        lv_buttonmatrix_ctrl_t, lv_draw_buf_align, lv_draw_image_dsc_t, lv_draw_line_dsc_t,
+        lv_font_montserrat_24, lv_subject_get_int, lv_subject_t,
     },
     widgets::{
         Button, Buttonmatrix, Canvas, Chart, Dropdown, Image, Label, LvglWorld, RawObj, Wdg, Widget,
@@ -138,7 +134,7 @@ fn main() {
 fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
     let mut world = world_rc.borrow_mut();
     let c1 = lv_color_hex(0xff0000);
-    let c2 = lv_palette_darken(lv_palette_t_LV_PALETTE_BLUE, 2);
+    let c2 = lv_palette_darken(lv_palette_t::LV_PALETTE_BLUE, 2);
     let c3 = lv_color_mix(c1, c2, OpacityLevel::Percent60 as u8);
 
     let mut style_big_font = Style::default();
@@ -172,10 +168,10 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
     dropdown.set_options(c"Lines\nBars");
 
     dropdown.set_grid_cell(
-        lv_grid_align_t_LV_GRID_ALIGN_CENTER,
+        lv_grid_align_t::LV_GRID_ALIGN_CENTER,
         0,
         1,
-        lv_grid_align_t_LV_GRID_ALIGN_CENTER,
+        lv_grid_align_t::LV_GRID_ALIGN_CENTER,
         0,
         1,
     );
@@ -186,16 +182,16 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
 
     let mut chart = Chart::new();
     chart.set_grid_cell(
-        lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
+        lv_grid_align_t::LV_GRID_ALIGN_STRETCH,
         0,
         1,
-        lv_grid_align_t_LV_GRID_ALIGN_CENTER,
+        lv_grid_align_t::LV_GRID_ALIGN_CENTER,
         1,
         1,
     );
 
     let mut series = chart
-        .add_series(c3, lv_chart_axis_t_LV_CHART_AXIS_PRIMARY_X)
+        .add_series(c3, lv_chart_axis_t::LV_CHART_AXIS_PRIMARY_X)
         .unwrap();
     let mut chart_y_array = [10, 25, 50, 40, 30, 35, 60, 65, 70, 75];
     unsafe {
@@ -212,10 +208,10 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
     let mut label = Label::new();
 
     label.set_grid_cell(
-        lv_grid_align_t_LV_GRID_ALIGN_START,
+        lv_grid_align_t::LV_GRID_ALIGN_START,
         1,
         1,
-        lv_grid_align_t_LV_GRID_ALIGN_CENTER,
+        lv_grid_align_t::LV_GRID_ALIGN_CENTER,
         0,
         1,
     );
@@ -236,17 +232,18 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
     });
 
     let btnmatrix_ctrl = [
-        lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_DISABLED,
-        2 | lv_buttonmatrix_ctrl_t_LV_BUTTONMATRIX_CTRL_CHECKED,
+        lv_buttonmatrix_ctrl_t::LV_BUTTONMATRIX_CTRL_DISABLED.0,
+        2 | lv_buttonmatrix_ctrl_t::LV_BUTTONMATRIX_CTRL_CHECKED.0,
         1,
-    ];
+    ]
+    .map(|val| lv_buttonmatrix_ctrl_t(val));
 
     let mut btnmatrix = Buttonmatrix::new();
     btnmatrix.set_grid_cell(
-        lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
+        lv_grid_align_t::LV_GRID_ALIGN_STRETCH,
         1,
         1,
-        lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
+        lv_grid_align_t::LV_GRID_ALIGN_STRETCH,
         1,
         1,
     );
@@ -260,14 +257,14 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
 
     btnmatrix.set_selected_button(1);
     let world2 = world_rc.clone();
-    btnmatrix.add_event_cb(EventCode::ValueChanged, move |mut event| {
+    btnmatrix.add_event_cb(lv_event_code_t::LV_EVENT_VALUE_CHANGED, move |mut event| {
         buttonmatrix_event_cb(&mut world2.borrow_mut(), &mut event);
     });
 
     let mut btnmatrix_entity = world.spawn(btnmatrix.into_inner());
 
     let mut style_big_font_2 =
-        Style::new((lv_part_t_LV_PART_ITEMS | lv_state_t_LV_STATE_CHECKED) as lv_style_selector_t);
+        Style::new(lv_part_t::LV_PART_ITEMS.0 | lv_state_t::LV_STATE_CHECKED.0);
 
     unsafe {
         style_big_font_2.set_text_font(&lv_font_montserrat_24);
@@ -277,14 +274,14 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
 
     let mut cont = Widget::new();
     cont.set_grid_cell(
-        lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
+        lv_grid_align_t::LV_GRID_ALIGN_STRETCH,
         2,
         1,
-        lv_grid_align_t_LV_GRID_ALIGN_STRETCH,
+        lv_grid_align_t::LV_GRID_ALIGN_STRETCH,
         0,
         2,
     );
-    cont.set_flex_flow(lv_flex_flow_t_LV_FLEX_FLOW_COLUMN);
+    cont.set_flex_flow(lv_flex_flow_t::LV_FLEX_FLOW_COLUMN);
     let cont_entity = world.spawn(cont);
     let cont_id = cont_entity.id();
 
@@ -315,7 +312,7 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
             let mut btn_entity = world.get_entity_mut(btn_id).unwrap();
 
             let mut btn = btn_entity.get_mut::<Widget>().unwrap();
-            btn.add_flag(lv_obj_flag_t_LV_OBJ_FLAG_HIDDEN);
+            btn.add_flag(lv_obj_flag_t::LV_OBJ_FLAG_HIDDEN);
         }
 
         if i == 2 {
@@ -362,10 +359,10 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
 
     let mut canvas = Canvas::new();
     canvas.set_grid_cell(
-        lv_grid_align_t_LV_GRID_ALIGN_START,
+        lv_grid_align_t::LV_GRID_ALIGN_START,
         0,
         2,
-        lv_grid_align_t_LV_GRID_ALIGN_START,
+        lv_grid_align_t::LV_GRID_ALIGN_START,
         2,
         1,
     );
@@ -373,14 +370,14 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
     unsafe {
         let buf = lv_draw_buf_align(
             canvas_buf.as_mut_ptr().cast(),
-            lv_color_format_t_LV_COLOR_FORMAT_RGB565,
+            lv_color_format_t::LV_COLOR_FORMAT_RGB565,
         );
         log::info!("aligned buf:{:#x}", buf.addr());
         canvas.set_buffer(
             buf.as_mut().unwrap().to_void_mut(),
             400,
             100,
-            lv_color_format_t_LV_COLOR_FORMAT_RGB565,
+            lv_color_format_t::LV_COLOR_FORMAT_RGB565,
         );
     }
 
@@ -398,15 +395,15 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
     let mut img = Image::new();
     img.set_src(test_img_lvgl_logo_jpg.to_void());
 
-    img.align(lv_align_t_LV_ALIGN_BOTTOM_RIGHT, -20, -20);
-    img.add_flag(lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
+    img.align(lv_align_t::LV_ALIGN_BOTTOM_RIGHT, -20, -20);
+    img.add_flag(lv_obj_flag_t::LV_OBJ_FLAG_IGNORE_LAYOUT);
     world.spawn(img.into_inner());
 
     let mut img = Image::new();
     img.set_src(test_img_lvgl_logo_png.to_void());
 
     img.set_pos(500, 420);
-    img.add_flag(lv_obj_flag_t_LV_OBJ_FLAG_IGNORE_LAYOUT);
+    img.add_flag(lv_obj_flag_t::LV_OBJ_FLAG_IGNORE_LAYOUT);
     img.set_rotation(200);
     img.set_scale_x(400);
     world.spawn(img.into_inner());
@@ -424,9 +421,9 @@ fn chart_type_observer_cb(observer: *mut lv_observer_t, subject: *mut lv_subject
         let mut chart_wdg = Wdg::from_ptr(lv_observer_get_target(observer).cast());
         let chart: &mut Chart<Wdg> = chart_wdg.downcast_mut().unwrap();
         let chart_type = if v == 0 {
-            lv_chart_type_t_LV_CHART_TYPE_LINE
+            lv_chart_type_t::LV_CHART_TYPE_LINE
         } else {
-            lv_chart_type_t_LV_CHART_TYPE_BAR
+            lv_chart_type_t::LV_CHART_TYPE_BAR
         };
         chart.set_type(chart_type);
     }
@@ -553,7 +550,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
             SimulatorEvent::MouseButtonDown { point, .. } => {
                 next_touch_status = Some(InputEvent {
                     status: BufferStatus::Once,
-                    state: InputState::Pressed,
+                    state: lv_indev_state_t::LV_INDEV_STATE_PRESSED,
                     data: point,
                 });
                 IS_POINTER_DOWN.store(true, Ordering::Relaxed);
@@ -561,7 +558,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
             SimulatorEvent::MouseButtonUp { point, .. } => {
                 next_touch_status = Some(InputEvent {
                     status: BufferStatus::Once,
-                    state: InputState::Released,
+                    state: lv_indev_state_t::LV_INDEV_STATE_RELEASED,
                     data: point,
                 });
                 IS_POINTER_DOWN.store(false, Ordering::Relaxed);
@@ -570,7 +567,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
                 if IS_POINTER_DOWN.load(Ordering::Relaxed) {
                     next_touch_status = Some(InputEvent {
                         status: BufferStatus::Once,
-                        state: InputState::Pressed,
+                        state: lv_indev_state_t::LV_INDEV_STATE_PRESSED,
                         data: point,
                     });
                 }

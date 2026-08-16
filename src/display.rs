@@ -56,45 +56,14 @@ use embedded_graphics::{
     primitives::Rectangle,
 };
 use lightvgl_sys::{
-    lv_color_format_get_size, lv_display_flush_ready, lv_display_get_user_data, lv_display_t,
-    lv_draw_buf_t,
+    lv_color_format_get_size, lv_color_format_t, lv_disp_render_t, lv_display_flush_ready,
+    lv_display_get_user_data, lv_display_rotation_t, lv_display_t, lv_draw_buf_t,
 };
 
 use crate::support::LvglColorFormat;
 
 pub struct Display {
     raw: NonNull<lv_display_t>,
-}
-
-#[cfg_attr(windows, repr(i32))]
-#[cfg_attr(not(windows), repr(u32))]
-pub enum RenderMode {
-    Partial = lightvgl_sys::lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_PARTIAL,
-    Direct = lightvgl_sys::lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_DIRECT,
-    Full = lightvgl_sys::lv_display_render_mode_t_LV_DISPLAY_RENDER_MODE_FULL,
-}
-
-impl From<RenderMode> for lightvgl_sys::lv_display_render_mode_t {
-    #[inline]
-    fn from(value: RenderMode) -> Self {
-        value as Self
-    }
-}
-
-#[cfg_attr(windows, repr(i32))]
-#[cfg_attr(not(windows), repr(u32))]
-pub enum DisplayRotation {
-    Deg0 = lightvgl_sys::lv_display_rotation_t_LV_DISPLAY_ROTATION_0,
-    Deg90 = lightvgl_sys::lv_display_rotation_t_LV_DISPLAY_ROTATION_90,
-    Deg180 = lightvgl_sys::lv_display_rotation_t_LV_DISPLAY_ROTATION_180,
-    Deg270 = lightvgl_sys::lv_display_rotation_t_LV_DISPLAY_ROTATION_270,
-}
-
-impl From<DisplayRotation> for lightvgl_sys::lv_disp_rotation_t {
-    #[inline]
-    fn from(value: DisplayRotation) -> Self {
-        value as Self
-    }
 }
 
 impl Display {
@@ -146,7 +115,7 @@ impl Display {
     pub fn register_raw<F, C: LvglColorFormat>(
         &mut self,
         buffer: &'static mut [u8],
-        render_mode: RenderMode,
+        render_mode: lv_disp_render_t,
         callback: F,
     ) where
         F: FnMut(&mut DisplayRefresh<C>) + 'static,
@@ -189,9 +158,9 @@ impl Display {
     }
 
     #[inline]
-    pub fn set_rotation(&mut self, rotation: DisplayRotation) {
+    pub fn set_rotation(&mut self, rotation: lv_display_rotation_t) {
         unsafe {
-            lightvgl_sys::lv_display_set_rotation(self.raw_mut(), rotation.into());
+            lightvgl_sys::lv_display_set_rotation(self.raw_mut(), rotation);
         }
     }
 
@@ -239,7 +208,7 @@ fn verify_color_format<C: LvglColorFormat>() {
     );
     // these are not checked by LVGL, just produce a black screen
     match cf {
-        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_L8 => {
+        lv_color_format_t::LV_COLOR_FORMAT_L8 => {
             assert_eq!(
                 lightvgl_sys::LV_COLOR_DEPTH,
                 8,
@@ -251,7 +220,7 @@ fn verify_color_format<C: LvglColorFormat>() {
                 "LV_DRAW_SW_SUPPORT_L8 must be set to 1"
             );
         }
-        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_I1 => {
+        lv_color_format_t::LV_COLOR_FORMAT_I1 => {
             assert_eq!(
                 lightvgl_sys::LV_COLOR_DEPTH,
                 1,
@@ -263,7 +232,7 @@ fn verify_color_format<C: LvglColorFormat>() {
                 "LV_DRAW_SW_SUPPORT_I1 must be set to 1"
             );
         }
-        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB565 => {
+        lv_color_format_t::LV_COLOR_FORMAT_RGB565 => {
             assert_eq!(
                 lightvgl_sys::LV_COLOR_DEPTH,
                 16,
@@ -275,7 +244,7 @@ fn verify_color_format<C: LvglColorFormat>() {
                 "LV_DRAW_SW_SUPPORT_RGB565 must be set to 1"
             );
         }
-        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB888 => {
+        lv_color_format_t::LV_COLOR_FORMAT_RGB888 => {
             assert_eq!(
                 lightvgl_sys::LV_COLOR_DEPTH,
                 24,

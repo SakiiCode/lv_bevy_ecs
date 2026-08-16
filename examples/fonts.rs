@@ -12,12 +12,12 @@ use std::{
     time::{Duration, Instant},
 };
 
-use lightvgl_sys::lv_font_montserrat_14;
+use lightvgl_sys::{lv_font_montserrat_14, lv_indev_state_t, lv_part_t};
 use lv_bevy_ecs::{
     display::{Display, DrawBuffer},
     error,
     functions::{NextTimerPeriod, lv_init, lv_tick_set_cb, lv_timer_handler},
-    input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
+    input::{BufferStatus, InputDevice, InputEvent, Pointer},
     support::LvGray8,
     sys::{atkinson, ibmplexsans, lato, montserrat, notosans, sourcesans3, verdana},
     widgets::{Label, LvglWorld},
@@ -140,7 +140,7 @@ fn main() {
             let mut label = Label::new();
             label.set_text(Box::leak(CString::new(*text).unwrap().into_boxed_c_str()));
             label.set_pos(10, 10 + idx as i32 * 30);
-            label.set_style_text_font(font, 0);
+            label.set_style_text_font(font, lv_part_t::LV_PART_MAIN.0);
             world.spawn(label.into_inner());
         }
     }
@@ -178,7 +178,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
             SimulatorEvent::MouseButtonDown { point, .. } => {
                 next_touch_status = Some(InputEvent {
                     status: BufferStatus::Once,
-                    state: InputState::Pressed,
+                    state: lv_indev_state_t::LV_INDEV_STATE_PRESSED,
                     data: point,
                 });
                 IS_POINTER_DOWN.store(true, Ordering::Relaxed);
@@ -186,7 +186,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
             SimulatorEvent::MouseButtonUp { point, .. } => {
                 next_touch_status = Some(InputEvent {
                     status: BufferStatus::Once,
-                    state: InputState::Released,
+                    state: lv_indev_state_t::LV_INDEV_STATE_RELEASED,
                     data: point,
                 });
                 IS_POINTER_DOWN.store(false, Ordering::Relaxed);
@@ -195,7 +195,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
                 if IS_POINTER_DOWN.load(Ordering::Relaxed) {
                     next_touch_status = Some(InputEvent {
                         status: BufferStatus::Once,
-                        state: InputState::Pressed,
+                        state: lv_indev_state_t::LV_INDEV_STATE_PRESSED,
                         data: point,
                     });
                 }

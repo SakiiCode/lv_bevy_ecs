@@ -41,7 +41,7 @@ pub struct LvGray8(u8);
 impl LvglColorFormat for LvGray8 {
     #[inline]
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
-        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_L8
+        lightvgl_sys::lv_color_format_t::LV_COLOR_FORMAT_L8
     }
 }
 
@@ -63,7 +63,7 @@ pub struct LvRgb565(u16);
 impl LvglColorFormat for LvRgb565 {
     #[inline]
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
-        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB565
+        lightvgl_sys::lv_color_format_t::LV_COLOR_FORMAT_RGB565
     }
 }
 
@@ -88,7 +88,7 @@ pub struct LvRgb888(U24);
 impl LvglColorFormat for LvRgb888 {
     #[inline]
     fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
-        lightvgl_sys::lv_color_format_t_LV_COLOR_FORMAT_RGB888
+        lightvgl_sys::lv_color_format_t::LV_COLOR_FORMAT_RGB888
     }
 }
 
@@ -101,97 +101,6 @@ impl From<Rgb888> for LvRgb888 {
 impl From<LvRgb888> for Rgb888 {
     fn from(value: LvRgb888) -> Self {
         Rgb888::new(value.0.2, value.0.1, value.0.0)
-    }
-}
-
-/// Possible LVGL alignments for widgets.
-pub enum Align {
-    Center,
-    TopLeft,
-    TopMid,
-    TopRight,
-    BottomLeft,
-    BottomMid,
-    BottomRight,
-    LeftMid,
-    RightMid,
-    OutTopLeft,
-    OutTopMid,
-    OutTopRight,
-    OutBottomLeft,
-    OutBottomMid,
-    OutBottomRight,
-    OutLeftTop,
-    OutLeftMid,
-    OutLeftBottom,
-    OutRightTop,
-    OutRightMid,
-    OutRightBottom,
-}
-
-impl From<Align> for lightvgl_sys::lv_align_t {
-    #[inline]
-    fn from(value: Align) -> lightvgl_sys::lv_align_t {
-        let native = match value {
-            Align::Center => lightvgl_sys::lv_align_t_LV_ALIGN_CENTER,
-            Align::TopLeft => lightvgl_sys::lv_align_t_LV_ALIGN_TOP_LEFT,
-            Align::TopMid => lightvgl_sys::lv_align_t_LV_ALIGN_TOP_MID,
-            Align::TopRight => lightvgl_sys::lv_align_t_LV_ALIGN_TOP_RIGHT,
-            Align::BottomLeft => lightvgl_sys::lv_align_t_LV_ALIGN_BOTTOM_LEFT,
-            Align::BottomMid => lightvgl_sys::lv_align_t_LV_ALIGN_BOTTOM_MID,
-            Align::BottomRight => lightvgl_sys::lv_align_t_LV_ALIGN_BOTTOM_RIGHT,
-            Align::LeftMid => lightvgl_sys::lv_align_t_LV_ALIGN_LEFT_MID,
-            Align::RightMid => lightvgl_sys::lv_align_t_LV_ALIGN_RIGHT_MID,
-            Align::OutTopLeft => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_TOP_LEFT,
-            Align::OutTopMid => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_TOP_MID,
-            Align::OutTopRight => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_TOP_RIGHT,
-            Align::OutBottomLeft => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_BOTTOM_LEFT,
-            Align::OutBottomMid => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_BOTTOM_MID,
-            Align::OutBottomRight => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_BOTTOM_RIGHT,
-            Align::OutLeftTop => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_LEFT_TOP,
-            Align::OutLeftMid => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_LEFT_MID,
-            Align::OutLeftBottom => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_LEFT_BOTTOM,
-            Align::OutRightTop => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_RIGHT_TOP,
-            Align::OutRightMid => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_RIGHT_MID,
-            Align::OutRightBottom => lightvgl_sys::lv_align_t_LV_ALIGN_OUT_RIGHT_BOTTOM,
-        };
-        native as lightvgl_sys::lv_align_t
-    }
-}
-
-pub enum TextAlign {
-    Auto,
-    Center,
-    Left,
-    Right,
-}
-
-impl From<TextAlign> for lightvgl_sys::lv_align_t {
-    fn from(value: TextAlign) -> Self {
-        let native = match value {
-            TextAlign::Auto => lightvgl_sys::lv_text_align_t_LV_TEXT_ALIGN_AUTO,
-            TextAlign::Center => lightvgl_sys::lv_text_align_t_LV_TEXT_ALIGN_CENTER,
-            TextAlign::Left => lightvgl_sys::lv_text_align_t_LV_TEXT_ALIGN_LEFT,
-            TextAlign::Right => lightvgl_sys::lv_text_align_t_LV_TEXT_ALIGN_RIGHT,
-        };
-        native as lightvgl_sys::lv_align_t
-    }
-}
-
-#[cfg_attr(windows, repr(i32))]
-#[cfg_attr(not(windows), repr(u32))]
-pub enum LabelLongMode {
-    Clip = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_MODE_CLIP,
-    Dots = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_MODE_DOTS,
-    Scroll = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_MODE_SCROLL,
-    ScrollCircular = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_MODE_SCROLL_CIRCULAR,
-    Wrap = lightvgl_sys::lv_label_long_mode_t_LV_LABEL_LONG_MODE_WRAP,
-}
-
-impl From<LabelLongMode> for lightvgl_sys::lv_label_long_mode_t {
-    #[inline]
-    fn from(value: LabelLongMode) -> Self {
-        value as lightvgl_sys::lv_label_long_mode_t
     }
 }
 

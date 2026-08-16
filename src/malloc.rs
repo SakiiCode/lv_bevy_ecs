@@ -108,7 +108,7 @@ pub fn set_mem_monitor(callback: fn(&mut lv_mem_monitor_t)) {
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn lv_mem_test_core() -> lv_result_t {
-    lv_result_t_LV_RESULT_OK
+    lv_result_t::LV_RESULT_OK
 }
 
 #[unsafe(no_mangle)]
