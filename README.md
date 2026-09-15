@@ -21,7 +21,7 @@ so that they don't go out of scope and get deallocated. Bevy's Observers will mi
 
 ### But I don't want to use an ECS...
 
-Setting `default-features = false` removes the Bevy ECS dependency and unlocks some functions that allow you to bring your own storage solution instead.
+Setting `default-features = false` removes the `bevy_ecs` dependency and unlocks some functions that allow you to bring your own storage solution instead.
 
 If you don't care about storage at all, and know in advance that a Widget will live for the rest of the program's execution,
 you can call `Widgetclass::leak(mywidget)` to leak memory and prevent calling the destructor.
@@ -36,10 +36,10 @@ Check out [no_ecs.rs](https://github.com/SakiiCode/lv_bevy_ecs/blob/master/examp
 - [x] Styles
 - [x] Input devices
 - [x] Animations
-- [x] Timers, lv_async_call
 - [x] Subjects
 - [x] Logging
 - [x] LVGL allocator
+- [x] lv_async_call
 - [x] "no_ecs" mode
 - [x] #![no_std] compatibility
 - [x] LVGL docstrings
@@ -47,6 +47,7 @@ Check out [no_ecs.rs](https://github.com/SakiiCode/lv_bevy_ecs/blob/master/examp
 - [x] Defmt support
 - [x] OOP-style function calls
 - [x] Custom fonts
+- [ ] Timers
 - [ ] Auto-generated enums
 - [ ] File system
 - [ ] Snapshots

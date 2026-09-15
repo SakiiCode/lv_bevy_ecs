@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   _(Same principle as `Box::leak()`)_
 - Removed `<{const N: usize}>` from `DrawBuffer` and `DisplayRefresh`
 - Reworked color formats, DrawBuffer now takes own datatypes like `LvRgb565`
+- `no_ecs` feature has been replaced by `default-features = false`. `bevy_ecs` is now bound to the new `ecs` feature.
 
 ### Added
 
