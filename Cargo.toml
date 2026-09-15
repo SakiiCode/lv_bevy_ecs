@@ -1,6 +1,6 @@
 [package]
 name = "lv_bevy_ecs"
-version = "0.12.0-alpha.3"
+version = "0.12.0-alpha.4"
 edition = "2024"
 description = "Safe Rust bindings to the LVGL graphics library using Bevy's ECS framework"
 readme = "README.md"
@@ -65,7 +65,7 @@ lightvgl-sys = {
     "raw-bindings",
   ]
 }
-lv_codegen = { path = "lv_codegen", version = "0.5.0" }
+lv_codegen = { path = "lv_codegen", version = "0.6.0" }
 prettyplease = "0.2.37"
 proc-macro2 = "1.0.95"
 quote = "1.0.40"
@@ -128,12 +128,14 @@ exhaustive_enums = "allow"
 exhaustive_structs = "allow"
 expect_used = "allow"
 implicit_return = "allow"
+inline-trait-bounds = "allow"
 integer_division = "allow"
 integer_division_remainder_used = "allow"
 mem_forget = "allow"
 min_ident_chars = "allow"
 missing_assert_message = "allow"
 missing_docs_in_private_items = "allow"
+missing_trait_methods = "allow"
 module_name_repetitions = "allow"
 multiple_unsafe_ops_per_block = "allow"
 pattern_type_mismatch = "allow"
