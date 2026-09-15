@@ -28,15 +28,18 @@
 
 use ::core::mem::MaybeUninit;
 
+#[cfg(feature = "ecs")]
 use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};
 use lightvgl_sys::{lv_part_t_LV_PART_MAIN, lv_style_selector_t};
 
-use crate::widgets::{RawObj, Widget};
+use crate::widgets::RawObj;
+#[cfg(feature = "ecs")]
+use crate::widgets::Widget;
 
-#[derive(Component)]
-#[component(on_insert=add_style)]
-#[component(on_discard=remove_style)]
-#[component(storage = "SparseSet")] // TODO investigate why styles don't get applied without this
+#[cfg_attr(feature = "ecs", derive(Component))]
+#[cfg_attr(feature = "ecs", component(on_insert=add_style))]
+#[cfg_attr(feature = "ecs", component(on_discard=remove_style))]
+#[cfg_attr(feature = "ecs", component(storage = "SparseSet"))] // TODO investigate why styles don't get applied without this
 pub struct Style {
     raw: lightvgl_sys::lv_style_t,
     selector: lv_style_selector_t,
@@ -101,6 +104,7 @@ impl Drop for Style {
 unsafe impl Send for Style {}
 unsafe impl Sync for Style {}
 
+#[cfg(feature = "ecs")]
 fn add_style(mut world: DeferredWorld, ctx: HookContext) {
     let widget = world
         .get_mut::<Widget>(ctx.entity)
@@ -113,6 +117,7 @@ fn add_style(mut world: DeferredWorld, ctx: HookContext) {
     crate::info!("Added Style");
 }
 
+#[cfg(feature = "ecs")]
 fn remove_style(mut world: DeferredWorld, ctx: HookContext) {
     let widget = world
         .get_mut::<Widget>(ctx.entity)

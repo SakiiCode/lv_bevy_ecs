@@ -121,9 +121,12 @@ use ::core::{
     ops::{Deref, DerefMut},
     ptr::NonNull,
 };
-use core::{ffi::CStr, mem::MaybeUninit};
+use core::ffi::CStr;
+#[cfg(feature = "ecs")]
+use core::mem::MaybeUninit;
 
 use alloc::string::{String, ToString};
+#[cfg(feature = "ecs")]
 use bevy_ecs::{
     component::Component,
     hierarchy::ChildOf,
@@ -132,13 +135,13 @@ use bevy_ecs::{
     system::{ParamSet, Query},
     world::World,
 };
-#[cfg(feature = "no_ecs")]
+#[cfg(not(feature = "ecs"))]
 use lightvgl_sys::lv_style_selector_t;
 use lightvgl_sys::{lv_obj_class_t, lv_obj_get_class, lv_obj_t};
 use thiserror::Error;
 
 use crate::events::{Event, EventCode};
-#[cfg(feature = "no_ecs")]
+#[cfg(not(feature = "ecs"))]
 use crate::styles::Style;
 
 /// An [`LvglWorld`] newtype that is `const` compatible, but it must be initalized manually before first use using `.init()`
@@ -147,8 +150,10 @@ use crate::styles::Style;
 ///
 /// If unsure, just use `std::sync::LazyLock` *(std)* or `once_cell::sync::Lazy` *(no_std)*
 #[repr(transparent)]
+#[cfg(feature = "ecs")]
 pub struct UnsafeLvglWorld(MaybeUninit<LvglWorld>);
 
+#[cfg(feature = "ecs")]
 impl UnsafeLvglWorld {
     #[inline]
     pub const fn new() -> Self {
@@ -161,6 +166,7 @@ impl UnsafeLvglWorld {
     }
 }
 
+#[cfg(feature = "ecs")]
 impl Default for UnsafeLvglWorld {
     #[inline]
     fn default() -> Self {
@@ -168,6 +174,7 @@ impl Default for UnsafeLvglWorld {
     }
 }
 
+#[cfg(feature = "ecs")]
 impl Deref for UnsafeLvglWorld {
     type Target = LvglWorld;
     #[inline]
@@ -176,6 +183,7 @@ impl Deref for UnsafeLvglWorld {
     }
 }
 
+#[cfg(feature = "ecs")]
 impl DerefMut for UnsafeLvglWorld {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
@@ -183,8 +191,10 @@ impl DerefMut for UnsafeLvglWorld {
     }
 }
 
+#[cfg(feature = "ecs")]
 pub struct LvglWorld(World);
 
+#[cfg(feature = "ecs")]
 impl Default for LvglWorld {
     fn default() -> Self {
         let mut world = World::new();
@@ -193,6 +203,7 @@ impl Default for LvglWorld {
     }
 }
 
+#[cfg(feature = "ecs")]
 impl Deref for LvglWorld {
     type Target = World;
     #[inline]
@@ -201,6 +212,7 @@ impl Deref for LvglWorld {
     }
 }
 
+#[cfg(feature = "ecs")]
 impl DerefMut for LvglWorld {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
@@ -208,6 +220,7 @@ impl DerefMut for LvglWorld {
     }
 }
 
+#[cfg(feature = "ecs")]
 impl LvglWorld {
     #[inline]
     pub fn new() -> Self {
@@ -215,7 +228,8 @@ impl LvglWorld {
     }
 }
 
-#[derive(Component, PartialEq)]
+#[derive(PartialEq)]
+#[cfg_attr(feature = "ecs", derive(Component))]
 pub struct Widget {
     raw: NonNull<lv_obj_t>,
 }
@@ -281,6 +295,7 @@ pub enum DowncastError {
 #[expect(clippy::type_complexity)]
 #[expect(clippy::unwrap_used)]
 #[expect(clippy::needless_pass_by_value)]
+#[cfg(feature = "ecs")]
 fn on_insert_parent(
     trigger: On<Insert, ChildOf>,
     mut set: ParamSet<(
@@ -354,7 +369,7 @@ impl Wdg {
         crate::events::lv_obj_add_event_cb(self, filter, callback)
     }
 
-    #[cfg(feature = "no_ecs")]
+    #[cfg(not(feature = "ecs"))]
     /// ## Safety
     /// You need to make sure the given Style does not get deallocated, otherwise this will cause a
     /// use-after-free.
@@ -365,7 +380,7 @@ impl Wdg {
         unsafe { lightvgl_sys::lv_obj_add_style(self.raw_mut(), style.raw_mut(), selector) }
     }
 
-    #[cfg(feature = "no_ecs")]
+    #[cfg(not(feature = "ecs"))]
     #[inline]
     pub fn set_parent(&mut self, parent: &mut Wdg) {
         unsafe { lightvgl_sys::lv_obj_set_parent(self.raw_mut(), parent.raw_mut()) }
