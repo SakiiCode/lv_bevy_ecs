@@ -5,6 +5,9 @@
 #![allow(rustdoc::invalid_rust_codeblocks)]
 #![allow(rustdoc::broken_intra_doc_links)]
 use ::core::{ffi::CStr, num::NonZero};
+use core::ffi::c_void;
+
+use alloc::boxed::Box;
 
 use crate::styles::Style;
 use crate::widgets::Wdg;
@@ -30,12 +33,23 @@ pub fn lv_tick_inc(millis: u32) {
     unsafe { lightvgl_sys::lv_tick_inc(millis) }
 }
 
-#[inline]
+// this is horrible but lv_tick_set_cb does not accept user data
+// could be replaced with StaticCell or OnceCell but not worth the extra dependency
+static mut TICK_CALLBACK: Option<Box<dyn FnMut() -> u32>> = None;
+
 pub fn lv_tick_set_cb<F>(callback: F)
 where
     F: FnMut() -> u32 + 'static,
 {
-    crate::timers::lv_tick_set_cb(callback);
+    unsafe {
+        TICK_CALLBACK = Some(Box::new(callback));
+        lightvgl_sys::lv_tick_set_cb(Some(tick_callback_trampoline));
+    }
+}
+
+#[expect(static_mut_refs)]
+unsafe extern "C" fn tick_callback_trampoline() -> u32 {
+    unsafe { (*TICK_CALLBACK.as_mut().unwrap())() }
 }
 
 #[inline]
@@ -102,7 +116,26 @@ pub fn lv_async_call<F>(callback: F)
 where
     F: FnMut() + 'static,
 {
-    crate::timers::lv_async_call(callback)
+    unsafe {
+        lightvgl_sys::lv_async_call(
+            Some(async_call_trampoline::<F>),
+            Box::into_raw(Box::new(callback)).cast(),
+        );
+    }
+}
+
+unsafe extern "C" fn async_call_trampoline<F>(obj: *mut c_void)
+where
+    F: FnMut() + 'static,
+{
+    unsafe {
+        if !obj.is_null() {
+            let callback = &mut *(obj.cast::<F>());
+            callback();
+        } else {
+            crate::warn!("Async call object was null, this should never happen!");
+        }
+    }
 }
 
 #[inline]

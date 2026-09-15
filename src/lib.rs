@@ -137,6 +137,7 @@
 
 extern crate alloc;
 
+#[cfg(feature = "ecs")]
 pub use bevy_ecs as bevy;
 pub use lightvgl_sys as sys;
 
@@ -153,6 +154,7 @@ pub mod malloc;
 pub mod styles;
 pub mod subjects;
 pub mod support;
+#[cfg(feature = "ecs")]
 pub mod timers;
 #[macro_use]
 pub mod widgets;

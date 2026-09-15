@@ -15,7 +15,7 @@ syn = { version = "2.0.111", features = ["full"] }
 thiserror = "2.0.17"
 
 [features]
-no_ecs = []
+ecs = []
 
 [lints.clippy]
 pedantic = { level = "warn", priority = -1 }
