@@ -37,13 +37,12 @@ use ::core::{
 };
 use alloc::{boxed::Box, vec};
 
-use bevy_ecs::component::Component;
 use lightvgl_sys::{lv_observer_get_user_data, lv_subject_t};
 
 use crate::widgets::{RawObj, Wdg};
 
-#[derive(Component)]
-#[component(storage = "SparseSet")]
+#[cfg_attr(feature = "ecs", derive(bevy_ecs::component::Component))]
+#[cfg_attr(feature = "ecs", component(storage = "SparseSet"))]
 pub struct Subject {
     raw: lv_subject_t,
 }

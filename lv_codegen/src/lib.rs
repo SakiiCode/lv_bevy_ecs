@@ -1,10 +1,10 @@
-use inflector::{Inflector, cases::pascalcase::to_pascal_case};
+use inflector::{cases::pascalcase::to_pascal_case, Inflector};
 use proc_macro2::{Ident, TokenStream};
-use quote::{ToTokens, format_ident, quote};
+use quote::{format_ident, quote, ToTokens};
 use regex::Regex;
 use std::collections::HashMap;
 use std::error::Error;
-use syn::{FnArg, ForeignItem, ForeignItemFn, Item, ReturnType, TypePath, parse_str};
+use syn::{parse_str, FnArg, ForeignItem, ForeignItemFn, Item, ReturnType, TypePath};
 use thiserror::Error;
 
 type CGResult<T> = Result<T, Box<dyn Error>>;
@@ -15,11 +15,11 @@ const LIB_PREFIX: &str = "lv_";
 const FUNCTION_BLACKLIST: &[&str] = &[
     "lv_obj_null_on_delete",        // can invalidate NonNull<>
     "lv_obj_add_style",             // add component instead / implemented manually
-    #[cfg(not(feature = "no_ecs"))]
+    #[cfg(feature = "ecs")]
     "lv_obj_replace_style",         // replace component instead
-    #[cfg(not(feature = "no_ecs"))]
+    #[cfg(feature = "ecs")]
     "lv_obj_remove_style",          // remove component instead
-    #[cfg(not(feature = "no_ecs"))]
+    #[cfg(feature = "ecs")]
     "lv_obj_remove_style_all",      // remove components instead
     "lv_obj_set_parent",            // use EntityWorldMut::add_child() instead / implemented manually
     "lv_obj_add_event_cb",          // implemented manually
@@ -912,9 +912,7 @@ mod test {
         let widget_names = CodeGen::get_widget_names(&funcs);
         assert_eq!(
             widget_names,
-            vec![
-                "obj", "btn", "cb", "style", "sysmon", "event", "subject", "display"
-            ]
+            vec!["obj", "btn", "cb", "style", "sysmon", "event", "subject", "display"]
         );
 
         let widget_types = CodeGen::extract_widgets(&funcs);
