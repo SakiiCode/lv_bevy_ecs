@@ -1,10 +1,10 @@
-use inflector::{cases::pascalcase::to_pascal_case, Inflector};
+use inflector::{Inflector, cases::pascalcase::to_pascal_case};
 use proc_macro2::{Ident, TokenStream};
-use quote::{format_ident, quote, ToTokens};
+use quote::{ToTokens, format_ident, quote};
 use regex::Regex;
 use std::collections::HashMap;
 use std::error::Error;
-use syn::{parse_str, FnArg, ForeignItem, ForeignItemFn, Item, ReturnType, TypePath};
+use syn::{FnArg, ForeignItem, ForeignItemFn, Item, ReturnType, TypePath, parse_str};
 use thiserror::Error;
 
 type CGResult<T> = Result<T, Box<dyn Error>>;
@@ -28,6 +28,7 @@ const FUNCTION_BLACKLIST: &[&str] = &[
     "lv_obj_report_style_change",   // first parameter is not obj
     "lv_style_transition_dsc_init", // first parameter is not style
     "lv_keyboard_def_event_cb",     // first parameter is not keyboard
+    "lv_obj_invalidate_expand_blur",// first parameter is not obj
     "lv_subject_add_observer_obj",  // implemented manually
     "lv_display_set_rotation",      // implemented manually
     "lv_display_set_flush_wait_cb", // implemented manually
@@ -778,7 +779,6 @@ impl CodeGen {
             })
             .collect::<Vec<_>>();
         result.push("event".to_owned()); // does not have init() or create()
-        result.push("subject".to_owned()); // does not have init() or create()
         result.push("display".to_owned()); // does not have init() or create()
         result
     }
@@ -912,7 +912,9 @@ mod test {
         let widget_names = CodeGen::get_widget_names(&funcs);
         assert_eq!(
             widget_names,
-            vec!["obj", "btn", "cb", "style", "sysmon", "event", "subject", "display"]
+            vec![
+                "obj", "btn", "cb", "style", "sysmon", "event", "subject", "display"
+            ]
         );
 
         let widget_types = CodeGen::extract_widgets(&funcs);

@@ -140,7 +140,7 @@ use lightvgl_sys::lv_style_selector_t;
 use lightvgl_sys::{lv_event_code_t, lv_obj_class_t, lv_obj_get_class, lv_obj_t};
 use thiserror::Error;
 
-use crate::events::{Event, EventCode};
+use crate::events::Event;
 #[cfg(not(feature = "ecs"))]
 use crate::styles::Style;
 

@@ -18,7 +18,7 @@ use lv_bevy_ecs::{
     error,
     functions::*,
     info,
-    input::{BufferStatus, InputDevice, InputEvent, Pointer},
+    input::{BufferStatus, InputDevice, InputEvent, InputState, Pointer},
     styles::Style,
     support::{LvRgb565, OpacityLevel},
     trace,
@@ -197,7 +197,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
             SimulatorEvent::MouseButtonDown { point, .. } => {
                 next_touch_status = Some(InputEvent {
                     status: BufferStatus::Once,
-                    state: lv_indev_state_t::LV_INDEV_STATE_PRESSED,
+                    state: LV_INDEV_STATE_PRESSED,
                     data: point,
                 });
                 IS_POINTER_DOWN.store(true, Ordering::Relaxed);
@@ -205,7 +205,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
             SimulatorEvent::MouseButtonUp { point, .. } => {
                 next_touch_status = Some(InputEvent {
                     status: BufferStatus::Once,
-                    state: lv_indev_state_t::LV_INDEV_STATE_RELEASED,
+                    state: InputState::Released,
                     data: point,
                 });
                 IS_POINTER_DOWN.store(false, Ordering::Relaxed);
@@ -214,7 +214,7 @@ fn get_touch_input(events: impl Iterator<Item = SimulatorEvent>) -> InputEvent<P
                 if IS_POINTER_DOWN.load(Ordering::Relaxed) {
                     next_touch_status = Some(InputEvent {
                         status: BufferStatus::Once,
-                        state: lv_indev_state_t::LV_INDEV_STATE_PRESSED,
+                        state: InputState::Pressed,
                         data: point,
                     });
                 }
