@@ -1,7 +1,11 @@
 //! Input devices
 use ::alloc::boxed::Box;
 use ::core::{marker::PhantomData, ptr::NonNull};
-use lightvgl_sys::{lv_indev_get_user_data, lv_indev_state_t, lv_indev_t, lv_indev_type_t};
+use lightvgl_sys::{
+    lv_indev_get_user_data,
+    lv_indev_state_t::{self, LV_INDEV_STATE_RELEASED},
+    lv_indev_t, lv_indev_type_t,
+};
 
 use embedded_graphics::prelude::Point;
 
@@ -18,7 +22,7 @@ pub enum BufferStatus {
 #[derive(Clone, Copy)]
 pub struct InputEvent<T: InputType> {
     pub status: BufferStatus,
-    pub state: lv_indev_state_t,
+    pub state: lv_indev_state_t::Type,
     pub data: T::DataType,
 }
 
@@ -27,7 +31,7 @@ impl<T: InputType> InputEvent<T> {
     pub const fn new(data: T::DataType) -> Self {
         InputEvent {
             status: BufferStatus::Once,
-            state: lv_indev_state_t::LV_INDEV_STATE_RELEASED,
+            state: LV_INDEV_STATE_RELEASED,
             data,
         }
     }
@@ -35,7 +39,7 @@ impl<T: InputType> InputEvent<T> {
 
 pub trait InputType {
     type DataType;
-    fn as_lv_indev_type() -> lv_indev_type_t;
+    fn as_lv_indev_type() -> lv_indev_type_t::Type;
     fn set_lv_indev_data(event_data: &Self::DataType, data: &mut lightvgl_sys::lv_indev_data_t);
 }
 
@@ -46,7 +50,7 @@ impl InputType for Pointer {
     type DataType = Point;
 
     #[inline]
-    fn as_lv_indev_type() -> lv_indev_type_t {
+    fn as_lv_indev_type() -> lv_indev_type_t::Type {
         lightvgl_sys::lv_indev_type_t::LV_INDEV_TYPE_POINTER
     }
 
@@ -63,7 +67,7 @@ impl InputType for Keypad {
     type DataType = u32;
 
     #[inline]
-    fn as_lv_indev_type() -> lv_indev_type_t {
+    fn as_lv_indev_type() -> lv_indev_type_t::Type {
         lightvgl_sys::lv_indev_type_t::LV_INDEV_TYPE_KEYPAD
     }
 
@@ -79,7 +83,7 @@ impl InputType for Encoder {
     type DataType = i16;
 
     #[inline]
-    fn as_lv_indev_type() -> lv_indev_type_t {
+    fn as_lv_indev_type() -> lv_indev_type_t::Type {
         lightvgl_sys::lv_indev_type_t::LV_INDEV_TYPE_ENCODER
     }
 
@@ -94,7 +98,7 @@ impl InputType for Button {
     type DataType = u32;
 
     #[inline]
-    fn as_lv_indev_type() -> lv_indev_type_t {
+    fn as_lv_indev_type() -> lv_indev_type_t::Type {
         lightvgl_sys::lv_indev_type_t::LV_INDEV_TYPE_BUTTON
     }
 

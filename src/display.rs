@@ -158,7 +158,7 @@ impl Display {
     }
 
     #[inline]
-    pub fn set_rotation(&mut self, rotation: lv_display_rotation_t) {
+    pub fn set_rotation(&mut self, rotation: lv_display_rotation_t::Type) {
         unsafe {
             lightvgl_sys::lv_display_set_rotation(self.raw_mut(), rotation);
         }

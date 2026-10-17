@@ -12,7 +12,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use lightvgl_sys::{lv_font_montserrat_14, lv_indev_state_t, lv_part_t};
+use lightvgl_sys::{lv_font_montserrat_14, lv_indev_state_t, lv_part_t::LV_PART_MAIN};
 use lv_bevy_ecs::{
     display::{Display, DrawBuffer},
     error,
@@ -140,7 +140,7 @@ fn main() {
             let mut label = Label::new();
             label.set_text(Box::leak(CString::new(*text).unwrap().into_boxed_c_str()));
             label.set_pos(10, 10 + idx as i32 * 30);
-            label.set_style_text_font(font, lv_part_t::LV_PART_MAIN.0);
+            label.set_style_text_font(font, LV_PART_MAIN);
             world.spawn(label.into_inner());
         }
     }

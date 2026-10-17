@@ -10,6 +10,9 @@ use embedded_graphics::pixelcolor::{
     Gray8, IntoStorage, Rgb565, Rgb888, RgbColor,
     raw::{RawU8, RawU16},
 };
+use lightvgl_sys::lv_color_format_t::{
+    self, LV_COLOR_FORMAT_L8, LV_COLOR_FORMAT_RGB565, LV_COLOR_FORMAT_RGB888,
+};
 
 pub const LV_SIZE_CONTENT: u32 = lightvgl_sys::LV_COORD_MAX | lightvgl_sys::LV_COORD_TYPE_SPEC;
 
@@ -32,7 +35,7 @@ pub(crate) fn assert_lv_is_initialized() {
 }
 
 pub trait LvglColorFormat {
-    fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t;
+    fn as_lv_color_format_t() -> lv_color_format_t::Type;
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
@@ -40,8 +43,8 @@ pub struct LvGray8(u8);
 
 impl LvglColorFormat for LvGray8 {
     #[inline]
-    fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
-        lightvgl_sys::lv_color_format_t::LV_COLOR_FORMAT_L8
+    fn as_lv_color_format_t() -> lv_color_format_t::Type {
+        LV_COLOR_FORMAT_L8
     }
 }
 
@@ -62,8 +65,8 @@ pub struct LvRgb565(u16);
 
 impl LvglColorFormat for LvRgb565 {
     #[inline]
-    fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
-        lightvgl_sys::lv_color_format_t::LV_COLOR_FORMAT_RGB565
+    fn as_lv_color_format_t() -> lv_color_format_t::Type {
+        LV_COLOR_FORMAT_RGB565
     }
 }
 
@@ -87,8 +90,8 @@ pub struct LvRgb888(U24);
 
 impl LvglColorFormat for LvRgb888 {
     #[inline]
-    fn as_lv_color_format_t() -> lightvgl_sys::lv_color_format_t {
-        lightvgl_sys::lv_color_format_t::LV_COLOR_FORMAT_RGB888
+    fn as_lv_color_format_t() -> lv_color_format_t::Type {
+        LV_COLOR_FORMAT_RGB888
     }
 }
 

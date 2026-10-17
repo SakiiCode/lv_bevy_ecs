@@ -101,7 +101,7 @@ pub fn lv_color_mix(c1: lv_color_t, c2: lv_color_t, mix: u8) -> lightvgl_sys::lv
 }
 
 #[inline]
-pub fn lv_palette_darken(p: lv_palette_t, lvl: u8) -> lightvgl_sys::lv_color_t {
+pub fn lv_palette_darken(p: lv_palette_t::Type, lvl: u8) -> lightvgl_sys::lv_color_t {
     unsafe { lightvgl_sys::lv_palette_darken(p, lvl) }
 }
 

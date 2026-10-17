@@ -362,7 +362,7 @@ impl Wdg {
     }
 
     #[inline]
-    pub fn add_event_cb<F>(&mut self, filter: lv_event_code_t, callback: F)
+    pub fn add_event_cb<F>(&mut self, filter: lv_event_code_t::Type, callback: F)
     where
         F: FnMut(Event) + 'static,
     {

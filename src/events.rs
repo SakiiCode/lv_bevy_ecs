@@ -11,7 +11,7 @@ use lightvgl_sys::{lv_event_code_t, lv_event_t};
 
 use crate::widgets::{RawObj, Wdg};
 
-pub(crate) fn lv_obj_add_event_cb<F>(widget: &mut Wdg, filter: lv_event_code_t, callback: F)
+pub(crate) fn lv_obj_add_event_cb<F>(widget: &mut Wdg, filter: lv_event_code_t::Type, callback: F)
 where
     F: FnMut(Event) + 'static,
 {

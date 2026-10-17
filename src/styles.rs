@@ -30,7 +30,7 @@ use ::core::mem::MaybeUninit;
 
 #[cfg(feature = "ecs")]
 use bevy_ecs::{component::Component, lifecycle::HookContext, world::DeferredWorld};
-use lightvgl_sys::{lv_part_t, lv_style_selector_t};
+use lightvgl_sys::{lv_part_t::LV_PART_MAIN, lv_style_selector_t};
 
 use crate::widgets::RawObj;
 #[cfg(feature = "ecs")]
@@ -54,7 +54,7 @@ impl Default for Style {
         };
         Self {
             raw,
-            selector: lv_part_t::LV_PART_MAIN.0,
+            selector: LV_PART_MAIN,
         }
     }
 }

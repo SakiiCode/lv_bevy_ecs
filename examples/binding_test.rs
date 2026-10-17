@@ -14,9 +14,13 @@ use std::{
 };
 
 use lightvgl_sys::{
-    lv_align_t, lv_chart_axis_t, lv_chart_type_t, lv_color_format_t, lv_event_code_t,
-    lv_flex_flow_t, lv_grid_align_t, lv_indev_state_t, lv_layer_t, lv_obj_flag_t,
-    lv_observer_get_target, lv_observer_t, lv_palette_t, lv_part_t, lv_state_t,
+    lv_align_t,
+    lv_buttonmatrix_ctrl_t::{LV_BUTTONMATRIX_CTRL_CHECKED, LV_BUTTONMATRIX_CTRL_DISABLED},
+    lv_chart_axis_t, lv_chart_type_t, lv_color_format_t, lv_event_code_t, lv_flex_flow_t,
+    lv_grid_align_t, lv_indev_state_t, lv_layer_t, lv_obj_flag_t, lv_observer_get_target,
+    lv_observer_t, lv_palette_t,
+    lv_part_t::LV_PART_ITEMS,
+    lv_state_t::LV_STATE_CHECKED,
 };
 use lv_bevy_ecs::{
     animation::Animation,
@@ -33,8 +37,8 @@ use lv_bevy_ecs::{
     sys::{
         LV_ANIM_REPEAT_INFINITE, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST, LV_SYMBOL_FILE,
         lv_anim_path_ease_out, lv_anim_set_path_cb, lv_anim_set_repeat_count, lv_area_t,
-        lv_buttonmatrix_ctrl_t, lv_draw_buf_align, lv_draw_image_dsc_t, lv_draw_line_dsc_t,
-        lv_font_montserrat_24, lv_subject_get_int, lv_subject_t,
+        lv_draw_buf_align, lv_draw_image_dsc_t, lv_draw_line_dsc_t, lv_font_montserrat_24,
+        lv_subject_get_int, lv_subject_t,
     },
     widgets::{
         Button, Buttonmatrix, Canvas, Chart, Dropdown, Image, Label, LvglWorld, RawObj, Wdg, Widget,
@@ -232,11 +236,10 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
     });
 
     let btnmatrix_ctrl = [
-        lv_buttonmatrix_ctrl_t::LV_BUTTONMATRIX_CTRL_DISABLED.0,
-        2 | lv_buttonmatrix_ctrl_t::LV_BUTTONMATRIX_CTRL_CHECKED.0,
+        LV_BUTTONMATRIX_CTRL_DISABLED,
+        2 | LV_BUTTONMATRIX_CTRL_CHECKED,
         1,
-    ]
-    .map(|val| lv_buttonmatrix_ctrl_t(val));
+    ];
 
     let mut btnmatrix = Buttonmatrix::new();
     btnmatrix.set_grid_cell(
@@ -263,8 +266,7 @@ fn create_ui(world_rc: Rc<RefCell<LvglWorld>>) {
 
     let mut btnmatrix_entity = world.spawn(btnmatrix.into_inner());
 
-    let mut style_big_font_2 =
-        Style::new(lv_part_t::LV_PART_ITEMS.0 | lv_state_t::LV_STATE_CHECKED.0);
+    let mut style_big_font_2 = Style::new(LV_PART_ITEMS | LV_STATE_CHECKED);
 
     unsafe {
         style_big_font_2.set_text_font(&lv_font_montserrat_24);

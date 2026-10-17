@@ -18,7 +18,7 @@ use embedded_graphics::{
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
-use lightvgl_sys::{lv_align_t, lv_event_code_t, lv_indev_state_t, lv_part_t};
+use lightvgl_sys::{lv_align_t, lv_event_code_t, lv_indev_state_t, lv_part_t::LV_PART_MAIN};
 use lv_bevy_ecs::{
     animation::Animation,
     bevy::{component::Component, entity::Entity, query::With},
@@ -111,7 +111,7 @@ async fn main() {
             OpacityLevel::Cover as i32,
             |obj, val| {
                 #[expect(clippy::cast_sign_loss)]
-                obj.set_style_opa(val as u8, lv_part_t::LV_PART_MAIN.0);
+                obj.set_style_opa(val as u8, LV_PART_MAIN);
             },
         );
 

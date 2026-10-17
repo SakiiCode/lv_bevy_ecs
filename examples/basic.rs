@@ -107,7 +107,7 @@ fn main() {
             OpacityLevel::Cover as i32,
             |obj, val| {
                 #[expect(clippy::cast_sign_loss)]
-                obj.set_style_opa(val as u8, lv_part_t::LV_PART_MAIN.0);
+                obj.set_style_opa(val as u8, lv_part_t::LV_PART_MAIN);
             },
         );
 
