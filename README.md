@@ -46,9 +46,9 @@ Check out [no_ecs.rs](https://github.com/SakiiCode/lv_bevy_ecs/blob/master/examp
 - [x] Cross-language LTO support
 - [x] Defmt support
 - [x] OOP-style function calls
+- [x] Custom fonts
 - [ ] Auto-generated enums
 - [ ] File system
-- [ ] Custom fonts
 - [ ] Snapshots
 - [ ] Non-widget functions
 - [ ] Layouts

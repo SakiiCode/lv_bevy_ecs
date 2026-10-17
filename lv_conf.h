@@ -691,7 +691,7 @@
  *  #define LV_FONT_CUSTOM_DECLARE   LV_FONT_DECLARE(my_font_1) LV_FONT_DECLARE(my_font_2)
  *  @endcode
  */
-#define LV_FONT_CUSTOM_DECLARE
+#define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(verdana) LV_FONT_DECLARE(atkinson) LV_FONT_DECLARE(ibmplexsans) LV_FONT_DECLARE(lato) LV_FONT_DECLARE(notosans) LV_FONT_DECLARE(sourcesans3) LV_FONT_DECLARE(montserrat)
 
 /** Always set a default font */
 #define LV_FONT_DEFAULT &lv_font_montserrat_14

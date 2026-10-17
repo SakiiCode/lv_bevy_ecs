@@ -935,7 +935,7 @@ dependencies = [
 
 [[package]]
 name = "lightvgl-sys"
-version = "9.5.4"
+version = "9.5.5-beta.1"
 dependencies = [
  "bindgen",
  "cc",
@@ -962,7 +962,7 @@ checksum = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
 
 [[package]]
 name = "lv_bevy_ecs"
-version = "0.12.0-alpha.2"
+version = "0.12.0-alpha.3"
 dependencies = [
  "bevy_ecs",
  "constptr",

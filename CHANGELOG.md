@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `lv_init()` check to `DrawBuffer::new()`
+- Custom font support with example code
 
 ### Fixed
 
